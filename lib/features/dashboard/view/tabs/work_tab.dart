@@ -93,13 +93,14 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
                 child: Container(
                   height: AppLayout.statusIndicatorHeight,
                   decoration: BoxDecoration(
-                    color: amber.surface,
+                    color: AmberDuskMaterial.raisedSurface,
                     borderRadius: BorderRadius.circular(spacing.pillRadius),
+                    boxShadow: AmberDuskMaterial.surfaceDepthShadows,
                   ),
                   child: TabBar(
                     controller: _subTabController,
                     indicator: BoxDecoration(
-                      color: amber.primary,
+                      gradient: AmberDuskMaterial.activeWashGradient,
                       borderRadius: BorderRadius.circular(spacing.pillRadius),
                     ),
                     labelColor: amber.text,

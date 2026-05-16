@@ -135,35 +135,6 @@ class _NextActionsListState extends State<NextActionsList>
     unawaited(_staggerController.forward());
   }
 
-  /// Maps a work item's primary action type to a priority color.
-  ///
-  /// Higher urgency actions (payment) get danger color, review gets warning,
-  /// standard actions get primary — creating visual urgency hierarchy on the
-  /// left border of each card.
-  Color _priorityColor(
-    PrimaryActionType? actionType,
-    AmberDuskColorTokens colors,
-  ) {
-    switch (actionType) {
-      // Urgent — money action requires immediate attention
-      case PrimaryActionType.payEscrow:
-        return colors.danger;
-      // Attention — delivery needs review
-      case PrimaryActionType.reviewDelivery:
-        return colors.warning;
-      // Action needed — evidence submission
-      case PrimaryActionType.submitEvidence:
-        return colors.info;
-      // Standard — general actions
-      case PrimaryActionType.startWork:
-      case PrimaryActionType.markCompleted:
-      case PrimaryActionType.approveClose:
-      case PrimaryActionType.viewDetails:
-      case null:
-        return colors.primary;
-    }
-  }
-
   /// Returns a human-readable priority label for accessibility.
   String _priorityLabel(PrimaryActionType? actionType) {
     switch (actionType) {
@@ -213,17 +184,15 @@ class _NextActionsListState extends State<NextActionsList>
       key: const Key('next_actions_list'),
       children: List.generate(displayItems.length, (index) {
         final item = displayItems[index];
-        final priorityColor = _priorityColor(item.primaryActionType, amber);
 
-        // Priority-colored left border wrapping each card — creates visual
-        // urgency hierarchy without IntrinsicHeight (zero extra layout cost).
+        // Active wash marks high-attention rows without the heavy left rail
+        // that made dashboard actions read like bordered alert cards.
         Widget card = Semantics(
           label: 'Priority: ${_priorityLabel(item.primaryActionType)}',
           child: Container(
             margin: const EdgeInsets.only(bottom: AppDimens.p12),
             decoration: BoxDecoration(
-              // Left bar indicates action urgency level
-              border: Border(left: BorderSide(width: 4, color: priorityColor)),
+              gradient: AmberDuskMaterial.activeWashGradient,
               borderRadius: BorderRadius.circular(AppDimens.r16),
             ),
             child: WorkItemCard(

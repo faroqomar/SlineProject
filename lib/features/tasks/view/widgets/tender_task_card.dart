@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/format_price.dart';
@@ -11,10 +9,10 @@ import 'package:sline_app/core/widgets/scale_button.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 
-/// Quiet Amber Dusk card for tender-style discovery tasks.
+/// Original SLine V2 Amber Dusk card for tender-style discovery tasks.
 ///
 /// The card keeps task navigation and saved-state callbacks untouched while
-/// rendering tender work as the compact raised panels shown in Phase 3.
+/// rendering tender work as a full client task post, not a dashboard row.
 class TenderTaskCard extends StatelessWidget {
   /// Creates a tender task card for the discovery feed.
   const TenderTaskCard({
@@ -35,7 +33,6 @@ class TenderTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
     const amberColors = AmberDuskTokens.colors;
     final cardTheme = AmberDuskTokens.widgetTheme.cards;
     final authorName = task.userName ?? 'Client';
@@ -64,20 +61,8 @@ class TenderTaskCard extends StatelessWidget {
       label: '${task.title} tender task card',
       child: Container(
         margin: const EdgeInsets.only(bottom: AppDimens.p12),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: cardTheme.taskGradientStops,
-          ),
-          borderRadius: BorderRadius.circular(
-            AmberDuskTokens.spacing.taskCardRadius,
-          ),
-          border: Border.all(
-            color: cardTheme.border,
-            width: cardTheme.borderWidth,
-          ),
-          boxShadow: AppDecorations.elevation(2, isDark: colorScheme.isDark),
+        decoration: AmberDuskMaterial.taskCardDecoration(
+          radius: AmberDuskTokens.spacing.taskCardRadius,
         ),
         child: ScaleButton(
           onPressed: () {

@@ -19,248 +19,251 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
     final amberColors = context.amberColors;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: colorScheme.phoneBackground,
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                AppDimens.p24,
-                topPadding + AppDimens.p24,
-                AppDimens.p24,
-                AppDimens.p16,
-              ),
-              child: Row(
-                children: [
-                  SizedBox.square(
-                    dimension: AppDimens.touchTarget,
-                    child: IconButton(
-                      tooltip: 'Back',
-                      style: IconButton.styleFrom(
-                        backgroundColor: amberColors.surface,
-                        foregroundColor: amberColors.text,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppDimens.r12),
+      backgroundColor: AmberDuskColors.background,
+      body: AmberDuskBackground(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppDimens.p24,
+                  topPadding + AppDimens.p24,
+                  AppDimens.p24,
+                  AppDimens.p16,
+                ),
+                child: Row(
+                  children: [
+                    SizedBox.square(
+                      dimension: AppDimens.touchTarget,
+                      child: IconButton(
+                        tooltip: 'Back',
+                        style: IconButton.styleFrom(
+                          backgroundColor: AmberDuskMaterial.raisedSurface,
+                          foregroundColor: amberColors.text,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppDimens.r12),
+                          ),
                         ),
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.arrow_back),
                       ),
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back),
                     ),
-                  ),
-                  const SizedBox(width: AppDimens.p16),
-                  Text(
-                    'Settings',
-                    style: AppTypography.h3.copyWith(color: colorScheme.text),
-                  ),
-                ],
+                    const SizedBox(width: AppDimens.p16),
+                    Text(
+                      'Settings',
+                      style: AppTypography.h3.copyWith(
+                        color: amberColors.text,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.all(AppDimens.p24),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _SettingsGroup(
-                  title: 'Preferences',
-                  subtitle: 'App behavior',
-                  children: [
-                    Consumer<ThemeModeProvider>(
-                      builder: (context, themeProvider, _) {
-                        final isDark =
-                            themeProvider.themeMode == ThemeMode.dark;
-                        return _buildSettingsTile(
-                          context,
-                          icon: isDark ? Icons.dark_mode : Icons.light_mode,
-                          title: 'Dark Mode',
-                          subtitle: isDark ? 'On' : 'Off',
-                          trailing: Switch(
-                            value: isDark,
-                            activeThumbColor: amberColors.primary,
-                            onChanged: (value) {
-                              AppLogger.d(
-                                'Settings theme toggle changed',
-                                tag: 'Settings',
-                                json: {'dark': value},
-                              );
-                              themeProvider.toggleThemeMode();
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                    _buildSettingsTile(
-                      context,
-                      icon: Icons.language,
-                      title: 'Language',
-                      subtitle: 'English',
-                      actionLabel: 'Open',
-                      onTap: () {
-                        AppLogger.d(
-                          'Settings language row tapped',
-                          tag: 'Settings',
-                        );
-                        _showComingSoonSnackBar(
-                          context,
-                          'Language settings coming soon',
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppDimens.p12),
-                _SettingsGroup(
-                  title: 'Public profile',
-                  subtitle: 'Client-facing',
-                  children: [
-                    _buildSettingsTile(
-                      context,
-                      icon: Icons.folder_special,
-                      title: 'Manage Portfolio',
-                      subtitle: 'Add or edit your work proof',
-                      actionLabel: 'Manage',
-                      onTap: () {
-                        AppLogger.d(
-                          'Settings manage portfolio opened',
-                          tag: 'Settings',
-                        );
-                        unawaited(
-                          Navigator.push(
+            SliverPadding(
+              padding: const EdgeInsets.all(AppDimens.p24),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _SettingsGroup(
+                    title: 'Preferences',
+                    subtitle: 'App behavior',
+                    children: [
+                      Consumer<ThemeModeProvider>(
+                        builder: (context, themeProvider, _) {
+                          final isDark =
+                              themeProvider.themeMode == ThemeMode.dark;
+                          return _buildSettingsTile(
                             context,
-                            MaterialPageRoute(
-                              builder: (_) => const ManagePortfolioScreen(),
+                            icon: isDark ? Icons.dark_mode : Icons.light_mode,
+                            title: 'Dark Mode',
+                            subtitle: isDark ? 'On' : 'Off',
+                            trailing: Switch(
+                              value: isDark,
+                              activeThumbColor: amberColors.primary,
+                              onChanged: (value) {
+                                AppLogger.d(
+                                  'Settings theme toggle changed',
+                                  tag: 'Settings',
+                                  json: {'dark': value},
+                                );
+                                themeProvider.toggleThemeMode();
+                              },
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildSettingsTile(
-                      context,
-                      icon: Icons.notifications_none,
-                      title: 'Notifications',
-                      subtitle: 'Manage alerts',
-                      actionLabel: 'Edit',
-                      onTap: () {
-                        AppLogger.d(
-                          'Settings notifications row tapped',
-                          tag: 'Settings',
-                        );
-                        _showComingSoonSnackBar(
-                          context,
-                          'Notification settings coming soon',
-                        );
-                      },
-                    ),
-                    _buildSettingsTile(
-                      context,
-                      icon: Icons.gpp_good_outlined,
-                      title: 'Support & Safety',
-                      subtitle: 'Reporting and account safety',
-                      actionLabel: 'Open',
-                      onTap: () {
-                        AppLogger.d(
-                          'Settings support dialog opened',
-                          tag: 'Settings',
-                        );
-                        unawaited(
-                          showDialog(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: const Text('Support & Safety'),
-                              content: const Text(
-                                'You can report abusive content from task details, chat conversations, and public profiles. '
-                                'For booking issues, open a booking and tap "Report Issue".',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx),
-                                  child: const Text('Close'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppDimens.p12),
-                _SettingsGroup(
-                  title: 'Money and security',
-                  subtitle: 'Private',
-                  children: [
-                    _buildSettingsTile(
-                      context,
-                      icon: Icons.account_balance_wallet,
-                      title: 'Request Withdrawal',
-                      subtitle: 'Withdraw funds to your bank',
-                      actionLabel: 'Open',
-                      onTap: () {
-                        AppLogger.d(
-                          'Settings withdrawal row tapped',
-                          tag: 'Settings',
-                        );
-                        _showComingSoonSnackBar(
-                          context,
-                          'Request withdrawal - coming soon',
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppDimens.p12),
-                _SettingsGroup(
-                  title: 'Account control',
-                  subtitle: 'Requires confirmation',
-                  danger: true,
-                  children: [
-                    _buildSettingsTile(
-                      context,
-                      icon: Icons.logout,
-                      title: 'Log Out',
-                      subtitle: 'End this session on the device',
-                      actionLabel: 'Log out',
-                      danger: true,
-                      onTap: () async {
-                        AppLogger.i(
-                          'Settings logout requested',
-                          tag: 'Settings',
-                        );
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => const LogoutConfirmationDialog(),
-                        );
-                        if (confirmed != true) {
+                          );
+                        },
+                      ),
+                      _buildSettingsTile(
+                        context,
+                        icon: Icons.language,
+                        title: 'Language',
+                        subtitle: 'English',
+                        actionLabel: 'Open',
+                        onTap: () {
                           AppLogger.d(
-                            'Settings logout cancelled',
+                            'Settings language row tapped',
                             tag: 'Settings',
                           );
-                          return;
-                        }
-                        if (!context.mounted) return;
+                          _showComingSoonSnackBar(
+                            context,
+                            'Language settings coming soon',
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppDimens.p12),
+                  _SettingsGroup(
+                    title: 'Public profile',
+                    subtitle: 'Client-facing',
+                    children: [
+                      _buildSettingsTile(
+                        context,
+                        icon: Icons.folder_special,
+                        title: 'Manage Portfolio',
+                        subtitle: 'Add or edit your work proof',
+                        actionLabel: 'Manage',
+                        onTap: () {
+                          AppLogger.d(
+                            'Settings manage portfolio opened',
+                            tag: 'Settings',
+                          );
+                          unawaited(
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ManagePortfolioScreen(),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildSettingsTile(
+                        context,
+                        icon: Icons.notifications_none,
+                        title: 'Notifications',
+                        subtitle: 'Manage alerts',
+                        actionLabel: 'Edit',
+                        onTap: () {
+                          AppLogger.d(
+                            'Settings notifications row tapped',
+                            tag: 'Settings',
+                          );
+                          _showComingSoonSnackBar(
+                            context,
+                            'Notification settings coming soon',
+                          );
+                        },
+                      ),
+                      _buildSettingsTile(
+                        context,
+                        icon: Icons.gpp_good_outlined,
+                        title: 'Support & Safety',
+                        subtitle: 'Reporting and account safety',
+                        actionLabel: 'Open',
+                        onTap: () {
+                          AppLogger.d(
+                            'Settings support dialog opened',
+                            tag: 'Settings',
+                          );
+                          unawaited(
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Support & Safety'),
+                                content: const Text(
+                                  'You can report abusive content from task details, chat conversations, and public profiles. '
+                                  'For booking issues, open a booking and tap "Report Issue".',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('Close'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppDimens.p12),
+                  _SettingsGroup(
+                    title: 'Money and security',
+                    subtitle: 'Private',
+                    children: [
+                      _buildSettingsTile(
+                        context,
+                        icon: Icons.account_balance_wallet,
+                        title: 'Request Withdrawal',
+                        subtitle: 'Withdraw funds to your bank',
+                        actionLabel: 'Open',
+                        onTap: () {
+                          AppLogger.d(
+                            'Settings withdrawal row tapped',
+                            tag: 'Settings',
+                          );
+                          _showComingSoonSnackBar(
+                            context,
+                            'Request withdrawal - coming soon',
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppDimens.p12),
+                  _SettingsGroup(
+                    title: 'Account control',
+                    subtitle: 'Requires confirmation',
+                    danger: true,
+                    children: [
+                      _buildSettingsTile(
+                        context,
+                        icon: Icons.logout,
+                        title: 'Log Out',
+                        subtitle: 'End this session on the device',
+                        actionLabel: 'Log out',
+                        danger: true,
+                        onTap: () async {
+                          AppLogger.i(
+                            'Settings logout requested',
+                            tag: 'Settings',
+                          );
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => const LogoutConfirmationDialog(),
+                          );
+                          if (confirmed != true) {
+                            AppLogger.d(
+                              'Settings logout cancelled',
+                              tag: 'Settings',
+                            );
+                            return;
+                          }
+                          if (!context.mounted) return;
 
-                        final authVM = context.read<AuthSessionViewModel>();
-                        await authVM.logout();
-                        if (!context.mounted) return;
+                          final authVM = context.read<AuthSessionViewModel>();
+                          await authVM.logout();
+                          if (!context.mounted) return;
 
-                        await Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          '/login',
-                          (route) => false,
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppDimens.p32),
-              ]),
+                          await Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/login',
+                            (route) => false,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppDimens.p32),
+                ]),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

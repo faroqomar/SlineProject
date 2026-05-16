@@ -191,7 +191,11 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
               children: [
                 const SkeletonLoader(width: 36, height: 36, isCircle: true),
                 if (index < 2)
-                  Container(width: 1, height: 32, color: colors.heroDivider),
+                  Container(
+                    width: 1,
+                    height: 32,
+                    color: AmberDuskMaterial.rowSeparator,
+                  ),
               ],
             ),
             const SizedBox(width: AppDimens.p12),
@@ -359,7 +363,11 @@ class _ActivityRow extends StatelessWidget {
                 ),
                 // Vertical connecting line between timeline dots
                 if (!isLast)
-                  Container(width: 1, height: 32, color: amber.heroDivider),
+                  Container(
+                    width: 1,
+                    height: 32,
+                    color: AmberDuskMaterial.rowSeparator,
+                  ),
               ],
             ),
             const SizedBox(width: AppDimens.p12),

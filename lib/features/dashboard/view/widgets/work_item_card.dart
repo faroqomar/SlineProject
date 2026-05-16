@@ -208,7 +208,7 @@ class WorkItemCard extends StatelessWidget {
                   vertical: spacing.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: amber.dangerMuted,
+                  gradient: AmberDuskMaterial.activeWashGradient,
                   borderRadius: BorderRadius.circular(spacing.moduleRadius),
                 ),
                 child: Row(

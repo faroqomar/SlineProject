@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:sline_app/core/navigation/main_nav_destinations.dart';
 import 'package:sline_app/core/providers/navigation_provider.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/custom_bottom_nav_bar.dart';
@@ -100,8 +101,9 @@ void main() {
       expect(capsuleBox.color, navTheme.activeIconBackground);
       expect(
         capsuleBox.borderRadius,
-        BorderRadius.circular(navTheme.activeIconRadius),
+        BorderRadius.circular(AppDimens.r18),
       );
+      expect(find.byKey(CustomBottomNavBar.activeRailKey), findsOneWidget);
     });
 
     testWidgets('T-CW113 has Semantics on each nav item', (tester) async {
@@ -184,7 +186,7 @@ void main() {
       expect(rustDotCount, 0);
     });
 
-    testWidgets('keeps the nav bar above Android system navigation insets', (
+    testWidgets('uses Amber Dusk frame-edge nav offset without double insets', (
       tester,
     ) async {
       const bottomSystemInset = 34.0;
@@ -206,7 +208,7 @@ void main() {
           );
       expect(
         positioned.bottom,
-        AmberDuskTokens.phoneLayout.bottomNavBottom + bottomSystemInset,
+        AmberDuskTokens.phoneLayout.bottomNavBottom,
       );
     });
   });

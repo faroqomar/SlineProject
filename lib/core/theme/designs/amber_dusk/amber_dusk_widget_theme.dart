@@ -35,11 +35,11 @@ abstract final class AmberDuskWidgetTheme {
   /// Default panel-card elevation level for Flutter shadow recipes.
   static const int panelCardElevationLevel = 1;
 
-  /// Task card top fill after applying the authored white overlay to bg2.
-  static const Color taskCardTopFill = Color(0xFF28231E);
+  /// Task card top fill retained for compatibility with older token readers.
+  static const Color taskCardTopFill = AmberDuskColors.surfaceRaised;
 
-  /// Task card bottom fill after applying the authored dark overlay to bg2.
-  static const Color taskCardBottomFill = Color(0xFF241F1A);
+  /// Task card bottom fill retained for compatibility with older token readers.
+  static const Color taskCardBottomFill = AmberDuskColors.surfaceRaised;
 
   /// Subtle task price and tag surface from `.price-pill` evidence.
   static const Color taskPillSurface = Color.fromRGBO(255, 255, 255, 0.035);
@@ -472,21 +472,21 @@ final class AmberDuskCardThemeTokens {
 
   /// Task card recipe with the larger Open Design task radius.
   AmberDuskCardRecipe get task => const AmberDuskCardRecipe(
-    background: AmberDuskColors.surface,
+    background: AmberDuskColors.surfaceRaised,
     radius: AmberDuskSpacing.taskCardRadius,
     elevationLevel: AmberDuskWidgetTheme.taskCardElevationLevel,
   );
 
   /// Panel recipe for grouped modules.
   AmberDuskCardRecipe get panel => const AmberDuskCardRecipe(
-    background: AmberDuskColors.surface,
+    background: AmberDuskColors.surfaceRaised,
     radius: AmberDuskSpacing.moduleRadius,
     elevationLevel: AmberDuskWidgetTheme.panelCardElevationLevel,
   );
 
   /// Message bubble recipe for chat-style surfaces.
   AmberDuskCardRecipe get message => const AmberDuskCardRecipe(
-    background: AmberDuskColors.surface,
+    background: AmberDuskColors.surfaceRaised,
     radius: AmberDuskSpacing.moduleRadius,
     elevationLevel: AmberDuskWidgetTheme.panelCardElevationLevel,
   );

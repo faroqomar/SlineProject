@@ -116,7 +116,7 @@ class DashboardBookingCard extends StatelessWidget {
                 vertical: spacing.md,
               ),
               decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.12),
+                gradient: AmberDuskMaterial.activeWashGradient,
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(spacing.taskCardRadius),
                 ),
@@ -236,7 +236,7 @@ class DashboardBookingCard extends StatelessWidget {
             ),
 
             if (hasActions) ...[
-              Divider(height: 1, thickness: 1, color: amber.heroDivider),
+              Divider(height: 1, thickness: 1, color: amber.rowSeparator),
               Padding(
                 padding: EdgeInsets.all(spacing.md),
                 child: _buildActions(
@@ -408,7 +408,7 @@ class _DeadlineUrgencyBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: urgencyColor.withValues(alpha: 0.08),
         border: Border(
-          bottom: BorderSide(color: urgencyColor.withValues(alpha: 0.15)),
+          bottom: BorderSide(color: colors.rowSeparator),
         ),
       ),
       child: Row(

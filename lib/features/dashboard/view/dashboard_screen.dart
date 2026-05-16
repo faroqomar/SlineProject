@@ -6,11 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/payment_service.dart';
-import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/web_url_utils_stub.dart'
     if (dart.library.html) 'package:sline_app/core/utils/web_url_utils_web.dart'
@@ -178,7 +176,6 @@ class _DashboardContentState extends State<_DashboardContent>
   void _showSettings(BuildContext context, DashboardViewModel vm) {
     const amber = AmberDuskTokens.colors;
     final sheetRecipe = AmberDuskTokens.surfaces.sheet;
-    final colorScheme = context.colorScheme;
 
     AppLogger.d('DashboardScreen: opening settings sheet', tag: 'Dashboard');
 
@@ -196,14 +193,11 @@ class _DashboardContentState extends State<_DashboardContent>
             top: false,
             child: Container(
               decoration: BoxDecoration(
-                color: sheetRecipe.fill,
+                color: AmberDuskMaterial.raisedSurface,
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(sheetRecipe.radius),
                 ),
-                boxShadow: AppDecorations.elevation(
-                  sheetRecipe.elevationLevel,
-                  isDark: colorScheme.isDark,
-                ),
+                boxShadow: AmberDuskMaterial.strongSurfaceDepthShadows,
               ),
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
@@ -264,7 +258,6 @@ class _DashboardContentState extends State<_DashboardContent>
     const amber = AmberDuskTokens.colors;
     const spacing = AmberDuskTokens.spacing;
     const typography = AmberDuskTokens.typography;
-    final bottomClearance = _dashboardBottomClearance(context);
 
     // Sync controller with VM state
     if (_tabController.index != vm.currentTab.index) {
@@ -272,7 +265,7 @@ class _DashboardContentState extends State<_DashboardContent>
     }
 
     return Scaffold(
-      backgroundColor: amber.page,
+      backgroundColor: amber.background,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -338,22 +331,18 @@ class _DashboardContentState extends State<_DashboardContent>
             ),
             const SizedBox(height: AppDimens.p8),
             Expanded(
-              child: Padding(
-                // Padding avoids overlap with the app-level bottom nav.
-                padding: EdgeInsets.only(bottom: bottomClearance),
-                child: TabBarView(
-                  controller: _tabController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children:
-                      widget.tabViews ??
-                      const [
-                        OverviewTab(),
-                        BookingsTab(),
-                        WorkTab(),
-                        WalletTab(),
-                        InboxTab(),
-                      ],
-                ),
+              child: TabBarView(
+                controller: _tabController,
+                physics: const NeverScrollableScrollPhysics(),
+                children:
+                    widget.tabViews ??
+                    const [
+                      OverviewTab(),
+                      BookingsTab(),
+                      WorkTab(),
+                      WalletTab(),
+                      InboxTab(),
+                    ],
               ),
             ),
           ],
@@ -364,17 +353,6 @@ class _DashboardContentState extends State<_DashboardContent>
 
   /// Returns the visible section label for the active dashboard tab.
   String _dashboardTabLabel(DashboardTab tab) => _dashboardTabLabels[tab.index];
-
-  double _dashboardBottomClearance(BuildContext context) {
-    const phoneLayout = AmberDuskTokens.phoneLayout;
-    final bottomSafePadding = MediaQuery.viewPaddingOf(context).bottom;
-    // Dashboard tabs sit behind the app-level floating nav, so the shell owns
-    // the shared clearance before each inner tab adds any local list padding.
-    return bottomSafePadding +
-        phoneLayout.bottomNavBottom +
-        phoneLayout.bottomNavHeight +
-        AppDimens.p16;
-  }
 }
 
 /// Centered dashboard tab strip with exactly one visual active state.
@@ -392,7 +370,6 @@ class _DashboardTabStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const amber = AmberDuskTokens.colors;
     const spacing = AmberDuskTokens.spacing;
     final tabTheme = AmberDuskTokens.widgetTheme.tabs;
 
@@ -434,9 +411,10 @@ class _DashboardTabStrip extends StatelessWidget {
                         alignment: Alignment.center,
                         padding: EdgeInsets.symmetric(horizontal: spacing.md),
                         decoration: BoxDecoration(
-                          color: isActive
-                              ? amber.activeGlow
-                              : AmberDuskColors.transparent,
+                          gradient: isActive
+                              ? AmberDuskMaterial.activeWashGradient
+                              : null,
+                          color: isActive ? null : AmberDuskColors.transparent,
                           borderRadius: BorderRadius.circular(
                             spacing.compactControlRadius,
                           ),
@@ -474,7 +452,6 @@ class _RoleSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
-    const amber = AmberDuskTokens.colors;
     final isFreelancer = vm.currentRole == UserRole.freelancer;
 
     return Container(
@@ -482,7 +459,7 @@ class _RoleSwitch extends StatelessWidget {
       decoration: BoxDecoration(
         color: AmberDuskWidgetTheme.fieldSurface,
         borderRadius: BorderRadius.circular(AppDimens.r20),
-        border: Border.all(color: amber.dark.overlay),
+        boxShadow: AmberDuskMaterial.surfaceDepthShadows,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -65,13 +65,13 @@ void main() {
           .where((widget) {
             final decoration = widget.decoration;
             return decoration is BoxDecoration &&
-                decoration.color == AmberDuskTokens.colors.activeGlow;
+                decoration.gradient == AmberDuskMaterial.activeWashGradient;
           })
           .length;
       expect(activeTabContainers, 1);
 
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
-      expect(scaffold.backgroundColor, AmberDuskTokens.colors.page);
+      expect(scaffold.backgroundColor, AmberDuskTokens.colors.background);
     });
 
     testWidgets('T57 tab tap calls setTab(index)', (tester) async {

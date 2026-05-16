@@ -81,7 +81,7 @@ void main() {
         isLoadingConversations: true,
       );
 
-      expect(find.text('Messages'), findsOneWidget);
+      expect(find.text('Conversations'), findsOneWidget);
     });
 
     testWidgets(
@@ -159,9 +159,10 @@ void main() {
         ],
       );
 
-      await tester.tap(find.byIcon(Icons.search_rounded));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'prototype');
+      await tester.enterText(
+        find.byKey(const ValueKey('messages_search_field')),
+        'prototype',
+      );
       // Wait past the MessagesScreen search debounce after typing in the
       // search TextField so the filtered conversation list has rebuilt.
       await tester.pump(const Duration(milliseconds: 350));
@@ -229,7 +230,7 @@ void main() {
       expect(find.text('No messages yet'), findsNothing);
     });
 
-    testWidgets('read conversation rows use quiet blended surfaces', (
+    testWidgets('conversation rows sit inside one organized inbox panel', (
       tester,
     ) async {
       final vm = _MockChatViewModel();
@@ -243,23 +244,35 @@ void main() {
             lastMessage: 'hi',
             taskTitle: 'Outdoor Personal Photo Session',
           ),
+          _conversation(
+            id: 'next-thread',
+            name: 'Zahraa Firas',
+            lastMessage: 'Ready',
+          ),
         ],
       );
 
-      final quietSurface = AmberDuskTokens.colors.surface.withValues(
-        alpha: 0.46,
+      final panel = tester.widget<Container>(
+        find.byKey(const ValueKey('message_conversation_panel')),
       );
-      final quietConversationCards = tester
-          .widgetList<Container>(find.byType(Container))
-          .where((container) {
-            final decoration = container.decoration;
-            return decoration is BoxDecoration &&
-                decoration.color == quietSurface;
-          });
+      final panelDecoration = panel.decoration;
+      final row = tester.widget<AnimatedContainer>(
+        find.byKey(const ValueKey('message_conversation_row_read-thread')),
+      );
+      final rowDecoration = row.decoration;
 
-      // Read rows should blend with the inbox canvas instead of using the full
-      // card surface, which made the message list look like stacked blocks.
-      expect(quietConversationCards, isNotEmpty);
+      // A single panel gives the inbox shape while read rows stay transparent
+      // inside it, avoiding repeated background blocks.
+      expect(panelDecoration, isA<BoxDecoration>());
+      expect(rowDecoration, isA<BoxDecoration>());
+      expect(
+        (rowDecoration! as BoxDecoration).color,
+        equals(AmberDuskColors.transparent),
+      );
+      expect(
+        find.byKey(const ValueKey('message_conversation_divider_read-thread')),
+        findsOneWidget,
+      );
     });
   });
 }

@@ -16,10 +16,10 @@ import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.da
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 
-/// Hero Amber Dusk card for booking-style discovery tasks.
+/// Original SLine V2 Amber Dusk hero card for booking-style discovery tasks.
 ///
 /// The widget preserves the existing tap, profile preview, and saved callbacks
-/// while giving bookings the stronger rust hero treatment from Phase 3.
+/// while keeping bookings visually distinct from compact task/list rows.
 class BookingTaskCard extends StatelessWidget {
   /// Creates a booking card for the discovery feed.
   const BookingTaskCard({
@@ -40,7 +40,6 @@ class BookingTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
     const amberColors = AmberDuskTokens.colors;
     final heroSurface = AmberDuskTokens.surfaces.hero;
     final cardTheme = AmberDuskTokens.widgetTheme.cards;
@@ -88,22 +87,8 @@ class BookingTaskCard extends StatelessWidget {
       label: '${task.title} booking task card',
       child: Container(
         margin: const EdgeInsets.only(bottom: AppDimens.p12),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: heroSurface.gradientStops,
-            stops: const [0, 0.56, 1],
-            begin: const Alignment(0.14, -1),
-            end: const Alignment(-0.14, 1),
-          ),
-          borderRadius: BorderRadius.circular(heroSurface.radius),
-          border: Border.all(
-            color: heroSurface.border,
-            width: AmberDuskTokens.spacing.borderWidth,
-          ),
-          boxShadow: AppDecorations.elevation(
-            heroSurface.elevationLevel,
-            isDark: colorScheme.isDark,
-          ),
+        decoration: AmberDuskMaterial.bookingCardDecoration(
+          radius: heroSurface.radius,
         ),
         child: ScaleButton(
           onPressed: () {

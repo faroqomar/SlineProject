@@ -16,6 +16,7 @@ import 'package:sline_app/core/theme/designs/amber_dusk/phone/amber_dusk_phone_l
 
 export 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_colors.dart';
 export 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_components.dart';
+export 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_material.dart';
 export 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_motion.dart';
 export 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_spacing.dart';
 export 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_surfaces.dart';

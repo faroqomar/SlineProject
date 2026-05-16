@@ -33,7 +33,7 @@ class ContentSafetyFilter {
   ///
   /// Dart does not expose Unicode NFKD normalization in the SDK, so this helper
   /// applies the equivalent moderation backstop this app needs: lowercase,
-  /// remove combining marks, drop punctuation separators, collapse whitespace,
+  /// remove combining marks, drop punctuation separators,
   /// and normalize common Latin diacritics used in trivial bypass attempts.
   static String _foldForModeration(String value) {
     final lower = value.toLowerCase();
@@ -46,7 +46,7 @@ class ContentSafetyFilter {
       RegExp('[^a-z0-9]+'),
       '',
     );
-    return alphanumericOnly.replaceAll(RegExp(r'\s+'), ' ');
+    return alphanumericOnly;
   }
 
   static String _foldChar(String char) {

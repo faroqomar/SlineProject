@@ -64,7 +64,7 @@ abstract final class AmberDuskSurfaces {
     shadowTokenName: 'shadow-raised',
   );
 
-  /// Hero booking material using the authored rust gradient.
+  /// Strong V2 booking material using the authored deep hero gradient.
   static const AmberDuskSurfaceRecipe hero = AmberDuskSurfaceRecipe(
     name: AmberDuskSurfaceNames.hero,
     fill: AmberDuskColors.hero,

@@ -165,10 +165,10 @@ void main() {
       expect(find.byKey(HomeScreen.discoveryAllWorkKey), findsOneWidget);
       expect(find.byKey(HomeScreen.discoveryBookingsKey), findsOneWidget);
       expect(find.byKey(HomeScreen.discoveryTendersKey), findsOneWidget);
-      expect(find.text('All posts'), findsWidgets);
-      expect(find.text('Tender posts'), findsOneWidget);
+      expect(find.text('All'), findsWidgets);
+      expect(find.text('Tasks'), findsOneWidget);
       expect(find.text('FEED'), findsOneWidget);
-      expect(find.text('0 items'), findsOneWidget);
+      expect(find.text('0 posts'), findsOneWidget);
       expect(find.byType(SkeletonTaskCard), findsWidgets);
       expect(find.byType(SafeArea), findsWidgets);
       final discoverySliver = tester.widget<DiscoveryTaskSliver>(

@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 
-import 'package:sline_app/core/theme/app_decorations.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 
-/// A reusable container with solid background, subtle border, and elevation shadow.
+/// A reusable container with a restrained Amber Dusk tactile surface.
 ///
 /// ## NO GLASS POLICY (see .impeccable.md)
 ///
 /// This widget was previously a glassmorphism container with [BackdropFilter] blur.
 /// As of Phase 1 (Core Widget Redesign), ALL glass effects have been removed.
-/// The widget now renders as a solid-surface container using:
-/// - `AmberDuskTokens.widgetTheme.cards.panel` for background and radius
-/// - `AmberDuskTokens.widgetTheme.cards.borderWidth` for borderless cards
-/// - [AppDecorations.elevation] for shadow depth
+/// The widget now renders with the shared Amber Dusk material recipe:
+/// - `rgba(36,31,26,.88)` raised fill for depth
+/// - inset top and bottom shadows for tactile panels
+/// - no visible hard border
 ///
 /// The widget name is kept as `AppCardContainer` for backward compatibility
 /// with existing feature code (21+ files use it). The API is backward-compatible:
@@ -48,27 +46,19 @@ class AppCardContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
     final cardTheme = AmberDuskTokens.widgetTheme.cards;
     final panelRecipe = cardTheme.panel;
     final effectiveRadius =
         borderRadius ?? BorderRadius.circular(panelRecipe.radius);
+    final isStrong = elevation >= AmberDuskWidgetTheme.taskCardElevationLevel;
 
     return Container(
       margin: margin,
       padding: padding,
-      decoration: BoxDecoration(
-        color: panelRecipe.background,
-        borderRadius: effectiveRadius,
-        border: Border.all(
-          color: cardTheme.border,
-          width: cardTheme.borderWidth,
-        ),
-        boxShadow: AppDecorations.elevation(
-          elevation,
-          isDark: colorScheme.isDark,
-        ),
-      ),
+      decoration: AmberDuskMaterial.surfaceDecoration(
+        radius: panelRecipe.radius,
+        strong: isStrong,
+      ).copyWith(borderRadius: effectiveRadius),
       child: child,
     );
   }

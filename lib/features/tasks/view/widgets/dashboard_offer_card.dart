@@ -3,10 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/format_price.dart';
@@ -92,20 +90,16 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
     const amber = AmberDuskTokens.colors;
     const spacing = AmberDuskTokens.spacing;
     const typography = AmberDuskTokens.typography;
     final statusColor = _offerStatusColor(widget.offer.status);
     final isPending = widget.offer.status == OfferStatus.pending;
-    final isDark = colorScheme.isDark;
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.p10),
-      decoration: BoxDecoration(
-        color: amber.surface,
-        borderRadius: BorderRadius.circular(spacing.taskCardRadius),
-        boxShadow: AppDecorations.elevation(1, isDark: isDark),
+      decoration: AmberDuskMaterial.surfaceDecoration(
+        radius: spacing.taskCardRadius,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -117,7 +111,7 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
               vertical: AppDimens.p8,
             ),
             decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.1),
+              gradient: AmberDuskMaterial.activeWashGradient,
               borderRadius: BorderRadius.vertical(
                 top: Radius.circular(spacing.taskCardRadius),
               ),
@@ -173,7 +167,9 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
               horizontal: AppDimens.p12,
               vertical: AppDimens.p8,
             ),
-            decoration: BoxDecoration(color: amber.heroChip),
+            decoration: const BoxDecoration(
+              color: AmberDuskWidgetTheme.taskPillSurface,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -182,7 +178,7 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
                     children: [
                       Text(
                         'OFFER PRICE',
-                        style: typography.chip.copyWith(color: amber.heroMuted),
+                        style: typography.chip.copyWith(color: amber.muted),
                       ),
                       const SizedBox(height: AppDimens.p4),
                       FittedBox(
@@ -193,7 +189,7 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
                             widget.offer.price.toDouble(),
                           ),
                           style: typography.moneyMedium.copyWith(
-                            color: amber.heroText,
+                            color: amber.text,
                           ),
                         ),
                       ),
@@ -529,7 +525,6 @@ class _OfferStatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(pills.radius),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Text(
         label.toUpperCase(),
