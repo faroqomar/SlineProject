@@ -98,7 +98,8 @@ void main() {
         );
       }
       final capsuleBox = capsuleDecoration;
-      expect(capsuleBox.color, navTheme.activeIconBackground);
+      expect(capsuleBox.color, isNull);
+      expect(capsuleBox.gradient, AmberDuskMaterial.activeWashGradient);
       expect(
         capsuleBox.borderRadius,
         BorderRadius.circular(AppDimens.r18),

@@ -32,21 +32,23 @@ linter:
     one_member_abstracts: false
     sort_pub_dependencies: false
 
-    # --- Disabled: cosmetic/noisy, tracked for Phase F adoption ---
-    sort_constructors_first: false
-    always_put_required_named_parameters_first: false
+    # --- Enabled: formerly Phase F candidates now active ---
     cascade_invocations: true
     avoid_redundant_argument_values: true
     avoid_annotating_with_dynamic: true
     prefer_for_elements_to_map_fromiterable: true
-    prefer_int_literals: false
-    comment_references: false
     document_ignores: true
     no_default_cases: true
     avoid_positional_boolean_parameters: true
     avoid_equals_and_hash_code_on_mutable_classes: true
     avoid_dynamic_calls: true
     avoid_catching_errors: true
+
+    # --- Disabled: cosmetic/noisy, tracked for Phase F adoption ---
+    sort_constructors_first: false
+    always_put_required_named_parameters_first: false
+    prefer_int_literals: false
+    comment_references: false
 
     # --- Disabled: formatter conflicts, experimental, deprecated, superseded, or noisy for SLine ---
     always_put_control_body_on_new_line: false

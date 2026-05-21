@@ -1,5 +1,5 @@
 // Expiration countdown widget for pending task request bids.
-// Shows time remaining with color transitions (green → yellow → red).
+// Shows time remaining with color transitions (teal → gold → red).
 import 'dart:async';
 
 import 'package:flutter/material.dart';

@@ -299,7 +299,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
                 // 1. Amber Dusk shell background. The solid base keeps the app
                 // calm while the two tiny radial fades separate the phone shell
                 // from safe areas without becoming decoration.
-                const ColoredBox(color: AmberDuskColors.background),
+                const Positioned.fill(
+                  child: ColoredBox(color: AmberDuskColors.background),
+                ),
                 const Positioned.fill(
                   child: DecoratedBox(
                     decoration: AmberDuskMaterial.atmosphericAmberDecoration,

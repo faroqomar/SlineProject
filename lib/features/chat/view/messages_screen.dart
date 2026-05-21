@@ -39,6 +39,11 @@ const int _presenceOnlineThresholdSeconds = 60;
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
 
+  /// Stable test hook for the header search action that focuses the search box.
+  static const Key headerSearchActionKey = ValueKey<String>(
+    'messages_header_search_action',
+  );
+
   @override
   State<MessagesScreen> createState() => _MessagesScreenState();
 }
@@ -860,6 +865,7 @@ class _MessagesHeader extends StatelessWidget {
             button: true,
             label: 'Focus message search',
             child: GestureDetector(
+              key: MessagesScreen.headerSearchActionKey,
               behavior: HitTestBehavior.opaque,
               onTap: onSearchTap,
               child: Container(

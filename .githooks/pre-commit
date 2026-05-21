@@ -4,7 +4,7 @@
 echo "Running format check..."
 if ! find . \
   \( -path './.dart_tool' -o -path './build' \) -prune -o \
-  -type f -name '*.dart' -print0 | xargs -0 -r dart format --set-exit-if-changed ; then
+  -type f -name '*.dart' -print0 | xargs -0 dart format --set-exit-if-changed ; then
   echo ""
   echo "FAILED: Formatting issues found."
   echo "Fix:    dart format changed Dart files."

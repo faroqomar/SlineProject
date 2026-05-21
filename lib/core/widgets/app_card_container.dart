@@ -51,14 +51,20 @@ class AppCardContainer extends StatelessWidget {
     final effectiveRadius =
         borderRadius ?? BorderRadius.circular(panelRecipe.radius);
     final isStrong = elevation >= AmberDuskWidgetTheme.taskCardElevationLevel;
+    final surfaceDecoration = AmberDuskMaterial.surfaceDecoration(
+      radius: panelRecipe.radius,
+      strong: isStrong,
+    ).copyWith(borderRadius: effectiveRadius);
+    final decoration = elevation <= 0
+        // Preserve the public elevation: 0 contract for flat call sites while
+        // keeping the solid Amber Dusk fill and radius recipe.
+        ? surfaceDecoration.copyWith(boxShadow: const <BoxShadow>[])
+        : surfaceDecoration;
 
     return Container(
       margin: margin,
       padding: padding,
-      decoration: AmberDuskMaterial.surfaceDecoration(
-        radius: panelRecipe.radius,
-        strong: isStrong,
-      ).copyWith(borderRadius: effectiveRadius),
+      decoration: decoration,
       child: child,
     );
   }

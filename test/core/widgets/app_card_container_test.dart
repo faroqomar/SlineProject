@@ -27,7 +27,7 @@ void main() {
       expect(find.byType(BackdropFilter), findsNothing);
     });
 
-    testWidgets('T-CW032 uses Amber Dusk panel surface and border token', (
+    testWidgets('T-CW032 uses Amber Dusk panel surface and borderless radius', (
       tester,
     ) async {
       final cardTheme = AmberDuskTokens.widgetTheme.cards;
@@ -52,21 +52,17 @@ void main() {
         );
       }
       final decoration = rawDecoration;
-      final rawBorder = decoration.border;
       final rawRadius = decoration.borderRadius;
-      if (rawBorder is! Border) {
-        throw TestFailure('Expected AppCardContainer border to be Border.');
-      }
       if (rawRadius is! BorderRadius) {
         throw TestFailure(
           'Expected AppCardContainer radius to be BorderRadius.',
         );
       }
-      final border = rawBorder;
       final radius = rawRadius;
 
       expect(decoration.color, cardTheme.panel.background);
-      expect(border.top.width, cardTheme.borderWidth);
+      expect(decoration.border, isNull);
+      expect(decoration.gradient, isNotNull);
       expect(radius.topLeft.x, cardTheme.panel.radius);
       expect(radius.topRight.x, cardTheme.panel.radius);
       expect(radius.bottomLeft.x, cardTheme.panel.radius);
@@ -81,12 +77,13 @@ void main() {
         const AppCardContainer(elevation: 3, child: Text('Elevated')),
       );
 
-      // Level 3 shadow should have blur=16
+      final expectedBlur =
+          AmberDuskMaterial.strongSurfaceDepthShadows.first.blurRadius;
       final containers = tester.widgetList<Container>(find.byType(Container));
       final elevated = containers.where((c) {
         final decoration = c.decoration;
         if (decoration is BoxDecoration && decoration.boxShadow != null) {
-          return decoration.boxShadow!.any((s) => s.blurRadius == 16);
+          return decoration.boxShadow!.any((s) => s.blurRadius == expectedBlur);
         }
         return false;
       });
