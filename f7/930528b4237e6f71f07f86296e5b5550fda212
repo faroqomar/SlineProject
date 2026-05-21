@@ -1,0 +1,38 @@
+lib/features/chat/view/messages_screen.dart
+  s_e72a9d286fe520::t_f7b6bc62c44228 42-46,868
+lib/features/tasks/view/widgets/expiration_countdown.dart
+  s_e72a9d286fe520::t_3ecebd092fc1e8 2
+lib/core/widgets/app_card_container.dart
+  s_e72a9d286fe520::t_3ecebd092fc1e8 54-62,67
+lib/app/main_navigation_screen.dart
+  s_e72a9d286fe520::t_71d12ae8bf83cc 302-304
+analysis_options.yaml
+  s_e72a9d286fe520::t_71d12ae8bf83cc 35,47-51
+.githooks/pre-commit
+  s_e72a9d286fe520::t_71d12ae8bf83cc 7
+test/core/widgets/custom_bottom_nav_bar_test.dart
+  s_e72a9d286fe520::t_3ecebd092fc1e8 101-102
+test/widget/tasks/expiration_countdown_test.dart
+  s_e72a9d286fe520::t_3ecebd092fc1e8 43,61,63,219
+test/widget/chat/phase6_advanced_interactions_test.dart
+  s_e72a9d286fe520::t_3ecebd092fc1e8 296-297,301-308,311-313,324-325,327,329,331-332,370,373-376
+  s_e72a9d286fe520::t_f7b6bc62c44228 298-300,328,369
+test/core/widgets/app_card_container_test.dart
+  s_e72a9d286fe520::t_3ecebd092fc1e8 30,64-65,80-81,86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "f7930528b4237e6f71f07f86296e5b5550fda212",
+  "prompts": {},
+  "sessions": {
+    "s_e72a9d286fe520": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4c64-28c6-7032-a64d-3d74cfb1c63c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    }
+  }
+}
