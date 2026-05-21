@@ -1,0 +1,9 @@
+pubspec.lock
+  ai_agent 683,686,1151,1154,1373
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "59939e43fff91742304d10969eb2d96a1f5e9aa9",
+  "prompts": {}
+}
