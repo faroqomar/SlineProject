@@ -96,8 +96,8 @@ Read and reference the current project documentation before drafting any plan. `
 - `Sline_everything/Sline_Log.md`
 - Relevant `.TODO/` artifacts for the current area
 - Relevant feature docs under `Sline_everything/DEVELOPER_GUIDE/`
-- `Sline_everything/AppDigram/README.md`
-- Relevant architecture, UI sequence, lifecycle, security, payment, realtime, storage, wallet, booking, chat, task, and notification diagrams under `Sline_everything/AppDigram/`
+- `Sline_everything/AppDiagram/README.md`
+- Relevant architecture, UI sequence, lifecycle, security, payment, realtime, storage, wallet, booking, chat, task, and notification diagrams under `Sline_everything/AppDiagram/`
 - Relevant project diagrams under `docs/diagrams/` if present
 
 Plan requirements:
@@ -596,6 +596,8 @@ Write only the header section at plan creation time:
 ## Phase 2: Flutter App Layer (MVVM)
 
 **Primary Agent(s):** `@Architect`, `@APIContract`, `@Observability`, `@Sentinel`
+
+Every Flutter app-layer phase that touches Dart source must include `dart run custom_lint` in its gate when MVVM, UI, widget, theme, layout, or motion rules could apply. This is the executable guard for SLine-specific MVVM and token rules; plans must not rely on `flutter analyze` alone.
 
 ### 2.1 Model Layer
 

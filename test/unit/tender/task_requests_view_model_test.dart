@@ -194,7 +194,6 @@ void main() {
         price: 500,
         days: 7,
         status: OfferStatus.pending,
-        paymentStatus: PaymentStatus.unpaid,
         createdAt: DateTime.now(),
       );
 
@@ -249,7 +248,6 @@ void main() {
           price: 100,
           days: 5,
           status: OfferStatus.pending,
-          paymentStatus: PaymentStatus.unpaid,
           createdAt: DateTime.now(),
         );
 
@@ -264,7 +262,6 @@ void main() {
           price: 100,
           days: 5,
           status: OfferStatus.accepted,
-          paymentStatus: PaymentStatus.unpaid,
           createdAt: DateTime.now(),
         );
 
@@ -274,7 +271,6 @@ void main() {
       test('should return false when not owner', () {
         final nonOwnerViewModel = TaskRequestsViewModel(
           taskId: 'test-task-id',
-          isOwner: false,
           service: mockService,
           taskService: mockTaskService,
         );
@@ -286,7 +282,6 @@ void main() {
           price: 100,
           days: 5,
           status: OfferStatus.pending,
-          paymentStatus: PaymentStatus.unpaid,
           createdAt: DateTime.now(),
         );
 
@@ -357,7 +352,6 @@ void main() {
               price: 100,
               days: 5,
               status: OfferStatus.pending,
-              paymentStatus: PaymentStatus.unpaid,
               createdAt: DateTime.now(),
             ),
           ],
@@ -426,7 +420,6 @@ void main() {
               price: 100,
               days: 5,
               status: OfferStatus.pending,
-              paymentStatus: PaymentStatus.unpaid,
               createdAt: DateTime.now(),
             ),
           ],
@@ -468,7 +461,6 @@ TaskRequest mockTaskRequest() {
     price: 100,
     days: 5,
     status: OfferStatus.pending,
-    paymentStatus: PaymentStatus.unpaid,
     createdAt: DateTime.now(),
   );
 }

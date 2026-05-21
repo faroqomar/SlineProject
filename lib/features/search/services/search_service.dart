@@ -28,7 +28,7 @@ class SearchService {
     int offset = 0,
   }) async {
     try {
-      final response = await _client.rpc(
+      final response = await _client.rpc<dynamic>(
         'search_tasks',
         params: {'query': query, 'limit_val': limit, 'offset_val': offset},
       );
@@ -40,7 +40,9 @@ class SearchService {
       final userIds = <String>{};
       final categoryIds = <String>{};
 
-      for (final row in rows) {
+      for (final row in rows.map(
+        (item) => Map<String, dynamic>.from(item as Map),
+      )) {
         if (row['user_id'] != null) userIds.add(row['user_id'] as String);
         if (row['category_id'] != null) {
           categoryIds.add(row['category_id'] as String);
@@ -126,8 +128,10 @@ class SearchService {
           .inFilter('id', categoryIds.toList());
 
       final map = <String, Map<String, dynamic>>{};
-      for (final row in (response as List)) {
-        map[row['id'] as String] = row as Map<String, dynamic>;
+      for (final row in (response as List<dynamic>).map(
+        (item) => Map<String, dynamic>.from(item as Map),
+      )) {
+        map[row['id'] as String] = row;
       }
       return map;
     } on Exception catch (e) {

@@ -140,7 +140,7 @@ class DashboardCacheService {
         return null;
       }
 
-      final Map<String, dynamic> json = jsonDecode(jsonString);
+      final json = Map<String, dynamic>.from(jsonDecode(jsonString) as Map);
       final counters = json.map((key, value) => MapEntry(key, value as int));
 
       AppLogger.d('Retrieved cached counters');

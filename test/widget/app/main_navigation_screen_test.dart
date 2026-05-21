@@ -190,7 +190,7 @@ void main() {
       expect(find.text('Stub Profile Screen'), findsOneWidget);
     });
 
-    testWidgets('T56 FAB stays above Android system navigation insets', (
+    testWidgets('T56 FAB follows Amber Dusk frame-edge nav offset', (
       tester,
     ) async {
       const bottomSystemInset = 34.0;
@@ -217,7 +217,7 @@ void main() {
           AmberDuskTokens.phoneLayout.bottomNavHeight +
           AmberDuskTokens.spacing.sm;
 
-      expect(positioned.bottom, expectedOffset + bottomSystemInset);
+      expect(positioned.bottom, expectedOffset);
     });
 
     testWidgets('T57 FAB is owned by Home and absent on other tabs', (

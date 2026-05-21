@@ -24,7 +24,7 @@ Task _task({
     userId: 'user-1',
     status: TaskStatus.open,
     taskType: taskType,
-    createdAt: createdAt ?? DateTime.utc(2026, 1, 1),
+    createdAt: createdAt ?? DateTime.utc(2026),
     deadline: deadline,
     category: category,
     categoryName: categoryName,
@@ -72,8 +72,9 @@ void main() {
         ),
       ];
 
-      viewModel.setTasks(tasks);
-      viewModel.searchTasks('dEsIgN');
+      viewModel
+        ..setTasks(tasks)
+        ..searchTasks('dEsIgN');
 
       expect(_ids(viewModel.filteredTasks), <String>['t1', 't2', 't3']);
       expect(_ids(viewModel.filteredTasks), isNot(contains('t4')));
@@ -87,14 +88,12 @@ void main() {
           description: 'Legacy category field only',
           budget: 100,
           category: 'Design',
-          categoryName: null,
         ),
         _task(
           id: 'name-only',
           title: 'UX review',
           description: 'Resolved categoryName only',
           budget: 120,
-          category: null,
           categoryName: 'Design',
         ),
         _task(
@@ -115,8 +114,9 @@ void main() {
         ),
       ];
 
-      viewModel.setTasks(tasks);
-      viewModel.filterByCategory('Design');
+      viewModel
+        ..setTasks(tasks)
+        ..filterByCategory('Design');
 
       expect(_ids(viewModel.filteredTasks), <String>[
         'legacy-only',
@@ -160,8 +160,9 @@ void main() {
         ),
       ];
 
-      viewModel.setTasks(tasks);
-      viewModel.applyAdvancedFilters(minBudget: 100, maxBudget: 200);
+      viewModel
+        ..setTasks(tasks)
+        ..applyAdvancedFilters(minBudget: 100, maxBudget: 200);
 
       expect(_ids(viewModel.filteredTasks), <String>['b100', 'b150', 'b200']);
       expect(_ids(viewModel.filteredTasks), isNot(contains('b50')));
@@ -193,16 +194,17 @@ void main() {
         ),
       ];
 
-      viewModel.setTasks(tasks);
-      viewModel.searchTasks('design');
-      viewModel.filterByCategory('Design');
-      viewModel.applyAdvancedFilters(
-        minBudget: 100,
-        maxBudget: 160,
-        deliveryTimes: const [TaskFilterViewModel.deliveryUpTo3Days],
-        sellerLevels: const [TaskFilterViewModel.sellerLevel2],
-        sortBy: TaskFilterViewModel.sortPriceHighToLow,
-      );
+      viewModel
+        ..setTasks(tasks)
+        ..searchTasks('design')
+        ..filterByCategory('Design')
+        ..applyAdvancedFilters(
+          minBudget: 100,
+          maxBudget: 160,
+          deliveryTimes: const [TaskFilterViewModel.deliveryUpTo3Days],
+          sellerLevels: const [TaskFilterViewModel.sellerLevel2],
+          sortBy: TaskFilterViewModel.sortPriceHighToLow,
+        );
 
       expect(viewModel.filteredTasks.length, lessThan(tasks.length));
 
@@ -266,10 +268,11 @@ void main() {
           ),
         ];
 
-        viewModel.setTasks(tasks);
-        viewModel.applyAdvancedFilters(
-          deliveryTimes: const [TaskFilterViewModel.deliveryUpTo24h],
-        );
+        viewModel
+          ..setTasks(tasks)
+          ..applyAdvancedFilters(
+            deliveryTimes: const [TaskFilterViewModel.deliveryUpTo24h],
+          );
         expect(_ids(viewModel.filteredTasks), <String>['booking-24h']);
 
         viewModel.applyAdvancedFilters(
@@ -318,15 +321,15 @@ void main() {
             title: 'Top-rated tender',
             description: 'Should be excluded when seller filter is active',
             budget: 140,
-            taskType: TaskType.tender,
             authorSellerLevel: 'top_rated',
           ),
         ];
 
-        viewModel.setTasks(tasks);
-        viewModel.applyAdvancedFilters(
-          sellerLevels: const [TaskFilterViewModel.sellerTopRated],
-        );
+        viewModel
+          ..setTasks(tasks)
+          ..applyAdvancedFilters(
+            sellerLevels: const [TaskFilterViewModel.sellerTopRated],
+          );
 
         expect(_ids(viewModel.filteredTasks), <String>['booking-top-rated']);
         expect(
@@ -366,12 +369,13 @@ void main() {
           ),
         ];
 
-        viewModel.setTasks(tasks);
-        viewModel.applyAdvancedFilters(
-          minBudget: 200,
-          maxBudget: 300,
-          sellerLevels: const [TaskFilterViewModel.sellerLevel2],
-        );
+        viewModel
+          ..setTasks(tasks)
+          ..applyAdvancedFilters(
+            minBudget: 200,
+            maxBudget: 300,
+            sellerLevels: const [TaskFilterViewModel.sellerLevel2],
+          );
 
         expect(_ids(viewModel.filteredTasks), <String>['booking-keep']);
       },

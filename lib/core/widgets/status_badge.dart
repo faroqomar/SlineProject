@@ -34,7 +34,9 @@ class StatusBadge extends StatefulWidget {
   }
 
   factory StatusBadge.fromStatus(
-    dynamic status,
+    Object? status,
+    // Work item type is accepted for call-site symmetry with unified status
+    // helpers even though current formatting only needs the status value.
     // ignore: avoid_unused_constructor_parameters
     WorkItemType type, {
     bool isSmall = false,
@@ -248,7 +250,7 @@ class _StatusBadgeState extends State<StatusBadge>
       padding: widget.isSmall ? pills.smallPadding : pills.padding,
       decoration: ShapeDecoration(
         color: tone.background,
-        shape: const StadiumBorder(side: BorderSide.none),
+        shape: const StadiumBorder(),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -94,7 +94,6 @@ void main() {
         tester,
         tileTitleFinder,
         tag: tag,
-        timeout: const Duration(seconds: 12),
         reason: 'Chosen notification title is not visible in the modal list.',
       );
       await tester.tap(tileTitleFinder.first);

@@ -45,8 +45,8 @@ void main() {
       expect(profile.accountStatus, 'active');
       expect(profile.moderationReason, isNull);
       expect(profile.restrictionScope, isNull);
-      expect(profile.forceLogoutAfterUtc, DateTime.utc(2026, 8, 15, 9, 30, 0));
-      expect(profile.createdAt, DateTime.utc(2025, 1, 10, 14, 0, 0));
+      expect(profile.forceLogoutAfterUtc, DateTime.utc(2026, 8, 15, 9, 30));
+      expect(profile.createdAt, DateTime.utc(2025, 1, 10, 14));
     });
 
     test('default values applied when fields missing', () {
@@ -121,7 +121,7 @@ void main() {
       });
 
       expect(profile.forceLogoutAfterUtc!.isUtc, isTrue);
-      expect(profile.forceLogoutAfterUtc, DateTime.utc(2026, 8, 15, 9, 30, 0));
+      expect(profile.forceLogoutAfterUtc, DateTime.utc(2026, 8, 15, 9, 30));
     });
 
     test('createdAt from offset timestamp is converted to UTC', () {
@@ -131,7 +131,7 @@ void main() {
       });
 
       expect(profile.createdAt.isUtc, isTrue);
-      expect(profile.createdAt, DateTime.utc(2025, 1, 10, 14, 0, 0));
+      expect(profile.createdAt, DateTime.utc(2025, 1, 10, 14));
     });
   });
 
@@ -173,11 +173,11 @@ void main() {
       // DateTime fields serialized as ISO 8601 strings
       expect(
         DateTime.parse(json['created_at'] as String).toUtc(),
-        DateTime.utc(2025, 1, 10, 14, 0, 0),
+        DateTime.utc(2025, 1, 10, 14),
       );
       expect(
         DateTime.parse(json['force_logout_after'] as String).toUtc(),
-        DateTime.utc(2026, 8, 15, 9, 30, 0),
+        DateTime.utc(2026, 8, 15, 9, 30),
       );
     });
 
@@ -275,7 +275,7 @@ void main() {
 
     test('copyWith updates forceLogoutAfterUtc', () {
       final original = ProfileModel.fromJson(_fullJson());
-      final newDate = DateTime.utc(2027, 1, 1);
+      final newDate = DateTime.utc(2027);
       final updated = original.copyWith(forceLogoutAfterUtc: newDate);
 
       expect(updated.forceLogoutAfterUtc, newDate);

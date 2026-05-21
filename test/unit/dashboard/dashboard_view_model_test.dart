@@ -365,8 +365,9 @@ void main() {
       clearInteractions(mockBookingService);
 
       // Switch away then back
-      viewModel.setTab(DashboardTab.overview.index);
-      viewModel.setTab(DashboardTab.bookings.index);
+      viewModel
+        ..setTab(DashboardTab.overview.index)
+        ..setTab(DashboardTab.bookings.index);
       await Future<void>.delayed(Duration.zero);
       await Future<void>.delayed(Duration.zero);
 
@@ -395,9 +396,9 @@ void main() {
       viewModel = await buildVm();
 
       var listenerCallCount = 0;
-      viewModel.addListener(() => listenerCallCount++);
-
-      viewModel.dispose();
+      viewModel
+        ..addListener(() => listenerCallCount++)
+        ..dispose();
 
       // After dispose, _safeNotify should be a no-op.
       // Calling setTab triggers _safeNotify internally but should not throw.
@@ -420,10 +421,7 @@ void main() {
         taskService: mockTaskService,
         bookingService: mockBookingService,
         directOffersService: mockOffersService,
-      );
-
-      // Dispose immediately while constructor async work is still in flight
-      viewModel.dispose();
+      )..dispose();
 
       // Let the pending futures complete -- should not throw
       await Future<void>.delayed(const Duration(milliseconds: 200));

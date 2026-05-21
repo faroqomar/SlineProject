@@ -150,7 +150,11 @@ class WorkManagementService {
           .eq('status', 'pending');
 
       return (response as List)
-          .map((e) => ChangeRequestModel.fromJson(e))
+          .map(
+            (e) => ChangeRequestModel.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
           .toList();
     } on Exception catch (e, stack) {
       AppLogger.e(
@@ -176,7 +180,11 @@ class WorkManagementService {
           .eq('status', 'pending');
 
       return (response as List)
-          .map((e) => ExtensionRequestModel.fromJson(e))
+          .map(
+            (e) => ExtensionRequestModel.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
           .toList();
     } on Exception catch (e, stack) {
       AppLogger.e(
@@ -195,7 +203,7 @@ class WorkManagementService {
     required String note,
   }) async {
     try {
-      await _supabase.rpc(
+      await _supabase.rpc<dynamic>(
         'rpc_submit_delivery',
         params: {
           'entity_type': entityType,
@@ -224,7 +232,7 @@ class WorkManagementService {
     required String note,
   }) async {
     try {
-      await _supabase.rpc(
+      await _supabase.rpc<dynamic>(
         'rpc_request_revision',
         params: {
           'entity_type': entityType,
@@ -276,7 +284,7 @@ class WorkManagementService {
       },
     );
     try {
-      await _supabase.rpc(
+      await _supabase.rpc<dynamic>(
         'rpc_approve_delivery',
         params: {'entity_type': entityType, 'entity_id': entityId},
       );
@@ -336,7 +344,7 @@ class WorkManagementService {
       // Let's check migration file content.
 
       // Checking local assumed contract:
-      await _supabase.rpc(
+      await _supabase.rpc<dynamic>(
         'rpc_accept_change_request',
         params: {'request_id': requestId},
       );

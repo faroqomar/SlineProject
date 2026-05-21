@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
@@ -86,8 +88,9 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
 
   @override
   void dispose() {
-    _scroll.removeListener(_onScroll);
-    _scroll.dispose();
+    _scroll
+      ..removeListener(_onScroll)
+      ..dispose();
     _filterVm?.dispose();
     super.dispose();
   }
@@ -134,10 +137,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
       request: request,
       vm: vm,
       budget: widget.budget,
-      onAwardingChanged: (v) {
+      onAwardingChanged: ({required isAwarding}) {
         if (mounted) {
           setState(() {
-            _isAwarding = v;
+            _isAwarding = isAwarding;
           });
         }
       },
@@ -215,7 +218,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
         appBar: AppBar(title: const Text('Offers')),
         body: const Center(
           child: Padding(
-            padding: EdgeInsets.all(24),
+            padding: EdgeInsets.all(AppDimens.p24),
             child: Text(
               'Offers are only available for tender-type tasks.',
               textAlign: TextAlign.center,
@@ -285,10 +288,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                             children: [
                               Icon(
                                 ExpiredBidFilter.hideExpired.icon,
-                                size: 20,
+                                size: AppLayout.iconStandard,
                                 color: context.colorScheme.text,
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: AppDimens.p8),
                               Text(ExpiredBidFilter.hideExpired.label),
                             ],
                           ),
@@ -299,10 +302,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                             children: [
                               Icon(
                                 ExpiredBidFilter.showAll.icon,
-                                size: 20,
+                                size: AppLayout.iconStandard,
                                 color: context.colorScheme.text,
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: AppDimens.p8),
                               Text(ExpiredBidFilter.showAll.label),
                             ],
                           ),
@@ -313,10 +316,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                             children: [
                               Icon(
                                 ExpiredBidFilter.showOnlyExpired.icon,
-                                size: 20,
+                                size: AppLayout.iconStandard,
                                 color: AppColors.lightRed,
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: AppDimens.p8),
                               Text(ExpiredBidFilter.showOnlyExpired.label),
                             ],
                           ),
@@ -352,7 +355,12 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     // Loading state
     if (c.isLoadingInitial) {
       return ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        padding: const EdgeInsets.fromLTRB(
+          AppDimens.p16,
+          AppDimens.p12,
+          AppDimens.p16,
+          AppDimens.p100,
+        ),
         itemCount: 5,
         itemBuilder: (_, _) => const SkeletonOfferCard(),
       );
@@ -381,13 +389,18 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     // List with offers
     return ListView.separated(
       controller: _scroll,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.p16,
+        AppDimens.p12,
+        AppDimens.p16,
+        AppDimens.p100,
+      ),
       itemCount: filteredItems.length + (c.isLoadingMore ? 1 : 0),
-      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      separatorBuilder: (_, _) => const SizedBox(height: AppDimens.p8),
       itemBuilder: (context, index) {
         if (index >= filteredItems.length) {
           return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
+            padding: EdgeInsets.symmetric(vertical: AppDimens.p16),
             child: SkeletonOfferCard(),
           );
         }
@@ -431,22 +444,22 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
   Widget _buildErrorState(TaskRequestsViewModel c, AppColorScheme colorScheme) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppDimens.p24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.error_outline,
-              size: 64,
+              size: AppDimens.p64,
               color: colorScheme.error.withValues(alpha: 0.7),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimens.p16),
             Text(
               'Something went wrong',
               style: AppTypography.h5.copyWith(color: colorScheme.text),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimens.p8),
             Text(
               c.errorMessage!,
               style: AppTypography.bodyMedium.copyWith(
@@ -454,7 +467,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppDimens.p24),
             FilledButton.icon(
               onPressed: () {
                 AppLogger.d(
@@ -467,7 +480,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimens.p12),
             TextButton(
               onPressed: () {
                 // Contact support - navigate to support or open email
@@ -511,7 +524,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
           height: MediaQuery.of(context).size.height * 0.6,
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(AppDimens.p32),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -524,17 +537,17 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                     ),
                     child: Icon(
                       icon,
-                      size: 48,
+                      size: AppLayout.iconFeature,
                       color: colorScheme.primary.withValues(alpha: 0.7),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppDimens.p24),
                   Text(
                     title,
                     style: AppTypography.h4.copyWith(color: colorScheme.text),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimens.p8),
                   Text(
                     subtitle,
                     style: AppTypography.bodyMedium.copyWith(
@@ -542,7 +555,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppDimens.p32),
                   if (isOwner)
                     // Owner CTA: Share task
                     FilledButton.icon(
@@ -603,21 +616,21 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
           height: MediaQuery.of(context).size.height * 0.5,
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(AppDimens.p32),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     icon,
-                    size: 64,
+                    size: AppDimens.p64,
                     color: colorScheme.textSecondary.withValues(alpha: 0.5),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppDimens.p16),
                   Text(
                     'No matching offers',
                     style: AppTypography.h5.copyWith(color: colorScheme.text),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimens.p8),
                   Text(
                     message,
                     style: AppTypography.bodyMedium.copyWith(
@@ -625,7 +638,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppDimens.p24),
                   TextButton.icon(
                     onPressed: () => _onFilterChanged(ExpiredBidFilter.showAll),
                     icon: const Icon(Icons.visibility),
@@ -647,7 +660,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
         context: context,
         builder: (ctx) => SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppDimens.p16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -657,7 +670,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                     color: context.colorScheme.text,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimens.p16),
                 ListTile(
                   leading: const Icon(Icons.copy),
                   title: const Text('Copy Link'),

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/docs-2.33.0-blue.svg)
+![Version](https://img.shields.io/badge/docs-2.34.0-blue.svg)
 ![Flutter](https://img.shields.io/badge/Flutter-3.41.9-02569B?logo=flutter)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)
 ![License](https://img.shields.io/badge/license-Private-red.svg)
@@ -408,7 +408,7 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 
 ## 🎯 Current Status
 
-### Documentation Version 2.33.0 (2026-05-14)
+### Documentation Version 2.34.0 (2026-05-21)
 
 **Latest Changes**:
 
@@ -422,6 +422,8 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 - ✅ Phase 9-12 phone-to-web handoff created for Mohammed with missing screenshot/runtime visual QA blockers called out
 - ✅ Transactional QA recovery fixed sanitized booking payment return handling, IQD money display, signup/post refresh, Dashboard empty-state CTAs, Dashboard Inbox behavior, Messages search guidance, Wallet withdraw copy, and transactional Amber Dusk surfaces
 - ✅ SystemEvolution 2026-05-14 merged runtime proof rules for focused/active form states, payment/booking lifecycle buckets, safe customer-facing payment result UI, and unexecuted gateway-branch reporting
+- ✅ Detail routes for direct offers, work items, task details, and booking details now use titleless floating chrome and compact docks while preserving ViewModel/payment/chat behavior
+- ✅ SystemEvolution 2026-05-21 merged production-route test requirements for route chrome, tabs, compact docks, icon-only tooltips, and async guard states
 - ✅ Agent workflow gates for README freshness, docs/diagram source maps, and code comment coverage
 - ✅ `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDiagram/README.md` added for planning/review routing
 - ✅ Root README refreshed for new-developer install and run flow
@@ -444,7 +446,7 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 
 **Immediate**:
 
-- Complete Amber Dusk emulator visual parity for Phases 2-8, Phases 9-12, and Transactional QA Recovery using the active session logs, handoffs, `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_Step6.md`, and `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/README.md` before claiming final visual parity
+- Complete Amber Dusk emulator visual parity for Phases 2-8, Phases 9-12, Transactional QA Recovery, and the 2026-05-21 detail-surface chrome/dock refresh using the active session logs, handoffs, `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_Step6.md`, and `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/README.md` before claiming final visual parity
 - Keep `README.md`, `Sline_everything/`, diagram index, and source map synchronized on every DocsKeeper pass
 - Re-run the full QiCard processed-payment success branch so app success/recovery and Dashboard Bookings can be proven after gateway submission
 

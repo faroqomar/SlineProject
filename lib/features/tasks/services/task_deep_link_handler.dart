@@ -11,8 +11,9 @@ import 'package:sline_app/features/tasks/view/task_details_screen.dart';
 /// Handles: 'task', 'offer' (offers link to the parent task details).
 void registerTaskDeepLinks(DeepLinkRegistry registry) {
   const handler = _handleTask;
-  registry.register('task', handler);
-  registry.register('offer', handler);
+  registry
+    ..register('task', handler)
+    ..register('offer', handler);
 }
 
 Future<void> _handleTask(

@@ -19,7 +19,7 @@ Task _task({required String id, String title = 'Task'}) {
     budget: 50,
     userId: 'u1',
     status: TaskStatus.open,
-    createdAt: DateTime.utc(2026, 1, 1),
+    createdAt: DateTime.utc(2026),
   );
 }
 
@@ -27,7 +27,7 @@ ProfileModel _profile({required String id, String? name}) {
   return ProfileModel(
     id: id,
     fullName: name ?? 'Profile $id',
-    createdAt: DateTime.utc(2026, 1, 1),
+    createdAt: DateTime.utc(2026),
   );
 }
 
@@ -69,9 +69,7 @@ void main() {
       ),
     ).thenAnswer((_) async => [_task(id: 't1')]);
 
-    final vm = buildVm();
-
-    vm.onSearchChanged('flutter');
+    final vm = buildVm()..onSearchChanged('flutter');
 
     // Before debounce fires, service should NOT have been called
     verifyNever(
@@ -110,10 +108,9 @@ void main() {
       ),
     ).thenAnswer((_) async => [_task(id: 't1')]);
 
-    final vm = buildVm();
+    final vm = buildVm()..onSearchChanged('flutter');
 
     // First perform a search
-    vm.onSearchChanged('flutter');
     await Future<void>.delayed(const Duration(milliseconds: 600));
     expect(vm.tasks.length, 1);
 
@@ -149,10 +146,9 @@ void main() {
         ),
       ).thenAnswer((_) async => [_profile(id: 'p1')]);
 
-      final vm = buildVm();
+      final vm = buildVm()..onSearchChanged('test');
 
       // Search on tasks tab first
-      vm.onSearchChanged('test');
       await Future<void>.delayed(const Duration(milliseconds: 600));
       expect(vm.activeTab, SearchTab.findWork);
       expect(vm.tasks.length, 1);
@@ -180,9 +176,7 @@ void main() {
   // 5. setTab with empty query clears results without search
   // -----------------------------------------------------------------------
   test('setTab with empty query clears results without triggering search', () {
-    final vm = buildVm();
-
-    vm.setTab(SearchTab.findTalent);
+    final vm = buildVm()..setTab(SearchTab.findTalent);
 
     expect(vm.activeTab, SearchTab.findTalent);
     expect(vm.tasks, isEmpty);
@@ -214,9 +208,9 @@ void main() {
     final vm = buildVm();
 
     var notified = false;
-    vm.addListener(() => notified = true);
-
-    vm.setTab(SearchTab.findWork); // already the default
+    vm
+      ..addListener(() => notified = true)
+      ..setTab(SearchTab.findWork); // already the default
     expect(notified, isFalse);
 
     vm.dispose();
@@ -235,9 +229,7 @@ void main() {
       ),
     ).thenAnswer((_) async => tasks);
 
-    final vm = buildVm();
-
-    vm.onSearchChanged('design');
+    final vm = buildVm()..onSearchChanged('design');
     await Future<void>.delayed(const Duration(milliseconds: 600));
 
     expect(vm.tasks.length, 3);
@@ -262,10 +254,9 @@ void main() {
       ),
     ).thenAnswer((_) async => profiles);
 
-    final vm = buildVm();
-    vm.setTab(SearchTab.findTalent);
-
-    vm.onSearchChanged('developer');
+    final vm = buildVm()
+      ..setTab(SearchTab.findTalent)
+      ..onSearchChanged('developer');
     await Future<void>.delayed(const Duration(milliseconds: 600));
 
     expect(vm.profiles.length, 2);
@@ -288,9 +279,7 @@ void main() {
       ),
     ).thenThrow(Exception('Network error'));
 
-    final vm = buildVm();
-
-    vm.onSearchChanged('fail');
+    final vm = buildVm()..onSearchChanged('fail');
     await Future<void>.delayed(const Duration(milliseconds: 600));
 
     expect(vm.error, 'Failed to search. Please try again.');
@@ -311,9 +300,7 @@ void main() {
       ),
     ).thenAnswer((_) async => <Task>[]);
 
-    final vm = buildVm();
-
-    vm.onSearchChanged('nonexistent');
+    final vm = buildVm()..onSearchChanged('nonexistent');
     await Future<void>.delayed(const Duration(milliseconds: 600));
 
     expect(vm.tasks, isEmpty);
@@ -335,11 +322,10 @@ void main() {
       ),
     ).thenAnswer((_) async => [_task(id: 't1')]);
 
-    final vm = buildVm();
-
-    vm.onSearchChanged('test');
-    // Dispose immediately before debounce fires
-    vm.dispose();
+    buildVm()
+      ..onSearchChanged('test')
+      // Dispose immediately before debounce fires
+      ..dispose();
 
     // Wait past debounce to ensure no error is thrown
     await Future<void>.delayed(const Duration(milliseconds: 600));
@@ -371,10 +357,9 @@ void main() {
       return [_task(id: 't1')];
     });
 
-    final vm = buildVm();
+    final vm = buildVm()..onSearchChanged('retry-test');
 
     // First search fails
-    vm.onSearchChanged('retry-test');
     await Future<void>.delayed(const Duration(milliseconds: 600));
     expect(vm.error, isNotNull);
 
@@ -399,9 +384,7 @@ void main() {
       ),
     ).thenAnswer((_) async => [_task(id: 't1')]);
 
-    final vm = buildVm();
-
-    vm.onSearchChanged('a');
+    final vm = buildVm()..onSearchChanged('a');
     await Future<void>.delayed(const Duration(milliseconds: 100));
     vm.onSearchChanged('ab');
     await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -450,9 +433,7 @@ void main() {
       ),
     ).thenAnswer((_) async => [_task(id: 't1')]);
 
-    final vm = buildVm();
-
-    vm.onSearchChanged('test');
+    final vm = buildVm()..onSearchChanged('test');
     await Future<void>.delayed(const Duration(milliseconds: 600));
 
     expect(() => (vm.tasks as List).add(_task(id: 'x')), throwsA(isA<Error>()));

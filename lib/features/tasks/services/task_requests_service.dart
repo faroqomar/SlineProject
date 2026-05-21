@@ -27,7 +27,6 @@ class BidReplaceabilityResult {
   factory BidReplaceabilityResult.noExistingBid() {
     return const BidReplaceabilityResult(
       isReplaceable: true,
-      existingBid: null,
     );
   }
 
@@ -193,7 +192,6 @@ class TaskRequestsService {
       );
       return const BidReplaceabilityResult(
         isReplaceable: false,
-        existingBid: null,
       );
     }
 
@@ -244,7 +242,6 @@ class TaskRequestsService {
       );
       return const BidReplaceabilityResult(
         isReplaceable: false,
-        existingBid: null,
       );
     }
   }
@@ -424,7 +421,7 @@ class TaskRequestsService {
     }
 
     try {
-      await _client.rpc(
+      await _client.rpc<dynamic>(
         'replace_task_request',
         params: {
           'p_task_id': taskId,
@@ -478,7 +475,7 @@ class TaskRequestsService {
     );
     try {
       final resolvedTaskId = taskId ?? await _resolveTaskId(requestId);
-      await _client.rpc(
+      await _client.rpc<dynamic>(
         'accept_task_request',
         params: {
           'p_task_id': resolvedTaskId,
@@ -514,7 +511,7 @@ class TaskRequestsService {
     AppLogger.d('Rejecting offer $requestId', tag: 'Offers');
     try {
       final resolvedTaskId = taskId ?? await _resolveTaskId(requestId);
-      await _client.rpc(
+      await _client.rpc<dynamic>(
         'reject_task_request',
         params: {'p_task_id': resolvedTaskId, 'p_request_id': requestId},
       );
@@ -565,6 +562,6 @@ class TaskRequestsService {
   ///
   /// This is a public helper that can be used by ViewModels
   /// to get consistent error messages. Delegates to [TaskRequestErrorMapper].
-  String mapErrorToUserMessage(dynamic error) =>
+  String mapErrorToUserMessage(Object? error) =>
       _errorMapper.mapErrorToUserMessage(error);
 }

@@ -42,24 +42,24 @@ void main() {
     });
 
     test('clear resets all state', () {
-      final delegate = buildDelegate();
-      delegate.setBookings([_buildBooking(id: 'b1')]);
-      delegate.clear();
+      final delegate = buildDelegate()
+        ..setBookings([_buildBooking(id: 'b1')])
+        ..clear();
       expect(delegate.bookings, isEmpty);
       expect(delegate.bookingsLoaded, isFalse);
       expect(delegate.bookingFilter, isNull);
     });
 
     test('setBookingFilter updates filter and notifies', () {
-      final delegate = buildDelegate();
-      delegate.setBookingFilter(BookingStatus.confirmed);
+      final delegate = buildDelegate()
+        ..setBookingFilter(BookingStatus.confirmed);
       expect(delegate.bookingFilter, BookingStatus.confirmed);
       expect(notifyCount, 1);
     });
 
     test('setBookingFilter skips if same value', () {
-      final delegate = buildDelegate();
-      delegate.setBookingFilter(BookingStatus.confirmed);
+      final delegate = buildDelegate()
+        ..setBookingFilter(BookingStatus.confirmed);
       notifyCount = 0;
       delegate.setBookingFilter(BookingStatus.confirmed);
       expect(notifyCount, 0);
@@ -127,8 +127,7 @@ void main() {
     });
 
     test('loadBookingsData does not reload if already loaded', () async {
-      final delegate = buildDelegate();
-      delegate.setBookings([_buildBooking(id: 'b1')]);
+      final delegate = buildDelegate()..setBookings([_buildBooking(id: 'b1')]);
       // Already loaded — should not call service
       await delegate.loadBookingsData(UserRole.freelancer);
       verifyNever(

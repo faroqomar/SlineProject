@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
@@ -114,7 +115,7 @@ class TaskCard extends StatelessWidget {
                           children: [
                             Icon(
                               Icons.local_fire_department,
-                              size: 12,
+                              size: AppLayout.iconTiny,
                               color: colors.star,
                             ),
                             const SizedBox(width: AppDimens.p4),
@@ -175,7 +176,11 @@ class TaskCard extends StatelessWidget {
                       Row(
                         children: [
                           if (task.deadline != null) ...[
-                            Icon(Icons.schedule, size: 14, color: statusColor),
+                            Icon(
+                              Icons.schedule,
+                              size: AppDimens.p14,
+                              color: statusColor,
+                            ),
                             const SizedBox(width: AppDimens.p4),
                             Text(
                               _formatDeadline(task.deadline!),

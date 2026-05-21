@@ -72,7 +72,6 @@ void main() {
         tester,
         find.text(rowCue),
         tag: tag,
-        timeout: const Duration(seconds: 12),
       );
       await tester.tap(find.text(rowCue).first);
       await tester.pump();

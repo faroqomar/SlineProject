@@ -345,7 +345,7 @@ class _ConversationListTileState extends State<ConversationListTile>
       children: [
         Icon(
           isBooking ? Icons.calendar_today : Icons.assignment_outlined,
-          size: 10,
+          size: AppDimens.p10,
           color: tagColor,
         ),
         const SizedBox(width: AppDimens.p4),

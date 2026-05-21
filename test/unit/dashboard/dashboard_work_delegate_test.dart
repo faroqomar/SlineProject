@@ -57,10 +57,10 @@ void main() {
     });
 
     test('clear resets all state', () {
-      final delegate = buildDelegate();
-      delegate.setWorkItems([
-        _buildWorkItem(id: '1', statusRaw: 'inprogress', bucket: 'Active'),
-      ]);
+      final delegate = buildDelegate()
+        ..setWorkItems([
+          _buildWorkItem(id: '1', statusRaw: 'inprogress', bucket: 'Active'),
+        ]);
       expect(delegate.workItems, hasLength(1));
       delegate.clear();
       expect(delegate.workItems, isEmpty);
@@ -189,7 +189,6 @@ WorkItem _buildWorkItem({
     sortRank: 0,
     createdAt: now,
     lastUpdate: now,
-    lastActivityAt: null,
     scheduledAt: scheduledAt,
     completedAt: completedAt,
     primaryActionType: PrimaryActionType.viewDetails,

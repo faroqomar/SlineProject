@@ -200,8 +200,6 @@ class SkeletonBookingCard extends StatelessWidget {
                   ),
                   gradient: LinearGradient(
                     colors: [skeletonTheme.raised, skeletonTheme.highlight],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
                   ),
                 ),
               ),
@@ -249,7 +247,6 @@ class SkeletonBookingCard extends StatelessWidget {
                       const SkeletonLoader(
                         width: 50,
                         height: 20,
-                        borderRadius: AppDimens.r8,
                       ),
                     ],
                   ),
@@ -350,7 +347,7 @@ class SkeletonOfferCard extends StatelessWidget {
       ),
       child: const Row(
         children: [
-          SkeletonAvatar(size: 48),
+          SkeletonAvatar(),
           SizedBox(width: AppDimens.p12),
           Expanded(
             child: Column(
@@ -370,7 +367,7 @@ class SkeletonOfferCard extends StatelessWidget {
               ],
             ),
           ),
-          SkeletonLoader(width: 60, height: 28, borderRadius: AppDimens.r8),
+          SkeletonLoader(width: 60, height: 28),
         ],
       ),
     );
@@ -534,7 +531,7 @@ class SkeletonSearchResultCard extends StatelessWidget {
           ),
           SizedBox(width: AppDimens.p12),
           // Trailing tag pill
-          SkeletonLoader(width: 50, height: 22, borderRadius: AppDimens.r8),
+          SkeletonLoader(width: 50, height: 22),
         ],
       ),
     );
@@ -629,7 +626,7 @@ class SkeletonFavoriteCard extends StatelessWidget {
           ),
           SizedBox(width: AppDimens.p8),
           // Action button placeholder
-          SkeletonLoader(width: 80, height: 32, borderRadius: AppDimens.r8),
+          SkeletonLoader(width: 80, height: 32),
         ],
       ),
     );
@@ -654,7 +651,6 @@ class SkeletonDetailsScreen extends StatelessWidget {
           const SkeletonLoader(
             width: 250,
             height: 24,
-            borderRadius: AppDimens.r8,
           ),
           const SizedBox(height: AppDimens.p12),
           // Subtitle/meta
@@ -696,7 +692,6 @@ class SkeletonDetailsScreen extends StatelessWidget {
                 SkeletonLoader(
                   width: 100,
                   height: 32,
-                  borderRadius: AppDimens.r8,
                 ),
               ],
             ),

@@ -35,11 +35,11 @@ abstract final class AmberDuskWidgetTheme {
   /// Default panel-card elevation level for Flutter shadow recipes.
   static const int panelCardElevationLevel = 1;
 
-  /// Task card top fill after applying the authored white overlay to bg2.
-  static const Color taskCardTopFill = Color(0xFF28231E);
+  /// Task card top fill retained for compatibility with older token readers.
+  static const Color taskCardTopFill = AmberDuskColors.surfaceRaised;
 
-  /// Task card bottom fill after applying the authored dark overlay to bg2.
-  static const Color taskCardBottomFill = Color(0xFF241F1A);
+  /// Task card bottom fill retained for compatibility with older token readers.
+  static const Color taskCardBottomFill = AmberDuskColors.surfaceRaised;
 
   /// Subtle task price and tag surface from `.price-pill` evidence.
   static const Color taskPillSurface = Color.fromRGBO(255, 255, 255, 0.035);
@@ -472,21 +472,21 @@ final class AmberDuskCardThemeTokens {
 
   /// Task card recipe with the larger Open Design task radius.
   AmberDuskCardRecipe get task => const AmberDuskCardRecipe(
-    background: AmberDuskColors.surface,
+    background: AmberDuskColors.surfaceRaised,
     radius: AmberDuskSpacing.taskCardRadius,
     elevationLevel: AmberDuskWidgetTheme.taskCardElevationLevel,
   );
 
   /// Panel recipe for grouped modules.
   AmberDuskCardRecipe get panel => const AmberDuskCardRecipe(
-    background: AmberDuskColors.surface,
+    background: AmberDuskColors.surfaceRaised,
     radius: AmberDuskSpacing.moduleRadius,
     elevationLevel: AmberDuskWidgetTheme.panelCardElevationLevel,
   );
 
   /// Message bubble recipe for chat-style surfaces.
   AmberDuskCardRecipe get message => const AmberDuskCardRecipe(
-    background: AmberDuskColors.surface,
+    background: AmberDuskColors.surfaceRaised,
     radius: AmberDuskSpacing.moduleRadius,
     elevationLevel: AmberDuskWidgetTheme.panelCardElevationLevel,
   );
@@ -503,148 +503,195 @@ final class AmberDuskCardThemeTokens {
     AmberDuskWidgetTheme.taskCardBottomFill,
   ];
 
-  /// Task-card padding from Open Design evidence.
-  EdgeInsets get taskPadding => const EdgeInsets.fromLTRB(15, 13, 15, 14);
+  /// Compact task-card padding keeps feed density high without crowding chips.
+  EdgeInsets get taskPadding => const EdgeInsets.fromLTRB(
+    13,
+    11,
+    13,
+    12,
+  ); // Open Design compact feed measure keeps CTA visible in a 320px card.
 
-  /// Booking-card padding from Open Design evidence.
-  EdgeInsets get bookingPadding => const EdgeInsets.fromLTRB(19, 17, 19, 18);
+  /// Compact booking-card padding trims hero-card height for phone feeds.
+  EdgeInsets get bookingPadding => const EdgeInsets.fromLTRB(
+    14,
+    12,
+    14,
+    13,
+  ); // Matches the 8pt rhythm while preserving room for booking metadata on 320px screens.
 
-  /// Task-card avatar size from Open Design evidence.
-  double get taskAvatarSize => 46;
+  /// Compact task-card avatar size preserves identity without dominating rows.
+  double get taskAvatarSize =>
+      42; // Stays just under the 44px touch grid so the author row remains visually secondary.
 
-  /// Booking-card photo size from Open Design evidence.
-  double get bookingPhotoSize => 54;
+  /// Compact booking-card photo size pairs with inline name and role content.
+  double get bookingPhotoSize =>
+      46; // Exceeds the 44px platform target while aligning with the Open Design booking header.
 
-  /// Circular action size used on booking cards.
-  double get bookingRoundActionSize => 40;
+  /// Smaller circular booking actions keep save/message controls secondary.
+  double get bookingRoundActionSize =>
+      32; // Keeps secondary actions compact so the primary CTA remains the footer focus.
 
-  /// Circular booking action icon size from `.round-action svg`.
-  double get bookingRoundActionIconSize => 14;
+  /// Circular booking action icon size tuned for the compact action target.
+  double get bookingRoundActionIconSize =>
+      13; // Maintains a clear icon-to-circle ratio inside the 32px action control.
 
-  /// Booking metadata chip icon size from `.booking-chip svg`.
-  double get bookingChipIconSize => 11;
+  /// Booking metadata chip icon size keeps labels readable in tighter chips.
+  double get bookingChipIconSize =>
+      10.5; // Holds icon alignment with 11px chip text without increasing chip height.
 
-  /// Booking metadata chip inner gap from `.booking-chip`.
-  double get bookingChipGap => 5;
+  /// Booking metadata chip inner gap follows the tighter feed rhythm.
+  double get bookingChipGap =>
+      4; // Uses the half-step 8pt grid to keep chip text and icon visually connected.
 
-  /// Gap between circular booking actions from `.booking-actions`.
-  double get bookingActionGap => 6;
+  /// Gap between circular booking actions stays visible at smaller sizes.
+  double get bookingActionGap =>
+      5; // Separates 32px action targets without pushing the CTA off narrow cards.
 
-  /// Booking CTA icon size from `.booking-cta svg`.
-  double get bookingCtaIconSize => 13;
+  /// Booking CTA icon size aligns with the compact CTA label.
+  double get bookingCtaIconSize =>
+      12; // Tracks the 12px control label scale from the Open Design CTA.
 
-  /// Shared card CTA height from `.outline-action` and `.booking-cta`.
-  double get cardActionHeight => 42;
+  /// Shared compact CTA height keeps card footers visually light.
+  double get cardActionHeight =>
+      36; // Keeps compact cards short while leaving enough vertical space for readable button text.
 
-  /// Task vertical rhythm between title/content groups from `.task-title`.
-  double get taskSectionSpacing => 13;
+  /// Task vertical rhythm groups related content more tightly in feeds.
+  double get taskSectionSpacing =>
+      10; // Reduces feed height while keeping sections distinct on the 8pt-derived rhythm.
 
-  /// Gap below the provider photo row in the booking hero card.
-  double get bookingTopSpacing => 14;
+  /// Gap below the inline provider header before metadata chips.
+  double get bookingTopSpacing =>
+      10; // Matches task section spacing so booking headers and chip rows scan as one group.
 
-  /// Gap between provider name and role in the booking hero card.
-  double get bookingNameGap => 5;
+  /// Gap between provider name and role keeps the identity block cohesive.
+  double get bookingNameGap =>
+      3; // Keeps role text attached to the name without collapsing the typographic baseline.
 
-  /// Gap below the booking divider before the price/action row.
-  double get bookingDividerBottomSpacing => 13;
+  /// Gap below the booking divider supports a shorter price/action footer.
+  double get bookingDividerBottomSpacing =>
+      10; // Preserves footer breathing room while keeping the price and CTA above the fold.
+
+  /// Booking divider width keeps the surface grouped instead of edge-to-edge.
+  double get bookingDividerWidthFactor =>
+      0.78; // Mirrors the Open Design inset divider so the footer reads as grouped content.
 
   /// Task price pill radius from `.price-pill`.
-  double get taskPriceRadius => 13;
+  double get taskPriceRadius =>
+      13; // Matches the measured pill curve and avoids a heavier fully-rounded badge.
 
   /// Inline icon/text gap used by task tags and price suffixes.
-  double get taskInlineGap => 5;
+  double get taskInlineGap =>
+      5; // Keeps inline icon labels legible without widening compact tag rows.
 
   /// Task tag and price pill fill from Open Design evidence.
-  Color get taskPillFill => AmberDuskWidgetTheme.taskPillSurface;
+  Color get taskPillFill => AmberDuskWidgetTheme
+      .taskPillSurface; // Uses the Open Design low-contrast fill to keep tags secondary.
 
   /// Booking circular action fill from Open Design evidence.
-  Color get bookingRoundActionFill =>
-      AmberDuskWidgetTheme.bookingRoundActionSurface;
+  Color get bookingRoundActionFill => AmberDuskWidgetTheme
+      .bookingRoundActionSurface; // Keeps icon-only actions visible without competing with the primary CTA.
 
-  /// Task price pill padding from Open Design evidence.
-  EdgeInsets get taskPricePadding =>
-      const EdgeInsets.symmetric(horizontal: 10, vertical: 7);
+  /// Compact task price pill padding keeps the footer balanced with the CTA.
+  EdgeInsets get taskPricePadding => const EdgeInsets.symmetric(
+    horizontal: 9,
+    vertical: 5,
+  ); // Fits price text beside the CTA within the compact 320px footer.
 
-  /// Task metadata tag padding from Open Design evidence.
-  EdgeInsets get taskTagPadding =>
-      const EdgeInsets.symmetric(horizontal: 9, vertical: 5);
+  /// Compact task metadata tag padding supports denser discovery cards.
+  EdgeInsets get taskTagPadding => const EdgeInsets.symmetric(
+    horizontal: 8,
+    vertical: 4,
+  ); // Follows the 8pt grid and keeps tag rows from wrapping early.
 
-  /// Booking metadata chip padding from Open Design evidence.
-  EdgeInsets get bookingChipPadding =>
-      const EdgeInsets.symmetric(horizontal: 10, vertical: 5);
+  /// Compact booking metadata chip padding prevents the chip row from bulking.
+  EdgeInsets get bookingChipPadding => const EdgeInsets.symmetric(
+    horizontal: 8,
+    vertical: 4,
+  ); // Keeps booking chips aligned to task tags while preserving scan density.
 
-  /// Booking CTA horizontal padding from Open Design evidence.
-  EdgeInsets get bookingActionPadding =>
-      const EdgeInsets.symmetric(horizontal: 15);
+  /// Compact booking CTA horizontal padding keeps the footer from overflowing.
+  EdgeInsets get bookingActionPadding => const EdgeInsets.symmetric(
+    horizontal: 12,
+  ); // Provides a comfortable label inset without forcing overflow next to action icons.
 
   /// Task title typography from `.task-title`.
-  TextStyle get taskTitleStyle => AmberDuskTypography.sectionTitle.copyWith(
-    fontSize: 16.5,
-    fontWeight: FontWeight.w800,
-    height: 1.23,
-  );
+  TextStyle get taskTitleStyle =>
+      // The 15.5px scale preserves hierarchy while keeping two-line titles compact.
+      AmberDuskTypography.sectionTitle.copyWith(
+        fontSize: 15.5,
+        fontWeight: FontWeight.w800,
+        height: 1.23,
+      );
 
   /// Task copy typography from `.task-copy`.
-  TextStyle get taskCopyStyle =>
-      AmberDuskTypography.bodySmall.copyWith(fontSize: 12.5, height: 1.4);
+  TextStyle get taskCopyStyle => AmberDuskTypography.bodySmall.copyWith(
+    fontSize: 12,
+    height: 1.35,
+  ); // Matches the Open Design body scale for three-line preview density.
 
   /// Task author typography from `.person strong`.
-  TextStyle get taskAuthorStyle =>
-      AmberDuskTypography.chip.copyWith(fontSize: 13.5);
+  TextStyle get taskAuthorStyle => AmberDuskTypography.chip.copyWith(
+    fontSize: 13,
+  ); // Keeps author identity readable beside the 42px avatar.
 
   /// Task chip typography from `.tag`.
   TextStyle get taskChipStyle => AmberDuskTypography.chip.copyWith(
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: FontWeight.w700,
-  );
+  ); // Uses an 11px chip scale so metadata stays secondary to the title.
 
   /// Task price typography from `.price-pill`.
   TextStyle get taskPriceStyle => AmberDuskTypography.control.copyWith(
-    fontSize: 14.5,
+    fontSize: 13.5,
     fontWeight: FontWeight.w800,
-  );
+  ); // Keeps price visually stronger than tags while fitting the compact footer.
 
   /// Task CTA typography from `.outline-action`.
   TextStyle get taskActionStyle => AmberDuskTypography.control.copyWith(
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: FontWeight.w800,
-  );
+  ); // Matches the 36px CTA height without clipping on platform text metrics.
 
   /// Booking provider name typography from `.booking-name`.
   TextStyle get bookingNameStyle =>
-      AmberDuskTypography.bookingName.copyWith(letterSpacing: 0);
+      // The 18.5px name scale anchors the booking card without exceeding the compact header.
+      AmberDuskTypography.bookingName.copyWith(
+        fontSize: 18.5,
+        height: 1.08,
+        letterSpacing: 0,
+      );
 
   /// Booking role typography from `.booking-role`.
   TextStyle get bookingRoleStyle => AmberDuskTypography.chip.copyWith(
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: FontWeight.w500,
     height: 1.2,
-  );
+  ); // Keeps role metadata subordinate to the provider name and within one line.
 
   /// Booking chip typography from `.booking-chip`.
   TextStyle get bookingChipStyle => AmberDuskTypography.chip.copyWith(
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: FontWeight.w600,
-  );
+  ); // Aligns booking metadata with task chip scale for cross-card consistency.
 
   /// Booking price typography from `.booking-price span`.
   TextStyle get bookingPriceStyle => AmberDuskTypography.bookingName.copyWith(
-    fontSize: 25,
+    fontSize: 20.5,
     fontWeight: FontWeight.w700,
     height: 1,
-  );
+  ); // Gives price first-read weight while staying below hero-title scale.
 
   /// Booking period typography from `.booking-period`.
   TextStyle get bookingPeriodStyle => AmberDuskTypography.chip.copyWith(
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: FontWeight.w500,
-  );
+  ); // Keeps the period label attached to price without stealing hierarchy.
 
   /// Card CTA typography shared by booking and task actions.
   TextStyle get cardActionStyle => AmberDuskTypography.control.copyWith(
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: FontWeight.w700,
-  );
+  ); // Shares the compact 12px control scale across task and booking card CTAs.
 }
 
 /// Visual recipe for one Amber Dusk card surface.

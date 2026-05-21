@@ -91,7 +91,6 @@ Future<void> _tapPackageTier(WidgetTester tester, Key key) async {
   await Scrollable.ensureVisible(
     tester.element(finder),
     alignment: 0.5,
-    duration: Duration.zero,
   );
   await tester.pumpAndSettle();
   await tester.tap(finder);
@@ -736,7 +735,7 @@ void main() {
         budget: 150,
         userId: 'user-1',
         status: TaskStatus.open,
-        createdAt: DateTime.utc(2026, 3, 1),
+        createdAt: DateTime.utc(2026, 3),
       );
 
       await pumpEditModeScreen(

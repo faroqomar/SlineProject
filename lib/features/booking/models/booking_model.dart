@@ -44,6 +44,9 @@ class BookingModel {
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
+    final availabilitySlot =
+        json['availability_slots'] as Map<String, dynamic>?;
+    final availabilityStart = availabilitySlot?['starts_at'] as String?;
     return BookingModel(
       id: json['id'] as String,
       taskId: json['task_id'] as String?,
@@ -61,16 +64,12 @@ class BookingModel {
       createdAtUtc: DateTime.parse(json['created_at'] as String).toUtc(),
       dueAtUtc: json['due_at'] != null
           ? DateTime.parse(json['due_at'] as String).toUtc()
-          : (json['availability_slots']?['starts_at'] != null
-                ? DateTime.parse(
-                    json['availability_slots']['starts_at'] as String,
-                  ).toUtc()
+          : (availabilityStart != null
+                ? DateTime.parse(availabilityStart).toUtc()
                 : null),
       deliveryDays: (json['delivery_days'] as num?)?.toInt(),
-      scheduledAt: json['availability_slots']?['starts_at'] != null
-          ? DateTime.parse(
-              json['availability_slots']['starts_at'] as String,
-            ).toUtc()
+      scheduledAt: availabilityStart != null
+          ? DateTime.parse(availabilityStart).toUtc()
           : null,
       completedAt: json['completed_at'] != null
           ? DateTime.parse(json['completed_at'] as String).toUtc()
@@ -100,7 +99,10 @@ class BookingModel {
         return 'disputed';
       case BookingStatus.declined:
         return 'canceled';
-      default:
+      case BookingStatus.pending:
+      case BookingStatus.confirmed:
+      case BookingStatus.completed:
+      case BookingStatus.canceled:
         return status.name;
     }
   }

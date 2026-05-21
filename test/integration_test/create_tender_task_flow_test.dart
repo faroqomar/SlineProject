@@ -43,7 +43,6 @@ void main() {
         tester,
         find.byKey(CreateTaskScreen.primaryActionButtonKey),
         tag: tag,
-        timeout: const Duration(seconds: 12),
         reason: 'CreateTaskScreen did not open from main-nav FAB.',
       );
 
@@ -91,7 +90,7 @@ void main() {
       );
       await tester.enterText(find.byKey(HomeScreen.searchFieldKey), marker);
       await tester.pump();
-      await pumpFor(tester, duration: const Duration(seconds: 1));
+      await pumpFor(tester);
 
       // Surface 1: Home Tenders discovery mode
       await tapByKey(tester, HomeScreen.discoveryTendersKey, tag: tag);
@@ -112,7 +111,6 @@ void main() {
         tester,
         [find.text('Job Details'), find.text('Booking Details')],
         tag: tag,
-        timeout: const Duration(seconds: 12),
         reason:
             'Task details screen did not open from Home Tenders discovery item tap.',
       );

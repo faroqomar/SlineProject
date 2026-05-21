@@ -126,7 +126,7 @@ class BookingService {
         'Calling rpc_create_booking_draft_validated for task $taskId',
         tag: 'Booking',
       );
-      final res = await _client.rpc(
+      final res = await _client.rpc<dynamic>(
         'rpc_create_booking_draft_validated',
         params: {
           'p_task_id': taskId,
@@ -239,7 +239,7 @@ class BookingService {
 
   Future<void> approveAndRelease(String bookingId) async {
     try {
-      await _client.rpc(
+      await _client.rpc<dynamic>(
         'rpc_approve_delivery',
         params: {'entity_type': 'booking', 'entity_id': bookingId},
       );
@@ -389,7 +389,10 @@ class BookingService {
         return 'disputed';
       case BookingStatus.declined:
         return 'canceled';
-      default:
+      case BookingStatus.pending:
+      case BookingStatus.confirmed:
+      case BookingStatus.completed:
+      case BookingStatus.canceled:
         return status.name;
     }
   }

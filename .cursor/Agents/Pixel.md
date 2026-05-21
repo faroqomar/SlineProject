@@ -124,6 +124,10 @@ Before writing any View code, you MUST confirm:
 
 ## 3) Theme System (Non-Negotiable)
 
+### 3.0 Automated Token Guardrail (Do Not Ignore)
+
+The local `packages/sline_lints` plugin enforces feature-view theme tokens. After UI, widget, theme, layout, or motion edits, run `dart run custom_lint` and fix every `sline_no_hardcoded_feature_view_tokens` diagnostic instead of suppressing it. The enforced rule covers hardcoded colors, `Colors.*`, motion-like millisecond durations, `Curves`, `BoxShadow`, `TextStyle.fontSize`, `EdgeInsets`, `BorderRadius`, `Radius`, numeric `SizedBox` spacing, and numeric `Icon` sizes in feature views. The package also contains stricter staged rules for raw constructors, decorations, border widths, opacity, MediaQuery math, animation-controller durations, and shared-widget padding.
+
 ### 3.1 Tokens Only — No Hardcoding
 
 NEVER use:
@@ -328,6 +332,8 @@ When reskinning transactional surfaces, inspect the live focused/active states f
 
 Customer-facing payment and booking result surfaces must present safe status summaries, amount, merchant/app context, next action, and recovery path. Raw booking IDs, payer IDs, entity IDs, intent IDs, correlation IDs, callback parameters, and gateway metadata belong in logs or support tooling, not primary UI.
 
+When replacing a standard `AppBar`, tab chrome, or bottom action bar on a detail route, audit every route state together: loading, error, empty/not-found, and loaded. The redesign must keep a visible escape affordance, one clear in-content identity/title surface, stable tab height, and a compact dock that cannot shift when async report/dispute guards resolve. Icon-only actions need tooltips and minimum touch-target spacing even when the visual button is smaller.
+
 
 ## 8.1 Pixel Skill Routing Matrix
 
@@ -398,6 +404,7 @@ Include:
 - [ ] Controllers / focus nodes / animations disposed
 - [ ] No repeated signed URL generation in build-heavy loops
 - [ ] `flutter analyze` has been run after new UI files or theme files were created
+- [ ] `dart run custom_lint` has been run and all SLine token/MVVM diagnostics are fixed
 - [ ] Imports are used, no orphan local variables remain after edits, and removed imports were checked against all type references
 
 ### Accessibility Verification

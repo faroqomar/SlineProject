@@ -1,13 +1,26 @@
 # SLine Code Review & Improvement Report
 
-**Date**: 2026-05-14 (Updated)
+**Date**: 2026-05-21 (Updated)
 **Reviewed By**: CodeGuard + Architect + Sentinel Agents
 **Previous Score**: 9/10
 **Current Score**: 9.7/10
 
 > Historical review note: this document records review findings and fixes from earlier passes. Treat references to removed files or older structure as historical context; the current live structure is documented in `Sline_everything/STRUCTURE.md` and `Sline_everything/DEVELOPER_GUIDE.md`.
 
-## Current Guardrail Notes (2026-05-14)
+## Current Guardrail Notes (2026-05-21)
+
+### Amber Dusk Detail Route Chrome And Compact Dock Review Rule (2026-05-21)
+
+**Pattern**: Detail-route redesigns that remove a standard AppBar or heavy bottom bar can regress states that are not visible in the loaded happy path. Wrapper tests can also pass while production route chrome, tab layout, and icon-only dock actions are stale.
+
+**Rule**:
+1. For direct offer, work item, task, booking, or similar detail routes, review loading, error, empty/not-found, and loaded states together. Each state needs a visible escape affordance when the standard AppBar is removed.
+2. If top chrome is reduced to a floating back button, the route must still expose one clear in-content identity/title surface before status or action bands.
+3. Compact docks must keep primary action priority visible, use tooltips for icon-only secondary actions, and reserve stable touch-target space for async report/dispute guards so the row does not jump after FutureBuilder checks resolve.
+4. Wrapper-only tests are not sufficient for route chrome, tabs, docks, tooltips, or action priority. Keep wrappers for isolated content coverage, but add production-route or production-route-body tests for the changed chrome/dock behavior.
+5. Analyzer, custom lint, and widget tests do not close runtime visual parity. Keep emulator checks open for loading/error/loaded, report/dispute, cancel, payment, submit, approve/release, and chat states.
+
+**Evidence**: `docs/LOG/SESSION_OpenDesign_DetailSurfaces_2026-05-21.md` records the direct-offer, work-item, task, and booking detail refresh plus production-route test additions. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-21.md` merged the route-state review and production-route test rules into `Pixel`, `Executor`, `Sentinel`, and `Orchestrator`.
 
 ### Amber Dusk Transactional QA Recovery Review Rule (2026-05-14)
 
@@ -78,7 +91,7 @@
 
 **Evidence**: Open Design Amber Dusk Phase 1 (2026-05-11) activated buttons, fields, icon buttons, cards, bottom nav, tabs, status badges, skeletons, and signed-media placeholders through the shared-widget adapter while leaving global `MaterialApp` theme wiring and Supabase behavior unchanged.
 
-### SystemEvolution Merge Runs (2026-05-12 / 2026-05-13 / 2026-05-14)
+### SystemEvolution Merge Runs (2026-05-12 / 2026-05-13 / 2026-05-14 / 2026-05-21)
 
 **Pattern**: When the human explicitly requests a SystemEvolution merge, the report is written first, then only deduped, evidence-backed rules are applied to the owning `.cursor/Agents/*.md` files.
 
@@ -88,7 +101,7 @@
 3. Prefer narrow agent-owner edits over broad rewrites.
 4. Record the merged files and evidence index in `docs/LOG/SYSTEM_EVOLUTION_REPORT_<date>.md`.
 
-**Evidence**: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` records the token/provenance and Phase 1 visual-evidence merge. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md` records the Step 7 merge for scope amendments, no invented model contracts in views, custom gesture semantics, privacy-safe view logs, behavior-level review tests, and explicit visual QA status in Master Reports. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md` records the Phase 5-8 merge for worker checkpoints, untrusted worker patches, lazy/injected ViewModel service bridges, wrapper theme harnesses, per-file emulator matrices, safe URL-facts logging, realtime transient reconnect handling, and stale guidance-path cleanup. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md` records the Transactional QA merge for focused/active runtime states, payment/booking lifecycle bucket proof, safe payment result UI, and unexecuted gateway-branch reporting.
+**Evidence**: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` records the token/provenance and Phase 1 visual-evidence merge. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md` records the Step 7 merge for scope amendments, no invented model contracts in views, custom gesture semantics, privacy-safe view logs, behavior-level review tests, and explicit visual QA status in Master Reports. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md` records the Phase 5-8 merge for worker checkpoints, untrusted worker patches, lazy/injected ViewModel service bridges, wrapper theme harnesses, per-file emulator matrices, safe URL-facts logging, realtime transient reconnect handling, and stale guidance-path cleanup. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md` records the Transactional QA merge for focused/active runtime states, payment/booking lifecycle bucket proof, safe payment result UI, and unexecuted gateway-branch reporting. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-21.md` records the detail-route chrome/dock merge for route-state review, production-route tests, and wrapper-only coverage disclosure.
 
 ### Coverage Artifact Hygiene (2026-05-11)
 

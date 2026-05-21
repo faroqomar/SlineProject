@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.33.0 (Amber Dusk Phase 9-12, Transactional QA Recovery, SystemEvolution 2026-05-14, and DocsKeeper sync)
-**Last Updated**: 2026-05-14
+**Version**: 2.34.0 (Detail surface chrome/dock refresh, SystemEvolution 2026-05-21, and DocsKeeper sync)
+**Last Updated**: 2026-05-21
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -22,7 +22,6 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 - [Chat Feature Reference](#chat-feature-reference)
 - [Direct Chat Offers (Direct Offers Feature)](DEVELOPER_GUIDE/Direct_Offers_Feature.md)
 - [Booking Feature Reference](#booking-feature-reference)
-- [Order Management Feature Reference](DEVELOPER_GUIDE/Order_Management_Feature.md)
 - [Proposals Feature Reference](DEVELOPER_GUIDE/Proposals_Feature.md)
 - [Wallet Feature Reference](DEVELOPER_GUIDE/Wallet_Feature.md)
 - [Work Management (Unified Flow)](#work-management-unified-flow)
@@ -514,13 +513,66 @@ References:
 - System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md`
 - Supabase objects changed: local Edge Function source only (`supabase/functions/qicard_payment_create/index.ts`, `supabase/functions/create_payment_intent/index.ts`); no migration/RLS/schema changes
 
+### Amber Dusk Detail Surface Chrome And Compact Docks (2026-05-21)
+
+The 2026-05-21 detail-surface refresh aligns direct-offer, work-item, task, and
+booking detail routes around quieter route chrome and compact action docks. This
+is scoped Flutter view/test/agent-rule work only: no Supabase schema, RLS, RPC,
+Edge Function, service, repository, or ViewModel behavior changed.
+
+Implementation notes:
+- `lib/features/direct_offers/view/direct_offer_details_screen.dart` keeps
+  `DirectOfferDetailsViewModel`, QiCard/WebView/browser payment handoff, cancel
+  confirmation, delivery submission, approve/release, dispute guards, report
+  submission, and chat opening behavior unchanged. The route now uses an Amber
+  Dusk background, floating back control for loading/error/loaded states, title
+  inside the hero card, and a compact dock with one primary pill plus icon-only
+  chat/cancel/report actions.
+- `lib/features/work/view/work_item_details_screen.dart` keeps
+  `WorkItemDetailsViewModel` and `WorkManagementService` as the source of work
+  state. The production route now accepts an optional `WorkManagementService`
+  override for widget tests, keeps loading/error/no-details escape affordances,
+  and uses floating tab chrome with stable height for `Overview`, `Extensions`,
+  and `Contract`.
+- `lib/features/work/view/widgets/work_item_bottom_actions.dart` and
+  `lib/features/work/view/widgets/work_item_guard_widgets.dart` reserve minimum
+  touch-target space for async report guards so icon-only compact docks do not
+  shift after dispute checks resolve.
+- `lib/features/booking/view/booking_details_screen.dart` removes the standard
+  AppBar treatment in favor of a floating back control and a top in-content
+  identity surface (`Booking Details` plus task title) before status and action
+  bands.
+- `lib/features/tasks/view/task_details_screen.dart` follows the same titleless
+  chrome and compact dock direction for task details while keeping owner,
+  non-owner, chat, report, package, and proposal behavior in existing
+  ViewModel/service paths.
+- Direct-offer, work-item, booking, and task widget tests now include
+  production-route assertions for back controls, chrome, compact dock primary
+  priority, icon-only tooltips, loading-state escape, and report/dispute guard
+  visibility. Wrapper tests may remain for Supabase-safe content coverage, but
+  they are no longer sufficient for route chrome or dock behavior.
+
+Runtime QA remains a separate visual gate. Analyzer, custom lint, focused
+widget tests, and `git diff --check` passed, but emulator review still needs to
+exercise every touched detail route across loading, error, empty/not-found,
+loaded, report, dispute, cancel, payment, submit, approve/release, and chat
+states before final visual parity is claimed.
+
+References:
+- Workflow: `.TODO/Archive/AmberDuskDesign/OpenDesign_DetailSurfaces_2026-05-21/WORKFLOW_OpenDesign_Redesign_To_Flutter_2026-05-21.md`
+- Session Log: `docs/LOG/SESSION_OpenDesign_DetailSurfaces_2026-05-21.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-21.md`
+- Key Flutter files: `lib/features/direct_offers/view/direct_offer_details_screen.dart`, `lib/features/work/view/work_item_details_screen.dart`, `lib/features/work/view/widgets/work_item_bottom_actions.dart`, `lib/features/work/view/widgets/work_item_guard_widgets.dart`, `lib/features/booking/view/booking_details_screen.dart`, `lib/features/tasks/view/task_details_screen.dart`
+- Key tests: `test/widget/direct_offers/direct_offer_details_screen_test.dart`, `test/widget/work/work_item_details_screen_test.dart`, `test/widget/booking/booking_details_screen_test.dart`, `test/widget/tasks/task_details_screen_test.dart`
+- Supabase objects changed: none
+
 ### 10.1 CI/CD Pipeline
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
 
 | Job | What It Does | Blocks Merge? |
 |-----|-------------|---------------|
-| **Lint & Analyze** | `dart format --set-exit-if-changed .` + `flutter analyze --no-fatal-infos` | Yes (warnings/errors fail) |
+| **Lint & Analyze** | `dart format --set-exit-if-changed`, `flutter analyze --no-fatal-infos`, `dart run custom_lint`, and `dart run dependency_validator` | Yes (warnings/errors, SLine rule violations, and dependency drift fail) |
 | **Architecture Guard** | 7 grep-based MVVM boundary checks (Supabase in views, controllers in VMs, Navigator in VMs, repo imports in views, view imports in VMs, Supabase in VMs, core-to-features boundary). Check 7 (Phase E): blocks `core/` importing from `features/` (max 5 threshold). | Yes (hard failure since Phase B, 2026-04-01) |
 | **Unit & Widget Tests** | `flutter test --coverage` with coverage % reported to PR summary, 40% floor enforced, and `coverage/lcov.info` uploaded as the `coverage-lcov` artifact for 7 days. The generated `coverage/` folder is ignored locally and should not be committed. | Yes |
 | **Build** | APK (debug) + Web (release) compilation | Yes |
@@ -529,7 +581,7 @@ Flutter version pinned: **3.41.9** across all jobs to satisfy the Dart SDK floor
 
 ### 10.2 Pre-commit Hook
 
-`.githooks/pre-commit` runs `dart format` + `flutter analyze` locally before every commit.
+`.githooks/pre-commit` runs `dart format`, `flutter analyze`, `dart run custom_lint`, and `dart run dependency_validator` locally before every commit.
 
 **First-time setup:** `git config core.hooksPath .githooks`
 
@@ -537,13 +589,25 @@ Flutter version pinned: **3.41.9** across all jobs to satisfy the Dart SDK floor
 
 **Base package**: `very_good_analysis` (migrated from `flutter_lints` in Phase E). Provides ~70+ rules active out of the box.
 
-27 rules are explicitly disabled with justification, tracked in `.TODO/LINT_DEBT_PhaseE.md`. Key disabled rules:
-- `avoid_dynamic_calls` -- Supabase query results return `dynamic`; would require casts on every field access.
-- `strict-inference`, `strict-casts` -- incompatible with Supabase's dynamic return types.
+The May 2026 lint hardening pass moved the most important Phase F candidates into active enforcement. `analysis_options.yaml` now enables:
+- `strict-raw-types`, `strict-casts`, and `strict-inference` -- Supabase and JSON boundaries must use explicit generic types or safe casts instead of relying on implicit `dynamic`.
+- `cascade_invocations` -- repeated calls on the same object should use cascades where they improve locality.
+- `avoid_redundant_argument_values` -- redundant default arguments should be removed so intentional overrides stand out.
+- `avoid_annotating_with_dynamic` -- APIs that previously advertised `dynamic` now use `Object?`, concrete map/list types, or untyped SDK override parameters only where the upstream signature requires it.
+- `prefer_for_elements_to_map_fromiterable` -- map/list transformations should use collection elements when that keeps the transformation readable and type-safe.
+
+Remaining disabled rules are intentionally limited to convention conflicts or noisy rules that do not materially improve safety yet. Key examples:
+- `avoid_dynamic_calls` -- Supabase query results still return `dynamic` in some places; field access is handled with targeted casts where strict modes require it.
 - `public_member_api_docs` -- not enforced yet; planned for Phase F.
 - `lines_longer_than_80_chars` -- relaxed for readability in query builder chains and long string literals.
+- Deprecated lints such as `avoid_null_checks_in_equality_operators` and `prefer_final_parameters` are not listed in `analysis_options.yaml`; the analyzer warns when deprecated lints are configured even as `false`.
 
 Strong mode: `implicit-casts: false`, `implicit-dynamic: false`.
+
+### 10.3.1 Tooling Gates
+
+- `dependency_validator` runs in CI and pre-commit to catch missing, unused, over-promoted, or under-promoted package declarations. Intentional plugin/font/tooling packages are documented in `dart_dependency_validator.yaml`.
+- `custom_lint` loads the local `packages/sline_lints` plugin. The enforced rules block direct Supabase/raw network access in feature views, repository imports in feature views, view imports in ViewModels, view/ViewModel imports in services/data, feature UI imports in core, UI framework imports in ViewModels, Navigator/UI-controller ownership in ViewModels, Supabase access from ViewModel executable bodies, `BuildContext` in ViewModels/data/repositories, `notifyListeners()` in ViewModel loops, raw exception strings assigned to UI error fields, `print`/`debugPrint` in `lib/`, offset pagination, dynamic model `fromJson` maps, signed URL persistence, and hardcoded feature-view UI tokens for colors, motion-like millisecond durations, `Curves`, `BoxShadow`, `TextStyle.fontSize`, `EdgeInsets`, `BorderRadius`, `Radius`, numeric `SizedBox` spacing, and numeric `Icon` sizes. Additional stricter MVVM, theming, logging, Supabase-query, and test-coverage rules are implemented in `packages/sline_lints` but staged until their legacy diagnostics are migrated.
 
 ### 10.4 Error vs Exception Handling (Dart-Specific)
 
@@ -712,7 +776,6 @@ Flutter's built-in `gen-l10n` pipeline is wired up and ready for translation.
 - Categories: `DEVELOPER_GUIDE/Categories Feature.md`
 - UI Surface Inventory: `UI_SURFACE_INVENTORY.md`
 - Inventory: `DEVELOPER_GUIDE/Inventory Feature.md` (Planned)
-- Order Management: `DEVELOPER_GUIDE/Order_Management_Feature.md`
 - Proposals: `DEVELOPER_GUIDE/Proposals_Feature.md`
 
 ## 13. Gotchas & Tips
@@ -1986,7 +2049,7 @@ Core also owns two browser-specific stability helpers:
 | `lib/core/models/user_profile.dart`              | model     | Shared typed profile model.                                                             |
 | `lib/core/models/payment_return_args.dart`       | model     | Shared typed browser payment callback payload.                                          |
 | `lib/core/theme/app_colors.dart`                 | theme     | Central palette + semantic status colors (success/warning/info/danger) + interactive state colors. |
-| `lib/core/theme/app_dimens.dart`                 | theme     | Raw spacing primitives (p0-p100), border radii (r4-r50), icon sizes (Layer 2 primitives). |
+| `lib/core/theme/app_dimens.dart`                 | theme     | Raw spacing primitives (p0-p140), border radii (r2-r50), icon sizes (Layer 2 primitives). |
 | `lib/core/theme/app_layout.dart`                 | theme     | **Phase 0.7** Semantic layout tokens: card, avatar, button, spacing, icon, thumbnail, nav, border (Layer 2 semantic). |
 | `lib/core/theme/app_typography.dart`             | theme     | Typography with per-style line heights (1.0-1.5) and letter spacing.                    |
 | `lib/core/theme/app_theme.dart`                  | theme     | Builds `ThemeData` + `AppThemeExtension` + 7 component themes (Card, Dialog, BottomSheet, Chip, Divider, SnackBar, TabBar). |
@@ -2010,7 +2073,7 @@ Layer 1 — THEME (colors, typography, motion, elevation, interaction states)
 
 Layer 2 — LAYOUT (spacing, sizes, structure, proportions)
   AppLayout (semantic tokens: cardPadding, avatarMedium, buttonHeight, spacingSection)
-  AppDimens  (raw primitives: p0-p100, r4-r50, iconSizeSmall/Medium/Large)
+  AppDimens  (raw primitives: p0-p140, r2-r50, iconSizeSmall/Medium/Large)
 
 Layer 3 — COMPONENTS (widgets that CONSUME Layer 1 + Layer 2)
   All widgets in lib/core/widgets/ and lib/features/*/view/
@@ -2757,7 +2820,7 @@ Primary user flows:
 - clients can purchase a booking package from a booking task
 - providers can review booking requests, accept or decline them, and mark work as delivered
 - clients can review details and approve release after delivery
-- both sides can inspect booking history and the embedded management timeline
+- both sides can inspect booking history and use booking detail lifecycle actions without the removed Order Timeline & Notes surface
 
 Important current behavior:
 
@@ -2827,7 +2890,7 @@ Current server-backed booking/payment flow depends on:
 | `lib/features/booking/view/payment_return_screen.dart`     | view       | Web callback landing screen that validates sanitized callback state, falls back to pending context, and triggers recovery. |
 | `lib/features/booking/view/payment_method_screen.dart`     | view       | Demo/manual payment form used by non-QiCard paths.                                                  |
 | `lib/features/booking/view/bookings_list_screen.dart`      | view       | Client/provider booking history list with filtering and pagination.                                 |
-| `lib/features/booking/view/booking_details_screen.dart`    | view       | Detailed booking view with CTA resolution, management timeline, and message handoff.                |
+| `lib/features/booking/view/booking_details_screen.dart`    | view       | Detailed booking view with CTA resolution and message handoff.                                      |
 | `lib/features/booking/view/widgets/booking_card.dart`      | widget     | Shared summary card for booking rows.                                                               |
 
 ## 4. Current Flutter Flow
@@ -2863,9 +2926,9 @@ Client-side actions:
 
 - release booking payment with fee handling
 - message provider
-- review timeline/history
+- review booking history
 
-`BookingDetailsScreen` also embeds `OrderManagementSection` with `WorkLogScope(entityId: booking.id, entityType: 'booking')`.
+The former task/booking Order Timeline & Notes UI has been removed. Work-log service calls remain internal for direct-offer system events only.
 
 ## 5. Example Snippets
 
@@ -2920,7 +2983,7 @@ Additional notes:
 - verify successful recovery reaches `payment_status = held`
 - verify repeat slotless direct bookings for the same client/task pair are allowed
 - verify provider can accept/decline/deliver and client can release after delivery
-- verify booking details show due date, delivery days, and management timeline correctly
+- verify booking details show due date, delivery days, and lifecycle actions correctly
 - verify legacy slot-based bookings still render safely when `slot_id` is present
 
 **Added in v2.13** — 2026-02-16

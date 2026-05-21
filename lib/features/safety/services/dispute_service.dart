@@ -39,7 +39,7 @@ class DisputeService {
           : null,
     };
 
-    await _client.rpc('rpc_submit_dispute', params: params);
+    await _client.rpc<dynamic>('rpc_submit_dispute', params: params);
 
     AppLogger.i(
       'Dispute submitted',

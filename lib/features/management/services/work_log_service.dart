@@ -22,7 +22,9 @@ class WorkLogService {
           .eq('related_entity_type', scope.entityType)
           .order('created_at', ascending: true);
 
-      return (response as List).map((e) => WorkLog.fromJson(e)).toList();
+      return (response as List)
+          .map((e) => WorkLog.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
     } on PostgrestException catch (e, st) {
       AppLogger.e(
         'Failed to fetch work logs',
@@ -104,7 +106,6 @@ class WorkLogService {
     return addLog(
       scope: scope,
       content: description,
-      isPrivate: false,
       metadata: {'type': eventType, ...additionalMetadata},
     );
   }

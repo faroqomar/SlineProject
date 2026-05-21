@@ -67,7 +67,7 @@ void main() {
           () => mockTaskService.getTaskById('task-1'),
         ).thenAnswer((_) async => _buildTask(userId: 'user-1'));
 
-        final vm = buildVm(userId: 'user-1');
+        final vm = buildVm();
         final result = await vm.validateTask();
 
         expect(result, isFalse);
@@ -77,9 +77,9 @@ void main() {
       test('returns true when task is valid', () async {
         when(
           () => mockTaskService.getTaskById('task-1'),
-        ).thenAnswer((_) async => _buildTask(userId: 'other-user'));
+        ).thenAnswer((_) async => _buildTask());
 
-        final vm = buildVm(userId: 'user-1');
+        final vm = buildVm();
         final result = await vm.validateTask();
 
         expect(result, isTrue);
@@ -104,7 +104,6 @@ void main() {
         when(() => mockController.checkBidReplaceability()).thenAnswer(
           (_) async => const BidReplaceabilityResult(
             isReplaceable: false,
-            existingBid: null,
           ),
         );
 
@@ -117,7 +116,7 @@ void main() {
       });
 
       test('returns pre-fill values when replaceable bid exists', () async {
-        final existingBid = _buildRequest(price: 5000, days: 7, note: 'test');
+        final existingBid = _buildRequest(note: 'test');
         when(() => mockController.checkBidReplaceability()).thenAnswer(
           (_) async => BidReplaceabilityResult(
             isReplaceable: true,
@@ -155,7 +154,6 @@ void main() {
             taskId: 'task-1',
             price: 100.0,
             days: 7,
-            note: null,
           ),
         ).thenAnswer((_) async => true);
 
@@ -172,7 +170,6 @@ void main() {
             taskId: 'task-1',
             price: 100.0,
             days: 7,
-            note: null,
           ),
         ).thenAnswer((_) async => false);
         when(() => mockController.errorMessage).thenReturn('Duplicate bid');
@@ -216,7 +213,6 @@ void main() {
             taskId: 'task-1',
             price: 100.0,
             days: 5,
-            note: null,
           ),
         ).thenAnswer((_) async => replaced);
         when(
@@ -236,7 +232,6 @@ void main() {
             taskId: 'task-1',
             price: 100.0,
             days: 5,
-            note: null,
           ),
         ).thenThrow(Exception('no longer open'));
 
@@ -257,7 +252,7 @@ void main() {
       });
 
       test('computes correct diff when bid exists', () async {
-        final existingBid = _buildRequest(price: 5000, days: 7);
+        final existingBid = _buildRequest();
         when(() => mockController.checkBidReplaceability()).thenAnswer(
           (_) async => BidReplaceabilityResult(
             isReplaceable: true,

@@ -91,7 +91,7 @@ class _ScaleButtonState extends State<ScaleButton>
     if (widget.callbackDelay == Duration.zero) {
       widget.onPressed!();
     } else {
-      Future.delayed(widget.callbackDelay, () {
+      Future<void>.delayed(widget.callbackDelay, () {
         if (mounted) widget.onPressed!();
       });
     }

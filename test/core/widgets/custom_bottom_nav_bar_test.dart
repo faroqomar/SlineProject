@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:sline_app/core/navigation/main_nav_destinations.dart';
 import 'package:sline_app/core/providers/navigation_provider.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/custom_bottom_nav_bar.dart';
@@ -57,7 +58,7 @@ void main() {
     testWidgets('T-CW112 active item shows label with full opacity', (
       tester,
     ) async {
-      await tester.pumpWidget(buildTestApp(initialIndex: 0));
+      await tester.pumpWidget(buildTestApp());
       await tester.pump();
 
       // "Home" should be visible (first tab is active)
@@ -67,7 +68,7 @@ void main() {
     testWidgets('T-CW112a uses Amber Dusk nav surface and active colors', (
       tester,
     ) async {
-      await tester.pumpWidget(buildTestApp(initialIndex: 0));
+      await tester.pumpWidget(buildTestApp());
       await tester.pump();
 
       final navTheme = AmberDuskTokens.widgetTheme.bottomNav;
@@ -97,11 +98,13 @@ void main() {
         );
       }
       final capsuleBox = capsuleDecoration;
-      expect(capsuleBox.color, navTheme.activeIconBackground);
+      expect(capsuleBox.color, isNull);
+      expect(capsuleBox.gradient, AmberDuskMaterial.activeWashGradient);
       expect(
         capsuleBox.borderRadius,
-        BorderRadius.circular(navTheme.activeIconRadius),
+        BorderRadius.circular(AppDimens.r18),
       );
+      expect(find.byKey(CustomBottomNavBar.activeRailKey), findsOneWidget);
     });
 
     testWidgets('T-CW113 has Semantics on each nav item', (tester) async {
@@ -137,7 +140,7 @@ void main() {
     testWidgets('T-CW115 renders compact Messages dot for zero count', (
       tester,
     ) async {
-      await tester.pumpWidget(buildTestApp(messagesNotificationCount: 0));
+      await tester.pumpWidget(buildTestApp());
       await tester.pump();
 
       final rustDots = tester.widgetList<Container>(find.byType(Container));
@@ -184,7 +187,7 @@ void main() {
       expect(rustDotCount, 0);
     });
 
-    testWidgets('keeps the nav bar above Android system navigation insets', (
+    testWidgets('uses Amber Dusk frame-edge nav offset without double insets', (
       tester,
     ) async {
       const bottomSystemInset = 34.0;
@@ -206,7 +209,7 @@ void main() {
           );
       expect(
         positioned.bottom,
-        AmberDuskTokens.phoneLayout.bottomNavBottom + bottomSystemInset,
+        AmberDuskTokens.phoneLayout.bottomNavBottom,
       );
     });
   });

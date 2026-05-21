@@ -117,7 +117,6 @@ class RequestTile extends StatelessWidget {
                 if (request.isPending && !isExpired)
                   ExpirationBadge(
                     expirationTime: request.expirationTime,
-                    size: CountdownSize.small,
                   ),
                 // Show expired badge for expired bids
                 if (isExpired)
@@ -151,8 +150,8 @@ class RequestTile extends StatelessWidget {
                         tooltip: pending ? null : 'Add to favorites',
                         icon: pending
                             ? const SizedBox(
-                                width: 24,
-                                height: 24,
+                                width: AppDimens.p24,
+                                height: AppDimens.p24,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                 ),

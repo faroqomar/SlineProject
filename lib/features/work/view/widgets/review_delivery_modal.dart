@@ -155,7 +155,7 @@ class _ReviewDeliveryModalState extends State<ReviewDeliveryModal> {
                 AppButton(
                   text: 'Request Changes',
                   isPrimary: false,
-                  onPressed: widget.canRequestRevision
+                  onPressed: widget.canRequestRevision && !_isLoading
                       ? () => setState(() => _mode = _ReviewMode.rejecting)
                       : null,
                 ),

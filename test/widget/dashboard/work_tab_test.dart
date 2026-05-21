@@ -46,8 +46,8 @@ WorkItem _buildWorkItem({
     counterpartyRole: 'Client',
     statusRaw: statusRaw,
     statusUiBucket: statusUiBucket,
-    createdAt: DateTime.utc(2026, 3, 1, 10, 0),
-    lastUpdate: DateTime.utc(2026, 3, 1, 11, 0),
+    createdAt: DateTime.utc(2026, 3, 1, 10),
+    lastUpdate: DateTime.utc(2026, 3, 1, 11),
     primaryActionType: canReview
         ? PrimaryActionType.reviewDelivery
         : PrimaryActionType.viewDetails,
@@ -171,6 +171,27 @@ void main() {
 
       expect(progress.value, 1);
       expect(status.style?.color, AmberDuskTokens.colors.text);
+    });
+
+    testWidgets('public work cards hide explicit unsafe titles', (
+      tester,
+    ) async {
+      final vm = _MockDashboardViewModel();
+      final unsafeItem = _buildWorkItem(
+        id: 'unsafe-title',
+        title: 'suck my cock',
+        canReview: false,
+      );
+
+      when(() => vm.activeWork).thenReturn([unsafeItem]);
+      when(() => vm.deliveredWork).thenReturn(const []);
+      when(() => vm.completedWork).thenReturn(const []);
+      when(() => vm.cancelledWork).thenReturn(const []);
+
+      await _pumpWorkTab(tester, vm);
+
+      expect(find.text('suck my cock'), findsNothing);
+      expect(find.text('Content under review'), findsOneWidget);
     });
   });
 }

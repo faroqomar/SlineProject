@@ -35,7 +35,7 @@ PostgrestFilterBuilder<T> _applyFilters<T>(
 ) {
   var filtered = query;
   for (final entry in filters.entries) {
-    filtered = filtered.eq(entry.key, entry.value);
+    filtered = filtered.eq(entry.key, entry.value as Object);
   }
   return filtered;
 }

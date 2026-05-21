@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/features/chat/models/conversation_model.dart';
 import 'package:sline_app/features/chat/view/messages_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
@@ -17,16 +19,20 @@ Conversation _conversation({
   required String name,
   required String lastMessage,
   String? lastMessageSenderId,
+  String? taskTitle,
+  String? taskType,
 }) {
   return Conversation(
     id: id,
     user1Id: 'user-1',
     user2Id: 'user-2',
-    createdAt: DateTime.utc(2026, 5, 1),
+    createdAt: DateTime.utc(2026, 5),
     otherUserName: name,
     lastMessage: lastMessage,
     lastMessageSenderId: lastMessageSenderId,
     lastMessageTime: DateTime.utc(2026, 5, 1, 12),
+    taskTitle: taskTitle,
+    taskType: taskType,
   );
 }
 
@@ -75,7 +81,8 @@ void main() {
         isLoadingConversations: true,
       );
 
-      expect(find.text('Messages'), findsOneWidget);
+      expect(find.text('Conversations'), findsOneWidget);
+      expect(find.byType(AmberDuskBackground), findsOneWidget);
     });
 
     testWidgets(
@@ -153,15 +160,120 @@ void main() {
         ],
       );
 
-      await tester.tap(find.byIcon(Icons.search_rounded));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'prototype');
+      await tester.enterText(
+        find.byKey(const ValueKey('messages_search_field')),
+        'prototype',
+      );
       // Wait past the MessagesScreen search debounce after typing in the
       // search TextField so the filtered conversation list has rebuilt.
       await tester.pump(const Duration(milliseconds: 350));
 
       expect(find.text('Yara Designer'), findsOneWidget);
       expect(find.text('Omar Finance'), findsNothing);
+    });
+
+    testWidgets('conversation list clears floating bottom navigation', (
+      tester,
+    ) async {
+      final vm = _MockChatViewModel();
+      await _pumpMessagesScreen(
+        tester,
+        vm,
+        conversations: [
+          _conversation(
+            id: 'last-visible',
+            name: 'Zahraa Firas',
+            lastMessage: 'Ready',
+          ),
+        ],
+      );
+
+      final paddingWidgets = tester.widgetList<SliverPadding>(
+        find.byType(SliverPadding),
+      );
+      final conversationListPadding = paddingWidgets
+          .map((widget) => widget.padding)
+          .whereType<EdgeInsets>()
+          .firstWhere(
+            (padding) =>
+                padding.left ==
+                AmberDuskTokens.spacing.contentHorizontalPadding,
+          );
+
+      // The inbox lives behind the app shell Stack, so its scrollable content
+      // must reserve the floating nav band even when the test safe area is 0.
+      expect(
+        conversationListPadding.bottom,
+        equals(
+          AmberDuskTokens.phoneLayout.bottomNavBottom +
+              AmberDuskTokens.phoneLayout.bottomNavHeight +
+              AppLayout.spacingScreen,
+        ),
+      );
+    });
+
+    testWidgets('empty linked task rows explain the context', (tester) async {
+      final vm = _MockChatViewModel();
+      await _pumpMessagesScreen(
+        tester,
+        vm,
+        conversations: [
+          _conversation(
+            id: 'task-empty',
+            name: 'Test One',
+            lastMessage: '',
+            taskTitle: 'i will market your campaign',
+          ),
+        ],
+      );
+
+      expect(find.text('Linked task - no messages yet'), findsOneWidget);
+      expect(find.text('No messages yet'), findsNothing);
+    });
+
+    testWidgets('conversation rows sit inside one organized inbox panel', (
+      tester,
+    ) async {
+      final vm = _MockChatViewModel();
+      await _pumpMessagesScreen(
+        tester,
+        vm,
+        conversations: [
+          _conversation(
+            id: 'read-thread',
+            name: 'Eros Gray',
+            lastMessage: 'hi',
+            taskTitle: 'Outdoor Personal Photo Session',
+          ),
+          _conversation(
+            id: 'next-thread',
+            name: 'Zahraa Firas',
+            lastMessage: 'Ready',
+          ),
+        ],
+      );
+
+      final panel = tester.widget<Container>(
+        find.byKey(const ValueKey('message_conversation_panel')),
+      );
+      final panelDecoration = panel.decoration;
+      final row = tester.widget<AnimatedContainer>(
+        find.byKey(const ValueKey('message_conversation_row_read-thread')),
+      );
+      final rowDecoration = row.decoration;
+
+      // A single panel gives the inbox shape while read rows stay transparent
+      // inside it, avoiding repeated background blocks.
+      expect(panelDecoration, isA<BoxDecoration>());
+      expect(rowDecoration, isA<BoxDecoration>());
+      expect(
+        (rowDecoration! as BoxDecoration).color,
+        equals(AmberDuskColors.transparent),
+      );
+      expect(
+        find.byKey(const ValueKey('message_conversation_divider_read-thread')),
+        findsOneWidget,
+      );
     });
   });
 }

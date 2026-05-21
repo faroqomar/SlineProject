@@ -86,5 +86,18 @@ void main() {
         'txn-3',
       );
     });
+
+    test('uses singular activity caption for one item', () {
+      final singleActivitySummary = buildWalletPresentationSummary(
+        balance: balance,
+        activities: [activities.first],
+        now: DateTime.utc(2026, 3, 11, 12),
+      );
+
+      expect(
+        singleActivitySummary.activityCaption,
+        'Based on your latest 1 wallet entry',
+      );
+    });
   });
 }

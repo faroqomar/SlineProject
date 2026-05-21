@@ -1,10 +1,12 @@
 // Expiration countdown widget for pending task request bids.
-// Shows time remaining with color transitions (green → yellow → red).
+// Shows time remaining with color transitions (teal → gold → red).
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
 
 /// Countdown state determining color and urgency level.
 enum CountdownState {
@@ -120,13 +122,13 @@ class _ExpirationCountdownState extends State<ExpirationCountdown> {
   Color get _stateColor {
     switch (_state) {
       case CountdownState.safe:
-        return Colors.green;
+        return AppColors.teal;
       case CountdownState.warning:
         return AppColors.gold;
       case CountdownState.urgent:
         return AppColors.lightRed;
       case CountdownState.expired:
-        return Colors.grey;
+        return AppColors.mediumGrey;
     }
   }
 
@@ -182,11 +184,20 @@ class _ExpirationCountdownState extends State<ExpirationCountdown> {
   EdgeInsets get _padding {
     switch (widget.size) {
       case CountdownSize.small:
-        return const EdgeInsets.symmetric(horizontal: 6, vertical: 2);
+        return const EdgeInsets.symmetric(
+          horizontal: AppDimens.p6,
+          vertical: AppDimens.p2,
+        );
       case CountdownSize.medium:
-        return const EdgeInsets.symmetric(horizontal: 8, vertical: 4);
+        return const EdgeInsets.symmetric(
+          horizontal: AppDimens.p8,
+          vertical: AppDimens.p4,
+        );
       case CountdownSize.large:
-        return const EdgeInsets.symmetric(horizontal: 12, vertical: 6);
+        return const EdgeInsets.symmetric(
+          horizontal: AppDimens.p12,
+          vertical: AppDimens.p6,
+        );
     }
   }
 
@@ -199,7 +210,7 @@ class _ExpirationCountdownState extends State<ExpirationCountdown> {
         decoration: BoxDecoration(
           color: _stateColor.withValues(alpha: 0.1),
           border: Border.all(color: _stateColor.withValues(alpha: 0.3)),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppDimens.r8),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -210,7 +221,11 @@ class _ExpirationCountdownState extends State<ExpirationCountdown> {
                 size: _iconSize,
                 color: _stateColor,
               ),
-              SizedBox(width: widget.size == CountdownSize.small ? 2 : 4),
+              SizedBox(
+                width: widget.size == CountdownSize.small
+                    ? AppDimens.p2
+                    : AppDimens.p4,
+              ),
             ],
             Text(
               _timeText,
@@ -247,30 +262,33 @@ class ExpirationBadge extends StatelessWidget {
 
     Color color;
     if (isExpired) {
-      color = Colors.grey;
+      color = AppColors.mediumGrey;
     } else if (remaining.inHours < 1) {
       color = AppColors.lightRed;
     } else if (remaining.inHours < 4) {
       color = AppColors.gold;
     } else {
-      color = Colors.green;
+      color = AppColors.teal;
     }
 
     if (isExpired) {
       return Chip(
-        label: const Text('Expired', style: TextStyle(fontSize: 10)),
-        backgroundColor: Colors.grey.withValues(alpha: 0.2),
-        labelStyle: const TextStyle(color: Colors.grey),
+        label: Text('Expired', style: AppTypography.micro),
+        backgroundColor: AppColors.mediumGrey.withValues(alpha: 0.2),
+        labelStyle: AppTypography.micro.copyWith(color: AppColors.mediumGrey),
         padding: EdgeInsets.zero,
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       );
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.p6,
+        vertical: AppDimens.p2,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppDimens.r4),
       ),
       child: Text(
         _formatDuration(remaining),

@@ -136,7 +136,7 @@ class _ChatScreenState extends State<ChatScreen> {
         unawaited(_chatCtrl.fetchMessages(widget.conversation.id));
         unawaited(_chatCtrl.subscribeToActiveConversation());
         if (!mounted) return;
-        await _chatCtrl.markReceiptsForActive(delivered: true, seen: true);
+        await _chatCtrl.markReceiptsForActive(seen: true);
         // Scroll to bottom on initial load so the user sees the latest messages
         if (mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -150,10 +150,12 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void dispose() {
     AppLogger.d('ChatScreen: closed conversation', tag: 'Chat');
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    _messageController.removeListener(_onTextChanged);
-    _messageController.dispose();
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
+    _messageController
+      ..removeListener(_onTextChanged)
+      ..dispose();
     if (widget.enableLifecycleEffects) {
       _chatCtrl.unsubscribeFromConversation();
     }
@@ -359,270 +361,290 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: amberColors.page,
       body: ColoredBox(
         color: amberColors.page,
-        child: Stack(
+        child: Column(
           children: [
-            // ── Messages List ──────────────────────────────────────
-            Positioned.fill(
-              child: Consumer<ChatViewModel>(
-                builder: (context, controller, child) {
-                  final messages = controller.currentMessages;
+            // Header owns its vertical space so the linked task context cannot
+            // float over the date separator or the first message.
+            _buildHeader(context),
 
-                  // Auto-scroll: two cases —
-                  // 1) Initial load (previousCount was 0, now messages arrived):
-                  //    always scroll to bottom so user sees latest messages.
-                  // 2) New messages while viewing (previousCount > 0, count grew):
-                  //    only scroll if user is near the bottom (within 300px).
-                  if (messages.length > _previousMessageCount) {
-                    final wasEmpty = _previousMessageCount == 0;
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (!mounted || !_scrollController.hasClients) return;
-                      if (wasEmpty) {
-                        // Initial load — always scroll to bottom
-                        _scrollToBottom();
-                      } else {
-                        final maxScroll =
-                            _scrollController.position.maxScrollExtent;
-                        final currentScroll = _scrollController.offset;
-                        if (maxScroll - currentScroll < 300) {
-                          _scrollToBottom();
-                        }
-                      }
-                    });
-                  }
-                  _previousMessageCount = messages.length;
+            // The message viewport is the only stacked region. This keeps the
+            // scroll FAB layered over messages without layering the header.
+            Expanded(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Consumer<ChatViewModel>(
+                      builder: (context, controller, child) {
+                        final messages = controller.currentMessages;
 
-                  // Loading state — show a centered spinner while messages
-                  // are being fetched. This runs when the screen navigates
-                  // instantly and fetchMessages() hasn't resolved yet.
-                  if (messages.isEmpty && controller.isLoadingMessages) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 120),
-                        child: SizedBox(
-                          width: 28,
-                          height: 28,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: amberColors.primary,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-
-                  // Empty state — no messages and not loading
-                  if (messages.isEmpty) {
-                    return _buildEmptyState();
-                  }
-
-                  final chatItems = _buildChatItems(messages);
-
-                  return Semantics(
-                    label: 'Chat messages',
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      // Bottom padding 140px — leaves room for the input bar (~80px)
-                      // plus typing indicator + safe area so the last message doesn't
-                      // sit flush against the input row.
-                      padding: const EdgeInsets.fromLTRB(
-                        AppLayout.spacingSection,
-                        AppDimens.p100,
-                        AppLayout.spacingSection,
-                        140,
-                      ),
-                      itemCount: chatItems.length,
-                      itemBuilder: (context, index) {
-                        final item = chatItems[index];
-
-                        // Date separator
-                        if (item is _DateSeparatorItem) {
-                          return _buildDateSeparator(item.date);
-                        }
-
-                        // Message item
-                        final msgItem = item as _MessageItem;
-                        final msg = msgItem.message;
-                        final isMine = (me != null) && msg.senderId == me;
-                        final status =
-                            controller.isPresenceReceiptsEnabled && isMine
-                            ? (msg.seenAt != null
-                                  ? 'read'
-                                  : (msg.deliveredAt != null
-                                        ? 'delivered'
-                                        : 'sent'))
-                            : (isMine ? 'sent' : null);
-
-                        // Offer messages (structured or legacy JSON)
-                        if (msg.messageType == MessageType.offer ||
-                            msg.content.trim().startsWith('{"type":"offer"')) {
-                          var offerData = <String, dynamic>{};
-                          if (msg.messageType == MessageType.offer) {
-                            offerData = msg.payload;
-                          } else {
-                            try {
-                              offerData = jsonDecode(msg.content);
-                            } on Object catch (e, st) {
-                              _logError(
-                                'Failed to decode legacy offer JSON',
-                                e,
-                                st,
-                              );
+                        // Auto-scroll: two cases —
+                        // 1) Initial load (previousCount was 0, now messages arrived):
+                        //    always scroll to bottom so user sees latest messages.
+                        // 2) New messages while viewing (previousCount > 0, count grew):
+                        //    only scroll if user is near the bottom (within 300px).
+                        if (messages.length > _previousMessageCount) {
+                          final wasEmpty = _previousMessageCount == 0;
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (!mounted || !_scrollController.hasClients) {
+                              return;
                             }
-                          }
-
-                          if (offerData.isNotEmpty) {
-                            final offerId = offerData['offer_id'] as String?;
-                            final rawStatus =
-                                controller.getOfferStatus(offerId) ??
-                                offerData['status']?.toString() ??
-                                'sent';
-                            return OfferMessageBubble(
-                              title: offerData['title'] ?? '',
-                              description: offerData['description'] ?? '',
-                              price: offerData['price']?.toString() ?? '0',
-                              deliveryDays: ChatOfferPayload.daysFromPayload(
-                                offerData,
-                              ).toString(),
-                              status: _parseOfferStatus(rawStatus),
-                              isMine: isMine,
-                              time: formatFriendlyTime(msg.createdAt),
-                              onAccept: () =>
-                                  _onAcceptOffer(context, msg, offerData),
-                              onDecline: () => _chatCtrl.rejectOffer(msg),
-                              offerId: offerId,
-                              rawStatus: rawStatus,
-                              onCancel: offerId != null
-                                  ? () => _chatCtrl.cancelOffer(offerId)
-                                  : null,
-                              onDeliver: offerId != null
-                                  ? () => _chatCtrl.markOfferDelivered(offerId)
-                                  : null,
-                              onComplete: offerId != null
-                                  ? () => _chatCtrl.completeOffer(offerId)
-                                  : null,
-                            );
-                          }
+                            if (wasEmpty) {
+                              // Initial load — always scroll to bottom
+                              _scrollToBottom();
+                            } else {
+                              final maxScroll =
+                                  _scrollController.position.maxScrollExtent;
+                              final currentScroll = _scrollController.offset;
+                              if (maxScroll - currentScroll < 300) {
+                                _scrollToBottom();
+                              }
+                            }
+                          });
                         }
+                        _previousMessageCount = messages.length;
 
-                        // Image attachments
-                        final hasImage =
-                            (msg.attachmentType == 'image') &&
-                            (msg.attachmentUrl != null &&
-                                msg.attachmentUrl!.isNotEmpty);
-
-                        if (hasImage) {
-                          return _wrapWithInteractions(
-                            message: msg,
-                            isMine: isMine,
-                            isAttachment: true,
-                            child: AttachmentMessageTile(
-                              isMine: isMine,
-                              storagePath: msg.attachmentUrl!,
-                              time: formatFriendlyTime(msg.createdAt),
-                              caption: msg.content != '[photo]'
-                                  ? msg.content
-                                  : null,
-                              signedUrlResolver:
-                                  widget.attachmentSignedUrlResolver ??
-                                  _chatCtrl.resolveAttachmentSignedUrl,
+                        // Loading state — show a centered spinner while messages
+                        // are being fetched. This runs when the screen navigates
+                        // instantly and fetchMessages() hasn't resolved yet.
+                        if (messages.isEmpty && controller.isLoadingMessages) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: AppDimens.p120,
+                              ),
+                              child: SizedBox(
+                                width: AppDimens.p28,
+                                height: AppDimens.p28,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: amberColors.primary,
+                                ),
+                              ),
                             ),
                           );
                         }
 
-                        // Regular text messages with grouping + swipe-to-reply + long-press menu.
-                        // Check client-side reply map for quoted context.
-                        final repliedTo = _replyMap[msg.id];
-                        return _wrapWithInteractions(
-                          message: msg,
-                          isMine: isMine,
-                          child: MessageBubble(
-                            text: msg.content,
-                            time: formatFriendlyTime(msg.createdAt),
-                            isMine: isMine,
-                            status: isMine ? status : null,
-                            isFirstInGroup: msgItem.isFirstInGroup,
-                            isLastInGroup: msgItem.isLastInGroup,
-                            replyToSender: repliedTo != null
-                                ? (repliedTo.senderId == me
-                                      ? 'You'
-                                      : widget.conversation.otherUserName ??
-                                            'User')
-                                : null,
-                            replyToText: repliedTo?.content,
+                        // Empty state — no messages and not loading
+                        if (messages.isEmpty) {
+                          return _buildEmptyState();
+                        }
+
+                        final chatItems = _buildChatItems(messages);
+
+                        return Semantics(
+                          label: 'Chat messages',
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            // Header and composer are now in the column flow, so the
+                            // list only needs rhythm padding around its own content.
+                            padding: const EdgeInsets.fromLTRB(
+                              AppLayout.spacingSection,
+                              AppLayout.spacingStandard,
+                              AppLayout.spacingSection,
+                              AppLayout.spacingScreen,
+                            ),
+                            itemCount: chatItems.length,
+                            itemBuilder: (context, index) {
+                              final item = chatItems[index];
+
+                              // Date separator
+                              if (item is _DateSeparatorItem) {
+                                return _buildDateSeparator(item.date);
+                              }
+
+                              // Message item
+                              final msgItem = item as _MessageItem;
+                              final msg = msgItem.message;
+                              final isMine = (me != null) && msg.senderId == me;
+                              final status =
+                                  controller.isPresenceReceiptsEnabled && isMine
+                                  ? (msg.seenAt != null
+                                        ? 'read'
+                                        : (msg.deliveredAt != null
+                                              ? 'delivered'
+                                              : 'sent'))
+                                  : (isMine ? 'sent' : null);
+
+                              // Offer messages (structured or legacy JSON)
+                              if (msg.messageType == MessageType.offer ||
+                                  msg.content.trim().startsWith(
+                                    '{"type":"offer"',
+                                  )) {
+                                var offerData = <String, dynamic>{};
+                                if (msg.messageType == MessageType.offer) {
+                                  offerData = msg.payload;
+                                } else {
+                                  try {
+                                    offerData = Map<String, dynamic>.from(
+                                      jsonDecode(msg.content) as Map,
+                                    );
+                                  } on Object catch (e, st) {
+                                    _logError(
+                                      'Failed to decode legacy offer JSON',
+                                      e,
+                                      st,
+                                    );
+                                  }
+                                }
+
+                                if (offerData.isNotEmpty) {
+                                  final offerId =
+                                      offerData['offer_id'] as String?;
+                                  final rawStatus =
+                                      controller.getOfferStatus(offerId) ??
+                                      offerData['status']?.toString() ??
+                                      'sent';
+                                  return OfferMessageBubble(
+                                    title: offerData['title']?.toString() ?? '',
+                                    description:
+                                        offerData['description']?.toString() ??
+                                        '',
+                                    price:
+                                        offerData['price']?.toString() ?? '0',
+                                    deliveryDays:
+                                        ChatOfferPayload.daysFromPayload(
+                                          offerData,
+                                        ).toString(),
+                                    status: _parseOfferStatus(rawStatus),
+                                    isMine: isMine,
+                                    time: formatFriendlyTime(msg.createdAt),
+                                    onAccept: () =>
+                                        _onAcceptOffer(context, msg, offerData),
+                                    onDecline: () => _chatCtrl.rejectOffer(msg),
+                                    offerId: offerId,
+                                    rawStatus: rawStatus,
+                                    onCancel: offerId != null
+                                        ? () => _chatCtrl.cancelOffer(offerId)
+                                        : null,
+                                    onDeliver: offerId != null
+                                        ? () => _chatCtrl.markOfferDelivered(
+                                            offerId,
+                                          )
+                                        : null,
+                                    onComplete: offerId != null
+                                        ? () => _chatCtrl.completeOffer(offerId)
+                                        : null,
+                                  );
+                                }
+                              }
+
+                              // Image attachments
+                              final hasImage =
+                                  (msg.attachmentType == 'image') &&
+                                  (msg.attachmentUrl != null &&
+                                      msg.attachmentUrl!.isNotEmpty);
+
+                              if (hasImage) {
+                                return _wrapWithInteractions(
+                                  message: msg,
+                                  isMine: isMine,
+                                  isAttachment: true,
+                                  child: AttachmentMessageTile(
+                                    isMine: isMine,
+                                    storagePath: msg.attachmentUrl!,
+                                    time: formatFriendlyTime(msg.createdAt),
+                                    caption: msg.content != '[photo]'
+                                        ? msg.content
+                                        : null,
+                                    signedUrlResolver:
+                                        widget.attachmentSignedUrlResolver ??
+                                        _chatCtrl.resolveAttachmentSignedUrl,
+                                  ),
+                                );
+                              }
+
+                              // Regular text messages with grouping + swipe-to-reply + long-press menu.
+                              // Check client-side reply map for quoted context.
+                              final repliedTo = _replyMap[msg.id];
+                              return _wrapWithInteractions(
+                                message: msg,
+                                isMine: isMine,
+                                child: MessageBubble(
+                                  text: msg.content,
+                                  time: formatFriendlyTime(msg.createdAt),
+                                  isMine: isMine,
+                                  status: isMine ? status : null,
+                                  isFirstInGroup: msgItem.isFirstInGroup,
+                                  isLastInGroup: msgItem.isLastInGroup,
+                                  replyToSender: repliedTo != null
+                                      ? (repliedTo.senderId == me
+                                            ? 'You'
+                                            : widget
+                                                      .conversation
+                                                      .otherUserName ??
+                                                  'User')
+                                      : null,
+                                  replyToText: repliedTo?.content,
+                                ),
+                              );
+                            },
                           ),
                         );
                       },
                     ),
-                  );
-                },
-              ),
-            ),
+                  ),
 
-            // ── Header ─────────────────────────────────────────────
-            Positioned(top: 0, left: 0, right: 0, child: _buildHeader(context)),
-
-            // ── Input Area ─────────────────────────────────────────
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: _buildInputArea(context),
-            ),
-
-            // ── Scroll-to-bottom FAB ───────────────────────────────
-            // Always kept in the widget tree so AnimatedSlide/AnimatedOpacity
-            // exit animations can play. Visibility is driven purely by the
-            // animation values: slide offscreen and fade to 0 when hidden.
-            // IgnorePointer prevents taps when the FAB is not visible.
-            Positioned(
-              // Position above input area: compact button + section spacing + extra
-              bottom:
-                  AppLayout.buttonHeightCompact +
-                  AppLayout.spacingSection +
-                  AppLayout.spacingSection,
-              right: AppLayout.spacingSection,
-              child: IgnorePointer(
-                // Block taps when the FAB is not showing
-                ignoring: !(_showScrollFab && !keyboardOpen),
-                child: Semantics(
-                  button: true,
-                  label: 'Scroll to latest messages',
-                  child: AnimatedSlide(
-                    duration: AppMotion.standard,
-                    curve: AppMotion.curveDecel,
-                    // Slide down out of view when hidden
-                    offset: (_showScrollFab && !keyboardOpen)
-                        ? Offset.zero
-                        : const Offset(0, 1),
-                    child: AnimatedOpacity(
-                      duration: AppMotion.fast,
-                      opacity: (_showScrollFab && !keyboardOpen) ? 1.0 : 0.0,
-                      child: GestureDetector(
-                        onTap: _scrollToBottom,
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: amberColors.surfaceRaised,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: amberColors.surfaceHighest,
+                  // ── Scroll-to-bottom FAB ───────────────────────────────
+                  // Always kept in the widget tree so AnimatedSlide/AnimatedOpacity
+                  // exit animations can play. Visibility is driven purely by the
+                  // animation values: slide offscreen and fade to 0 when hidden.
+                  // IgnorePointer prevents taps when the FAB is not visible.
+                  Positioned(
+                    // Composer is outside the message viewport, so this offset
+                    // only needs to clear the viewport edge.
+                    bottom: AppLayout.spacingSection,
+                    right: AppLayout.spacingSection,
+                    child: IgnorePointer(
+                      // Block taps when the FAB is not showing
+                      ignoring: !(_showScrollFab && !keyboardOpen),
+                      child: Semantics(
+                        button: true,
+                        label: 'Scroll to latest messages',
+                        child: AnimatedSlide(
+                          duration: AppMotion.standard,
+                          curve: AppMotion.curveDecel,
+                          // Slide down out of view when hidden
+                          offset: (_showScrollFab && !keyboardOpen)
+                              ? Offset.zero
+                              : const Offset(0, 1),
+                          child: AnimatedOpacity(
+                            duration: AppMotion.fast,
+                            opacity: (_showScrollFab && !keyboardOpen)
+                                ? 1.0
+                                : 0.0,
+                            child: GestureDetector(
+                              onTap: _scrollToBottom,
+                              child: Container(
+                                width: AppLayout.buttonHeightSmall,
+                                height: AppLayout.buttonHeightSmall,
+                                decoration: BoxDecoration(
+                                  color: amberColors.surfaceRaised,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: amberColors.surfaceHighest,
+                                  ),
+                                  // Elevation level 2 — subtle lift for scroll-to-bottom FAB
+                                  boxShadow: AppDecorations.elevation(2),
+                                ),
+                                child: Icon(
+                                  Icons.keyboard_arrow_down,
+                                  color: amberColors.text,
+                                  size: AppLayout.iconStandard,
+                                ),
+                              ),
                             ),
-                            // Elevation level 2 — subtle lift for scroll-to-bottom FAB
-                            boxShadow: AppDecorations.elevation(2),
-                          ),
-                          child: Icon(
-                            Icons.keyboard_arrow_down,
-                            color: amberColors.text,
-                            size: AppLayout.iconStandard,
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
+
+            // Composer also owns its vertical space, matching the Open Design
+            // chat-body/composer split and preventing bottom message overlap.
+            _buildInputArea(context),
           ],
         ),
       ),
@@ -794,6 +816,19 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     PopupMenuButton<String>(
                       icon: Icon(Icons.more_vert, color: amberColors.text),
+                      color: amberColors.surfaceRaised,
+                      elevation: AppDimens.p8,
+                      offset: const Offset(-AppDimens.p16, AppDimens.p8),
+                      position: PopupMenuPosition.under,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppDimens.r18,
+                        ),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: AppDimens.p120 + AppDimens.p100,
+                        maxWidth: AppDimens.p120 + AppDimens.p140,
+                      ),
                       onSelected: (value) {
                         if (value == 'report_chat') {
                           unawaited(_reportConversation(context));
@@ -801,14 +836,26 @@ class _ChatScreenState extends State<ChatScreen> {
                           unawaited(_reportUser(context));
                         }
                       },
-                      itemBuilder: (_) => const [
+                      itemBuilder: (_) => [
                         PopupMenuItem(
                           value: 'report_chat',
-                          child: Text('Report Conversation'),
+                          child: _ReportMenuItem(
+                            icon: Icons.flag_outlined,
+                            label: 'Report conversation',
+                            description: 'Message thread issue',
+                            color: amberColors.danger,
+                          ),
                         ),
                         PopupMenuItem(
                           value: 'report_user',
-                          child: Text('Report User'),
+                          child: _ReportMenuItem(
+                            icon: Icons.person_off_outlined,
+                            label: 'Report user',
+                            description:
+                                widget.conversation.otherUserName ??
+                                'Account issue',
+                            color: amberColors.danger,
+                          ),
                         ),
                       ],
                     ),
@@ -918,7 +965,11 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                     onChanged: (value) {
-                      unawaited(_chatCtrl.setTyping(value.trim().isNotEmpty));
+                      unawaited(
+                        _chatCtrl.setTyping(
+                          isTyping: value.trim().isNotEmpty,
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -1160,7 +1211,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     margin: const EdgeInsets.only(bottom: AppDimens.p8),
                     decoration: BoxDecoration(
                       color: amberColors.surfaceHighest,
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(AppDimens.r2),
                     ),
                   ),
                   // Copy option — available when message has copyable text
@@ -1273,9 +1324,12 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _reportConversation(BuildContext context) async {
+    final targetName = widget.conversation.otherUserName ?? 'this chat';
     final reason = await _showReasonDialog(
       context,
       title: 'Report Conversation',
+      targetLabel: 'Conversation with $targetName',
+      helperText: 'Tell us what happened in this thread.',
     );
     if (!context.mounted || reason == null) return;
     final vm = context.read<SafetyViewModel>();
@@ -1300,7 +1354,13 @@ class _ChatScreenState extends State<ChatScreen> {
     final targetUserId = widget.conversation.user1Id == me
         ? widget.conversation.user2Id
         : widget.conversation.user1Id;
-    final reason = await _showReasonDialog(context, title: 'Report User');
+    final targetName = widget.conversation.otherUserName ?? 'this user';
+    final reason = await _showReasonDialog(
+      context,
+      title: 'Report User',
+      targetLabel: targetName,
+      helperText: 'Tell us what this account did.',
+    );
     if (!context.mounted || reason == null) return;
     final vm = context.read<SafetyViewModel>();
     final ok = await vm.submitReport(
@@ -1321,40 +1381,237 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<String?> _showReasonDialog(
     BuildContext context, {
     required String title,
+    required String targetLabel,
+    required String helperText,
   }) async {
-    var draftReason = '';
     final amberColors = context.amberColors;
-    final result = await showDialog<String>(
+    return showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          maxLines: 4,
-          onChanged: (value) => draftReason = value,
-          decoration: const InputDecoration(
-            hintText: 'Describe the issue',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(foregroundColor: amberColors.muted),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, draftReason.trim()),
-            style: FilledButton.styleFrom(
-              backgroundColor: amberColors.primary,
-              foregroundColor: amberColors.textInverse,
-            ),
-            child: const Text('Submit'),
-          ),
-        ],
+      barrierColor: amberColors.scrim,
+      builder: (_) => _ReportReasonDialog(
+        title: title,
+        targetLabel: targetLabel,
+        helperText: helperText,
       ),
     );
-    if (result == null || result.isEmpty) return null;
-    return result;
+  }
+}
+
+/// Compact overflow menu row for chat safety actions.
+///
+/// The row gives report actions a warning role without making them look like
+/// normal navigation commands.
+class _ReportMenuItem extends StatelessWidget {
+  /// Creates a menu action with an icon, label, and short context line.
+  const _ReportMenuItem({
+    required this.icon,
+    required this.label,
+    required this.description,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String description;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final amberColors = context.amberColors;
+
+    return Row(
+      children: [
+        Icon(icon, color: color, size: AppDimens.iconSmall),
+        const SizedBox(width: AppDimens.p12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: AmberDuskTokens.typography.body.copyWith(
+                  color: amberColors.text,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: AppDimens.p2),
+              Text(
+                description,
+                style: AppTypography.caption.copyWith(
+                  color: amberColors.textSubtle,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Amber Dusk report prompt that validates the reason before submission.
+///
+/// Keeping the prompt state local prevents empty report submissions while the
+/// parent screen continues to own the SafetyViewModel call.
+class _ReportReasonDialog extends StatefulWidget {
+  /// Creates a report prompt for a specific safety target.
+  const _ReportReasonDialog({
+    required this.title,
+    required this.targetLabel,
+    required this.helperText,
+  });
+
+  final String title;
+  final String targetLabel;
+  final String helperText;
+
+  @override
+  State<_ReportReasonDialog> createState() => _ReportReasonDialogState();
+}
+
+class _ReportReasonDialogState extends State<_ReportReasonDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  bool get _canSubmit => _controller.text.trim().isNotEmpty;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final amberColors = context.amberColors;
+    final viewInsets = MediaQuery.viewInsetsOf(context);
+    final dialogMaxWidth = MediaQuery.sizeOf(context).width.clamp(
+      0.0,
+      AppDimens.dialogMaxWidth,
+    );
+
+    return SafeArea(
+      child: AnimatedPadding(
+        // Match the keyboard inset so the action row stays reachable.
+        duration: AppMotion.standard,
+        curve: AppMotion.curveDecel,
+        padding: EdgeInsets.fromLTRB(
+          AppDimens.p20,
+          AppDimens.p24,
+          AppDimens.p20,
+          AppDimens.p24 + viewInsets.bottom,
+        ),
+        child: Align(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: dialogMaxWidth),
+            child: Material(
+              color: amberColors.surfaceRaised,
+              borderRadius: BorderRadius.circular(AppDimens.r24),
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimens.p24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                        color: amberColors.text,
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.p8),
+                    Text(
+                      widget.targetLabel,
+                      style: AppTypography.captionBold.copyWith(
+                        color: amberColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.p4),
+                    Text(
+                      widget.helperText,
+                      style: AppTypography.caption.copyWith(
+                        color: amberColors.textSubtle,
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.p18),
+                    TextField(
+                      controller: _controller,
+                      autofocus: true,
+                      minLines: 4,
+                      maxLines: 5,
+                      onChanged: (_) => setState(() {}),
+                      style: AmberDuskTokens.typography.body.copyWith(
+                        color: amberColors.text,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Describe the issue',
+                        hintStyle: AmberDuskTokens.typography.body.copyWith(
+                          color: amberColors.muted,
+                        ),
+                        filled: true,
+                        fillColor: AmberDuskWidgetTheme.fieldSurface,
+                        contentPadding: const EdgeInsets.all(AppDimens.p16),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppDimens.r18),
+                          borderSide: BorderSide(color: amberColors.overlay),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppDimens.r18),
+                          borderSide: BorderSide(color: amberColors.primary),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.p20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              foregroundColor: amberColors.textSubtle,
+                              textStyle: AmberDuskTokens.typography.control,
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: AppDimens.p12),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: _canSubmit
+                                ? () => Navigator.pop(
+                                    context,
+                                    _controller.text.trim(),
+                                  )
+                                : null,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: amberColors.primary,
+                              disabledBackgroundColor:
+                                  amberColors.surfaceHighest,
+                              foregroundColor: amberColors.textInverse,
+                              disabledForegroundColor: amberColors.muted,
+                              minimumSize: const Size.fromHeight(AppDimens.p48),
+                              textStyle: AmberDuskTokens.typography.control,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.r20,
+                                ),
+                              ),
+                            ),
+                            child: const Text('Submit'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

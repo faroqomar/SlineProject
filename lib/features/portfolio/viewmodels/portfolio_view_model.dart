@@ -230,7 +230,7 @@ class PortfolioViewModel extends ChangeNotifier {
     AppLogger.i('Deleting portfolio item', tag: _tag, json: {'id': id});
 
     try {
-      await _repo.deleteItem(id: id, alsoDeleteImage: true);
+      await _repo.deleteItem(id: id);
       final idx = _items.indexWhere((it) => it.id == id);
       if (idx != -1) {
         _items.removeAt(idx);

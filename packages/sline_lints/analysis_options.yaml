@@ -1,0 +1,16 @@
+include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  errors:
+    # custom_lint 0.8 still exposes ErrorReporter/ErrorSeverity in its
+    # public API while analyzer 8 marks them deprecated.
+    deprecated_member_use: ignore
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+
+linter:
+  rules:
+    lines_longer_than_80_chars: false
+    public_member_api_docs: false

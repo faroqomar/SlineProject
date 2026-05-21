@@ -1,3 +1,5 @@
+// These model tests intentionally cover deprecated compatibility fields while
+// the app still supports historical task request rows.
 // ignore_for_file: deprecated_member_use_from_same_package
 
 import 'package:flutter_test/flutter_test.dart';
@@ -42,9 +44,9 @@ void main() {
     });
 
     test('T32 TaskRequest.fromMap missing bidder fields falls back safely', () {
-      final map = _taskRequestMap();
-      map.remove('freelancer_id');
-      map.remove('bidder_id');
+      final map = _taskRequestMap()
+        ..remove('freelancer_id')
+        ..remove('bidder_id');
 
       final request = TaskRequest.fromMap(map);
 
@@ -107,7 +109,7 @@ void main() {
     });
 
     test('TaskRequest.fromProposal maps ProposalModel to TaskRequest', () {
-      final createdAt = DateTime.utc(2026, 3, 4, 12, 0);
+      final createdAt = DateTime.utc(2026, 3, 4, 12);
       final p = ProposalModel(
         id: 'req-p',
         taskId: 'task-p',
@@ -199,7 +201,7 @@ void main() {
     });
 
     test('expirationTime returns createdAt + 24 hours', () {
-      final createdAt = DateTime.utc(2026, 3, 1, 12, 0);
+      final createdAt = DateTime.utc(2026, 3, 1, 12);
       final request = TaskRequest(
         id: 'req-1',
         taskId: 'task-1',
@@ -251,7 +253,6 @@ void main() {
         price: 100,
         days: 5,
         status: OfferStatus.accepted,
-        paymentStatus: PaymentStatus.unpaid,
         createdAt: DateTime.now(),
       );
       expect(pendingPayment.isPendingPayment, isTrue);
@@ -299,7 +300,6 @@ void main() {
         price: 100,
         days: 5,
         status: OfferStatus.pending,
-        paymentStatus: PaymentStatus.unpaid,
         createdAt: DateTime.now(),
       );
       expect(pendingWithUnpaid.isActive, isFalse);
@@ -380,7 +380,7 @@ void main() {
           price: 200,
           days: 3,
           status: status,
-          createdAt: DateTime.utc(2026, 4, 1),
+          createdAt: DateTime.utc(2026, 4),
         );
 
         final map = request.toMap();

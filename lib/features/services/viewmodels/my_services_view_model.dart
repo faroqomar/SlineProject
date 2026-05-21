@@ -158,7 +158,7 @@ class MyServicesViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  String _mapError(dynamic e) {
+  String _mapError(Object e) {
     if (e is PostgrestException) {
       switch (e.code) {
         case '42501':

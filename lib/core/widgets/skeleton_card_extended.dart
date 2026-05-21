@@ -243,7 +243,7 @@ class SkeletonFavoriteCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SkeletonAvatar(size: 48),
+          SkeletonAvatar(),
           SizedBox(width: AppDimens.p12),
           Expanded(
             child: Column(

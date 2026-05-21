@@ -293,11 +293,24 @@ void main() {
         ),
       );
 
-      // Search icon should be visible in the header
-      expect(find.byIcon(Icons.search_rounded), findsOneWidget);
+      // The header action has its own search icon; the persistent field also
+      // has a prefix icon, so scope the assertion to the header semantics node.
+      final headerSearchAction = find.byKey(
+        MessagesScreen.headerSearchActionKey,
+      );
+      expect(headerSearchAction, findsOneWidget);
+      expect(
+        find.descendant(
+          of: headerSearchAction,
+          matching: find.byIcon(Icons.search_rounded),
+        ),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('toggles search bar on icon tap', (tester) async {
+    testWidgets('focuses persistent search field on header icon tap', (
+      tester,
+    ) async {
       final vm = buildVm();
 
       await pumpApp(
@@ -308,15 +321,15 @@ void main() {
         ),
       );
 
-      // Tap search icon to open search bar
-      await tester.tap(find.byIcon(Icons.search_rounded));
-      await tester.pumpAndSettle();
+      final searchField = find.byKey(const ValueKey('messages_search_field'));
+      expect(searchField, findsOneWidget);
 
-      // Search field should now be visible
-      expect(find.byType(TextField), findsOneWidget);
+      // Tap the header search action to focus the persistent search bar.
+      await tester.tap(find.byKey(MessagesScreen.headerSearchActionKey));
+      await tester.pump();
 
-      // Close icon should replace search icon
-      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+      final textField = tester.widget<TextField>(searchField);
+      expect(textField.focusNode?.hasFocus, isTrue);
     });
 
     testWidgets('filters conversations by name', (tester) async {
@@ -353,12 +366,14 @@ void main() {
         ),
       );
 
-      // Open search
-      await tester.tap(find.byIcon(Icons.search_rounded));
-      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(MessagesScreen.headerSearchActionKey));
+      await tester.pump();
 
       // Type filter text
-      await tester.enterText(find.byType(TextField), 'Alice');
+      await tester.enterText(
+        find.byKey(const ValueKey('messages_search_field')),
+        'Alice',
+      );
       // Wait for debounce (300ms)
       await tester.pump(const Duration(milliseconds: 350));
 
@@ -385,7 +400,6 @@ void main() {
             deliveryDays: '3',
             isMine: true,
             time: '12:00',
-            status: OfferStatus.pending,
           ),
         ),
       );

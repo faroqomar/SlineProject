@@ -40,11 +40,11 @@ class AppLogger {
   }
 
   /// Pretty-prints JSON and masks sensitive fields
-  static String _formatJson(dynamic json) {
+  static String _formatJson(Object? json) {
     if (json == null) return 'null';
     try {
       // Decode if string
-      var data = json;
+      Object? data = json;
       if (json is String) {
         if (json.trim().startsWith('{') || json.trim().startsWith('[')) {
           try {
@@ -76,10 +76,9 @@ class AppLogger {
       );
 
       return pretty;
-    } on Exception catch (_) {
-      return json.toString();
-    } on Error catch (_) {
-      // JsonUnsupportedObjectError and other encoding errors
+    } on Object catch (_) {
+      // Encoding can fail for unsupported objects supplied by platform or SDK
+      // errors; logging must degrade to a safe string instead of crashing.
       return json.toString();
     }
   }
@@ -88,9 +87,9 @@ class AppLogger {
     LogLevel level,
     String message, {
     String? tag,
-    dynamic error,
+    Object? error,
     StackTrace? stackTrace,
-    dynamic jsonPayload,
+    Object? jsonPayload,
   }) {
     if (!kDebugMode) return;
     if (level.index < currentLevel.index) return;
@@ -152,24 +151,24 @@ class AppLogger {
     }
   }
 
-  static void d(String message, {String? tag, dynamic json}) {
+  static void d(String message, {String? tag, Object? json}) {
     _log(LogLevel.debug, message, tag: tag, jsonPayload: json);
   }
 
-  static void i(String message, {String? tag, dynamic json}) {
+  static void i(String message, {String? tag, Object? json}) {
     _log(LogLevel.info, message, tag: tag, jsonPayload: json);
   }
 
-  static void w(String message, {String? tag, dynamic error, dynamic json}) {
+  static void w(String message, {String? tag, Object? error, Object? json}) {
     _log(LogLevel.warning, message, tag: tag, error: error, jsonPayload: json);
   }
 
   static void e(
     String message, {
     String? tag,
-    dynamic error,
+    Object? error,
     StackTrace? stackTrace,
-    dynamic json,
+    Object? json,
   }) {
     _log(
       LogLevel.error,

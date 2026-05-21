@@ -49,7 +49,7 @@ UnifiedWorkItemModel _workItem({
     price: 100.0,
     clientId: clientId,
     freelancerId: freelancerId,
-    deadline: deadline ?? DateTime.utc(2026, 6, 1),
+    deadline: deadline ?? DateTime.utc(2026, 6),
     revisionsTotal: 3,
     revisionsUsed: 0,
   );
@@ -63,7 +63,7 @@ WorkContractModel _contract() {
     version: 1,
     snapshot: const {'title': 'Test Work Item', 'price': 100.0},
     contractHash: 'abc123',
-    createdAt: DateTime.utc(2026, 1, 1),
+    createdAt: DateTime.utc(2026),
   );
 }
 
@@ -279,7 +279,7 @@ void main() {
 
   group('requestExtension', () {
     test('happy path: calls service with computed deadline', () async {
-      final deadline = DateTime.utc(2026, 6, 1);
+      final deadline = DateTime.utc(2026, 6);
       _stubLoadDefaults(mockService, workItem: _workItem(deadline: deadline));
       await vm.loadData(_kWorkItemId, _kWorkItemType);
 
@@ -532,8 +532,6 @@ void main() {
       _stubLoadDefaults(
         mockService,
         workItem: _workItem(
-          clientId: _kUserId,
-          freelancerId: _kOtherUserId,
           status: UnifiedWorkStatus.delivered,
         ),
       );
@@ -561,11 +559,7 @@ void main() {
     test('false when client but status is not delivered', () async {
       _stubLoadDefaults(
         mockService,
-        workItem: _workItem(
-          clientId: _kUserId,
-          freelancerId: _kOtherUserId,
-          status: UnifiedWorkStatus.active,
-        ),
+        workItem: _workItem(),
       );
 
       await vm.loadData(_kWorkItemId, _kWorkItemType);
@@ -586,13 +580,11 @@ void main() {
       final mockDashboard = MockDashboardViewModel();
       when(mockDashboard.refresh).thenAnswer((_) async {});
 
-      final vmWithDashboard = WorkItemDetailsViewModel(
+      WorkItemDetailsViewModel(
         workService: mockService,
         uid: _kUserId,
         dashboardViewModel: mockDashboard,
-      );
-
-      vmWithDashboard.refreshDashboard();
+      ).refreshDashboard();
 
       verify(mockDashboard.refresh).called(1);
     });

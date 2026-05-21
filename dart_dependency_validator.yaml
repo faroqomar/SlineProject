@@ -1,0 +1,15 @@
+# Dependency validator config for packages that are intentionally present even
+# when static imports cannot prove usage.
+exclude:
+  # Local lint plugin has its own pubspec and dependency graph.
+  - 'packages/sline_lints/**'
+ignore:
+  # Flutter/plugin packages can be consumed by generated registrant code,
+  # platform channels, assets, fonts, or runtime plugin registration.
+  - app_links
+  - cupertino_icons
+  - google_fonts
+  - logger
+  - rxdart
+  # custom_lint discovers local lint plugins from dev_dependencies.
+  - sline_lints

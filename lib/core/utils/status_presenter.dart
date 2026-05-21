@@ -49,7 +49,14 @@ class StatusPresenter {
         return 'EXPIRED';
       case BookingStatus.disputed:
         return 'DISPUTED';
-      default:
+      case BookingStatus.pending:
+      case BookingStatus.confirmed:
+      case BookingStatus.active:
+      case BookingStatus.delivered:
+      case BookingStatus.completed:
+      case BookingStatus.canceled:
+      case BookingStatus.refunded:
+      case BookingStatus.declined:
         return status.name.toUpperCase();
     }
   }

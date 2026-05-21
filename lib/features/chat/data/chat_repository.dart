@@ -41,7 +41,6 @@ class ChatRepository {
     required String user1Id,
     required String user2Id,
   }) => _service.createOrGetConversation(
-    taskId: null,
     user1Id: user1Id,
     user2Id: user2Id,
   );
@@ -103,9 +102,9 @@ class ChatRepository {
       _service.isPresenceReceiptsEnabled();
   Future<void> upsertPresence(
     String conversationId,
-    String userId,
-    bool isTyping,
-  ) => _service.upsertPresence(conversationId, userId, isTyping);
+    String userId, {
+    required bool isTyping,
+  }) => _service.upsertPresence(conversationId, userId, isTyping: isTyping);
   Stream<List<Map<String, dynamic>>> subscribeToPresence(
     String conversationId,
   ) => _service.subscribeToPresence(conversationId);

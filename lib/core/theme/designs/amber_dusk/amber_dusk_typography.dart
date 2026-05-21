@@ -19,6 +19,9 @@ abstract final class AmberDuskTypographyRoles {
   /// Section title typography role name.
   static const String sectionTitle = 'sectionTitle';
 
+  /// Notification title typography role name.
+  static const String notificationTitle = 'notificationTitle';
+
   /// Booking and freelancer name typography role name.
   static const String bookingName = 'bookingName';
 
@@ -27,6 +30,12 @@ abstract final class AmberDuskTypographyRoles {
 
   /// Medium money value typography role name.
   static const String moneyMedium = 'moneyMedium';
+
+  /// Wallet balance value typography role name.
+  static const String walletAmount = 'walletAmount';
+
+  /// Compact wallet balance value typography role name.
+  static const String walletAmountCompact = 'walletAmountCompact';
 
   /// Body copy typography role name.
   static const String body = 'body';
@@ -100,6 +109,18 @@ abstract final class AmberDuskTypography {
     letterSpacing: 0,
   );
 
+  /// Neutral notification title style.
+  ///
+  /// The role intentionally leaves weight unset so read and unread states own
+  /// font weight without overriding another semantic role.
+  static const TextStyle notificationTitle = TextStyle(
+    fontFamily: interfaceFamily,
+    fontFamilyFallback: interfaceFallback,
+    fontSize: 18,
+    height: 1.2,
+    letterSpacing: 0,
+  );
+
   /// Booking and freelancer name style using the display family sparingly.
   static const TextStyle bookingName = TextStyle(
     fontFamily: displayFamily,
@@ -127,6 +148,32 @@ abstract final class AmberDuskTypography {
     fontSize: 36,
     fontWeight: FontWeight.w800,
     height: 1.04,
+    letterSpacing: 0,
+  );
+
+  /// Wallet balance value style for finance cards.
+  ///
+  /// Wallet amounts use the interface family instead of the display family so
+  /// digits stay compact, tabular-feeling, and legible inside dense cards.
+  static const TextStyle walletAmount = TextStyle(
+    fontFamily: interfaceFamily,
+    fontFamilyFallback: interfaceFallback,
+    fontSize: 38,
+    fontWeight: FontWeight.w900,
+    height: 1.02,
+    letterSpacing: 0,
+  );
+
+  /// Compact wallet amount style for dashboard snapshots.
+  ///
+  /// This keeps overview cards readable without letting balance values dominate
+  /// the whole dashboard row.
+  static const TextStyle walletAmountCompact = TextStyle(
+    fontFamily: interfaceFamily,
+    fontFamilyFallback: interfaceFallback,
+    fontSize: 30,
+    fontWeight: FontWeight.w900,
+    height: 1.05,
     letterSpacing: 0,
   );
 
@@ -217,6 +264,9 @@ final class AmberDuskTypographyTokens {
   /// Money family alias for high-emphasis amount text.
   String get moneyFamily => AmberDuskTypography.displayFamily;
 
+  /// Wallet amount family alias for compact finance balances.
+  String get walletAmountFamily => AmberDuskTypography.interfaceFamily;
+
   /// Fallbacks for interface text when DM Sans is unavailable.
   List<String> get interfaceFallback => AmberDuskTypography.interfaceFallback;
 
@@ -235,6 +285,9 @@ final class AmberDuskTypographyTokens {
   /// Section heading style for grouped content.
   TextStyle get sectionTitle => AmberDuskTypography.sectionTitle;
 
+  /// Neutral notification title style.
+  TextStyle get notificationTitle => AmberDuskTypography.notificationTitle;
+
   /// Booking and freelancer name style.
   TextStyle get bookingName => AmberDuskTypography.bookingName;
 
@@ -243,6 +296,12 @@ final class AmberDuskTypographyTokens {
 
   /// Medium money value style.
   TextStyle get moneyMedium => AmberDuskTypography.moneyMedium;
+
+  /// Wallet balance value style.
+  TextStyle get walletAmount => AmberDuskTypography.walletAmount;
+
+  /// Compact wallet balance value style.
+  TextStyle get walletAmountCompact => AmberDuskTypography.walletAmountCompact;
 
   /// Primary body copy style.
   TextStyle get body => AmberDuskTypography.body;

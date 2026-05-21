@@ -23,13 +23,13 @@ class _RpcCapture {
   Map<String, dynamic>? lastRpcParams;
 }
 
-/// Awaitable stub for rpc() so that await client.rpc(...) completes.
+/// Awaitable stub for `rpc()` so that awaited RPC calls complete.
 class _StubRpcBuilder extends Fake implements PostgrestFilterBuilder<dynamic> {
   @override
   Future<R> then<R>(
-    FutureOr<R> Function(dynamic) onValue, {
+    FutureOr<R> Function(Object?) onValue, {
     Function? onError,
-  }) => Future<dynamic>.value(null).then(onValue, onError: onError);
+  }) => Future<dynamic>.value().then(onValue, onError: onError);
 }
 
 void main() {
@@ -49,12 +49,15 @@ void main() {
     when(() => mockClient.auth).thenAnswer((_) => mockAuth);
     when(() => mockAuth.currentUser).thenAnswer((_) => mockUser);
     when(() => mockUser.id).thenAnswer((_) => 'user-123');
-    when(() => mockClient.rpc(any(), params: any(named: 'params'))).thenAnswer((
+    when(
+      () => mockClient.rpc<dynamic>(any(), params: any(named: 'params')),
+    ).thenAnswer((
       invocation,
     ) {
-      rpcCapture.lastRpcName = invocation.positionalArguments[0] as String;
-      rpcCapture.lastRpcParams =
-          invocation.namedArguments[#params] as Map<String, dynamic>?;
+      rpcCapture
+        ..lastRpcName = invocation.positionalArguments[0] as String
+        ..lastRpcParams =
+            invocation.namedArguments[#params] as Map<String, dynamic>?;
       return _StubRpcBuilder();
     });
 

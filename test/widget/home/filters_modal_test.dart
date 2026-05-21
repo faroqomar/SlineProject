@@ -7,8 +7,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/features/home/view/widgets/filters_modal.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
-const Offset _sheetDragLarge = Offset(0, -500);
-const Offset _sheetDragSmall = Offset(0, -200);
+const Offset _sheetScrollSmall = Offset(0, -260);
 
 Future<void> _openFiltersModal(
   WidgetTester tester,
@@ -30,6 +29,7 @@ Future<void> _openFiltersModal(
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
+                        barrierColor: Colors.black87,
                         builder: (_) => const FiltersModal(),
                       ),
                     );
@@ -58,26 +58,36 @@ void main() {
 
         await _openFiltersModal(tester, viewModel);
 
-        // Expand the sheet to full height so all filters are visible.
-        // The drag handle area is at the top of the sheet — drag up to expand.
-        final sheetFinder = find.byType(DraggableScrollableSheet);
-        await tester.drag(sheetFinder, _sheetDragLarge);
-        await tester.pumpAndSettle();
+        expect(find.byType(DraggableScrollableSheet), findsNothing);
+        expect(find.byKey(FiltersModal.sheetHandleKey), findsOneWidget);
 
-        // Now scroll the inner ListView to find delivery time chips
-        final listFinder = find.byType(ListView);
-        await tester.drag(listFinder, _sheetDragSmall);
-        await tester.pumpAndSettle();
-
+        // Scroll the single inner ListView to find delivery time chips. The
+        // visual layout can grow, so target the control instead of relying on
+        // a fixed offset landing point.
+        final scrollableFinder = find.byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        );
         final deliveryFinder = find
             .text(TaskFilterViewModel.deliveryUpTo3Days)
             .hitTestable();
+        await tester.scrollUntilVisible(
+          find.text(TaskFilterViewModel.deliveryUpTo3Days),
+          _sheetScrollSmall.dy.abs(),
+          scrollable: scrollableFinder,
+        );
+        await tester.pumpAndSettle();
         expect(deliveryFinder, findsOneWidget);
         await tester.tap(deliveryFinder);
         await tester.pumpAndSettle();
 
-        // Scroll more to reach seller levels
-        await tester.drag(listFinder, _sheetDragSmall);
+        // Scroll more to reach seller levels without coupling to section size.
+        await tester.scrollUntilVisible(
+          find.text(TaskFilterViewModel.sellerLevel2),
+          _sheetScrollSmall.dy.abs(),
+          scrollable: scrollableFinder,
+        );
         await tester.pumpAndSettle();
 
         final sellerFinder = find
@@ -101,8 +111,27 @@ void main() {
         expect(viewModel.sellerLevels, <String>[
           TaskFilterViewModel.sellerLevel2,
         ]);
+        expect(viewModel.maxBudget, isNull);
       },
     );
+
+    testWidgets('apply with no changes does not create a max budget filter', (
+      tester,
+    ) async {
+      final viewModel = TaskFilterViewModel();
+
+      await _openFiltersModal(tester, viewModel);
+
+      expect(find.text('Apply Filters'), findsOneWidget);
+      await tester.tap(find.byKey(FiltersModal.applyButtonKey));
+      await tester.pumpAndSettle();
+
+      expect(viewModel.minBudget, isNull);
+      expect(viewModel.maxBudget, isNull);
+      expect(viewModel.deliveryTimes, isEmpty);
+      expect(viewModel.sellerLevels, isEmpty);
+      expect(viewModel.sortBy, TaskFilterViewModel.sortRelevance);
+    });
 
     testWidgets('reset clears existing advanced filters immediately', (
       tester,
@@ -122,11 +151,6 @@ void main() {
       await tester.pumpAndSettle();
 
       // Reset now only mutates local state. Tap Apply to commit to ViewModel.
-      // Scroll to make Apply button visible in DraggableScrollableSheet.
-      final sheetFinder = find.byType(DraggableScrollableSheet);
-      await tester.drag(sheetFinder, const Offset(0, -300));
-      await tester.pumpAndSettle();
-
       await tester.tap(find.byKey(FiltersModal.applyButtonKey));
       await tester.pumpAndSettle();
 
@@ -151,6 +175,28 @@ void main() {
 
       expect(find.text('Apply 1 Filter'), findsOneWidget);
       expect(viewModel.sortBy, initialSortBy);
+    });
+
+    testWidgets('uses a single sheet surface and IQD budget fields', (
+      tester,
+    ) async {
+      final viewModel = TaskFilterViewModel();
+
+      await _openFiltersModal(tester, viewModel);
+
+      expect(find.byType(DraggableScrollableSheet), findsNothing);
+      expect(find.byKey(FiltersModal.sheetHandleKey), findsOneWidget);
+      final sheet = tester.widget<FractionallySizedBox>(
+        find.byType(FractionallySizedBox),
+      );
+      expect(sheet.heightFactor, equals(0.86));
+      expect(find.text('IQD'), findsWidgets);
+      expect(find.byIcon(Icons.attach_money), findsNothing);
+
+      await tester.drag(find.byType(ListView), _sheetScrollSmall);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Delivery Time'), findsOneWidget);
     });
   });
 }

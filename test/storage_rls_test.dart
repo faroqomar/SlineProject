@@ -8,8 +8,10 @@
 /// - T53: Admin can access all private storage
 ///
 /// Run with: flutter test test/storage_rls_test.dart
-/// With real Supabase: flutter test test/storage_rls_test.dart --dart-define=SUPABASE_INTEGRATION=1
+/// With real Supabase: flutter test test/storage_rls_test.dart --dart-define=SUPABASE_INTEGRATION=1 --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
 library;
+
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -19,41 +21,55 @@ import 'rls/storage_rls_test_harness.dart';
 import 'supabase_test_helper.dart';
 
 const String? _skipReason =
-    String.fromEnvironment('SUPABASE_INTEGRATION', defaultValue: '') != '1'
+    String.fromEnvironment('SUPABASE_INTEGRATION') != '1'
     ? 'Requires Supabase; run with --dart-define=SUPABASE_INTEGRATION=1'
     : null;
+const String _supabaseUrlDefine = String.fromEnvironment('SUPABASE_URL');
+const String _supabaseAnonKeyDefine = String.fromEnvironment(
+  'SUPABASE_ANON_KEY',
+);
+
+String _supabaseConfigValue({
+  required String dartDefineValue,
+  required String environmentKey,
+}) {
+  final value = dartDefineValue.isNotEmpty
+      ? dartDefineValue
+      : Platform.environment[environmentKey];
+  if (value == null || value.isEmpty) {
+    throw StateError(
+      '$environmentKey is required when SUPABASE_INTEGRATION=1',
+    );
+  }
+  return value;
+}
 
 void main() {
   group('Storage RLS Security Tests (T50-T53)', skip: _skipReason, () {
     late StorageRlsTestHarness harness;
 
     setUpAll(() async {
-      try {
-        Supabase.instance;
-      } on Object catch (_) {
-        ensureSupabaseTestEnvironment();
-        await Supabase.initialize(
-          url: 'https://test.supabase.co',
-          anonKey: 'dummy-key',
-          debug: false,
-          authOptions: FlutterAuthClientOptions(
-            localStorage: supabaseTestLocalStorage,
-            pkceAsyncStorage: supabaseTestPkceStorage,
-          ),
-        );
-      }
+      ensureSupabaseTestEnvironment();
+      await Supabase.initialize(
+        url: _supabaseConfigValue(
+          dartDefineValue: _supabaseUrlDefine,
+          environmentKey: 'SUPABASE_URL',
+        ),
+        anonKey: _supabaseConfigValue(
+          dartDefineValue: _supabaseAnonKeyDefine,
+          environmentKey: 'SUPABASE_ANON_KEY',
+        ),
+        debug: false,
+        authOptions: FlutterAuthClientOptions(
+          localStorage: supabaseTestLocalStorage,
+          pkceAsyncStorage: supabaseTestPkceStorage,
+        ),
+      );
     });
 
     setUp(() {
-      // For integration tests, inject real client
-      // For unit tests, use mock mode (client = null)
-      SupabaseClient? client;
-      try {
-        client = Supabase.instance.client;
-      } on Object catch (_) {
-        // Supabase not initialized — use mock mode
-      }
-      harness = StorageRlsTestHarness(client: client);
+      // Integration mode initializes Supabase in setUpAll, so use the real client.
+      harness = StorageRlsTestHarness(client: Supabase.instance.client);
     });
 
     tearDown(() {

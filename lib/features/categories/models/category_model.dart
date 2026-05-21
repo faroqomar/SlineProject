@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// CategoryModel
 ///
 /// Immutable model representing a category row from `public.categories`.
@@ -9,6 +11,7 @@
 /// Notes:
 /// - Keep this model small and serializable. It is shared by services and UI.
 /// - All comments MUST be in English only.
+@immutable
 class CategoryModel {
   final String id;
   final String name;

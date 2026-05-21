@@ -23,7 +23,7 @@ Task _task({
     budget: 100,
     userId: 'user-1',
     status: status,
-    createdAt: DateTime.utc(2026, 1, 1),
+    createdAt: DateTime.utc(2026),
   );
 }
 
@@ -110,7 +110,7 @@ void main() {
           categoriesRepo: _MockCategoriesRepository(),
         );
         final seededTasks = <Task>[
-          _task(id: 'task-a', title: 'Task A', status: TaskStatus.open),
+          _task(id: 'task-a', title: 'Task A'),
           _task(id: 'task-b', title: 'Task B', status: TaskStatus.assigned),
         ];
 

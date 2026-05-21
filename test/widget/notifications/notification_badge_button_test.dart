@@ -106,6 +106,7 @@ NotificationViewModel _buildViewModel(
   return NotificationViewModel(
     service: service,
     authStateChanges: authController.stream,
+    client: createMockSupabaseClient(),
   );
 }
 

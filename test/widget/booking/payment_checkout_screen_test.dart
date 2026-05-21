@@ -65,7 +65,6 @@ const _price = 25000.0; // 25K IQD
 /// terminates without attempting webview navigation.
 const _noFormResult = QiCardCreatePaymentResult(
   bookingId: 'booking-1',
-  error: null,
 );
 
 void _stubIdleState(_MockBookingViewModel vm) {
@@ -161,7 +160,6 @@ Future<void> _pumpCheckout(
 const _withFormResult = QiCardCreatePaymentResult(
   bookingId: 'booking-1',
   formUrl: 'https://pay.example.com/checkout',
-  error: null,
 );
 
 /// A recovery result indicating success with funds held.

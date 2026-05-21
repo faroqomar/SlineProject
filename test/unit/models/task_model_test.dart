@@ -96,7 +96,7 @@ void main() {
           category: 'Design',
         );
 
-        final json = task.toJson(includeSystemFields: false);
+        final json = task.toJson();
 
         expect(json.containsKey('id'), isFalse);
         expect(json.containsKey('created_at'), isFalse);
@@ -181,7 +181,7 @@ void main() {
           budget: 10,
           userId: 'u-1',
           status: entry.key,
-          createdAt: DateTime.utc(2026, 4, 1),
+          createdAt: DateTime.utc(2026, 4),
         );
 
         final json = task.toJson(includeSystemFields: true);

@@ -43,7 +43,7 @@ class NotificationItem {
     );
   }
 
-  static Map<String, dynamic> _parseMetadata(dynamic value) {
+  static Map<String, dynamic> _parseMetadata(Object? value) {
     if (value == null) return const {};
     if (value is Map) return Map<String, dynamic>.from(value);
     return const {};

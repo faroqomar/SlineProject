@@ -26,6 +26,7 @@ void main() {
       initials: 'JD',
       name: 'Jane Doe',
       verified: true,
+      role: 'freelancer',
       title: 'Flutter Developer',
       location: 'Remote',
       jobSuccess: '100%',
@@ -122,7 +123,7 @@ void main() {
     });
 
     test('multiple loads replace previous profile', () async {
-      final first = fakeProfile(id: 'user-1');
+      final first = fakeProfile();
       final second = fakeProfile(id: 'user-2');
 
       when(

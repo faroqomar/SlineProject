@@ -54,7 +54,6 @@ void main() {
       const result = RoleSwitchResult(
         success: true,
         newRole: 'freelancer',
-        errorCode: null,
         message: 'Role switched successfully',
       );
 
@@ -129,7 +128,6 @@ void main() {
       const result = RoleSwitchResult(
         success: true,
         newRole: 'freelancer',
-        errorCode: null,
       );
       expect(result.toString(), contains('RoleSwitchResult'));
       expect(result.toString(), contains('success: true'));

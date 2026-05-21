@@ -15,6 +15,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
@@ -159,7 +160,7 @@ class _DiscoveryTaskSliverState extends State<DiscoveryTaskSliver> {
                     ),
                     child: Icon(
                       Icons.error_outline,
-                      size: 48,
+                      size: AppLayout.iconFeature,
                       color: amberColors.rust,
                     ),
                   ),
@@ -218,7 +219,7 @@ class _DiscoveryTaskSliverState extends State<DiscoveryTaskSliver> {
                   alignment: Alignment.center,
                   child: Icon(
                     widget.emptyIcon,
-                    size: 36,
+                    size: AppDimens.p36,
                     color: amberColors.primary,
                   ),
                 ),
@@ -469,7 +470,7 @@ class _LoadMoreSentinelState extends State<_LoadMoreSentinel> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(
-        widget.onLoadMore().catchError((error, stackTrace) {
+        widget.onLoadMore().catchError((Object error, StackTrace stackTrace) {
           AppLogger.e(
             'discovery_load_more_failed',
             tag: 'DiscoveryUI',

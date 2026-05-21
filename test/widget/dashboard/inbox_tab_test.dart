@@ -68,10 +68,10 @@ void main() {
 
       await _pumpInboxTab(tester, vm);
 
-      expect(find.text('Proposals requiring action'), findsOneWidget);
+      expect(find.text('Offers requiring action'), findsOneWidget);
       expect(find.text('Received'), findsNothing);
       expect(find.text('Sent'), findsNothing);
-      expect(find.text('No Proposals Yet'), findsOneWidget);
+      expect(find.text('No Offers Yet'), findsOneWidget);
       expect(find.text('Open Messages'), findsOneWidget);
       verifyNever(vm.refresh);
       expect(
@@ -108,6 +108,8 @@ void main() {
 
       expect(find.text('Yara Ahmed'), findsOneWidget);
       expect(find.text('Landing page design'), findsOneWidget);
+      expect(find.text('PENDING'), findsOneWidget);
+      expect(find.text('UNAVAILABLE'), findsNothing);
 
       await tester.tap(find.widgetWithText(FilledButton, 'Award'));
       await tester.pumpAndSettle();
@@ -166,6 +168,36 @@ void main() {
       await tester.pumpAndSettle();
 
       verify(() => vm.withdrawOffer(offer.id)).called(1);
+    });
+
+    testWidgets('excludes unavailable offers from the action queue', (
+      tester,
+    ) async {
+      final vm = _MockDashboardViewModel();
+
+      await _pumpInboxTab(
+        tester,
+        vm,
+        offers: [_offer(status: OfferStatus.unknown)],
+      );
+
+      expect(find.text('UNAVAILABLE'), findsNothing);
+      expect(find.text('No Offers Yet'), findsOneWidget);
+    });
+
+    testWidgets('reserves bottom clearance for the floating nav', (
+      tester,
+    ) async {
+      final vm = _MockDashboardViewModel();
+
+      await _pumpInboxTab(tester, vm, offers: [_offer()]);
+
+      final listView = tester.widget<ListView>(find.byType(ListView));
+      final padding = (listView.padding ?? EdgeInsets.zero).resolve(
+        TextDirection.ltr,
+      );
+
+      expect(padding.bottom, greaterThanOrEqualTo(116));
     });
   });
 }

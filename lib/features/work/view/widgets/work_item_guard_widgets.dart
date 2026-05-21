@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
@@ -51,7 +52,7 @@ class DisputeBannerContent extends StatelessWidget {
               children: [
                 Icon(
                   Icons.info_outline,
-                  size: 20,
+                  size: AppLayout.iconStandard,
                   color: context.colorScheme.primary,
                 ),
                 const SizedBox(width: AppDimens.p8),
@@ -81,6 +82,7 @@ class ReportIssueGuard extends StatelessWidget {
     required this.onReportIssue,
     required this.builder,
     required this.safetyViewModel,
+    this.reserveSpace = false,
   });
 
   final String sourceType;
@@ -88,6 +90,7 @@ class ReportIssueGuard extends StatelessWidget {
   final VoidCallback onReportIssue;
   final Widget Function(BuildContext, VoidCallback) builder;
   final SafetyViewModel safetyViewModel;
+  final bool reserveSpace;
 
   @override
   Widget build(BuildContext context) {
@@ -104,12 +107,20 @@ class ReportIssueGuard extends StatelessWidget {
       future: hasDisputeFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox.shrink();
+          return _reservedGuardSpace();
         }
         final hasOpenDispute = snapshot.data ?? true;
-        if (hasOpenDispute) return const SizedBox.shrink();
+        if (hasOpenDispute) return _reservedGuardSpace();
         return builder(context, onReportIssue);
       },
+    );
+  }
+
+  Widget _reservedGuardSpace() {
+    if (!reserveSpace) return const SizedBox.shrink();
+    return const SizedBox(
+      width: AppLayout.minTouchTarget,
+      height: AppLayout.minTouchTarget,
     );
   }
 }
@@ -123,12 +134,14 @@ class ReviewWithDisputeGuard extends StatelessWidget {
     required this.entityId,
     required this.onReview,
     required this.safetyViewModel,
+    this.height,
   });
 
   final String sourceType;
   final String entityId;
   final VoidCallback onReview;
   final SafetyViewModel safetyViewModel;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
@@ -146,12 +159,18 @@ class ReviewWithDisputeGuard extends StatelessWidget {
       future: hasDisputeFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const AppButton(text: 'Checking…', onPressed: null);
+          return AppButton(
+            text: 'Checking…',
+            onPressed: null,
+            height: height,
+          );
         }
         final hasOpenDispute = snapshot.data ?? true;
         return AppButton(
           text: 'Review',
           onPressed: hasOpenDispute ? null : onReview,
+          icon: Icons.rate_review_outlined,
+          height: height,
         );
       },
     );

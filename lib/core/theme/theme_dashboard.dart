@@ -1,4 +1,3 @@
-// ignore: dangling_library_doc_comments
 /// Theme System Dashboard
 ///
 /// This file serves as a comprehensive reference for all theme values in the SLine app.
@@ -9,7 +8,10 @@
 /// (`AppColors`, `AppTypography`, `AppDimens`, `AppDecorations`) in your code.
 ///
 /// **Last Updated:** 2026-04-08 (Phase 0.7 — Layout Tokens)
+library;
 
+// These imports are intentionally kept because this file is a developer-facing
+// theme reference, not executable theme logic.
 // ignore_for_file: unused_import
 
 import 'package:flutter/material.dart';

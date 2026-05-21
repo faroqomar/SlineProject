@@ -319,9 +319,9 @@ void main() {
       await vm.submit();
 
       var notified = false;
-      vm.addListener(() => notified = true);
-
-      vm.clearPendingWebPayment();
+      vm
+        ..addListener(() => notified = true)
+        ..clearPendingWebPayment();
       expect(notified, isTrue);
     });
 
@@ -329,9 +329,9 @@ void main() {
       final vm = buildVm();
 
       var notified = false;
-      vm.addListener(() => notified = true);
-
-      vm.clearPendingWebPayment();
+      vm
+        ..addListener(() => notified = true)
+        ..clearPendingWebPayment();
       expect(notified, isFalse);
     });
   });
@@ -812,7 +812,6 @@ void main() {
           amount: amount,
           currency: 'IQD',
           description: 'Payment for "$taskTitle"',
-          finishUrl: null,
         ),
       ).called(1);
     });

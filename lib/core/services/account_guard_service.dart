@@ -67,7 +67,7 @@ class AccountGuardService {
     }
   }
 
-  DateTime? _parseUtc(dynamic value) {
+  DateTime? _parseUtc(Object? value) {
     if (value == null) return null;
     return DateTime.tryParse(value.toString())?.toUtc();
   }

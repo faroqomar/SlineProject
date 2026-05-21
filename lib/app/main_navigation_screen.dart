@@ -266,12 +266,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
             runtimeConfig.bannerEnabled &&
             runtimeConfig.bannerText.trim().isNotEmpty;
         final showBanner = !_bannerDismissed && hasBanner;
-        final bottomSafePadding = MediaQuery.viewPaddingOf(context).bottom;
         final showCreateFab = currentIndex == MainNavDestinations.home;
         final fabBottomOffset =
             phoneLayout.bottomNavBottom +
             phoneLayout.bottomNavHeight +
             AmberDuskTokens.spacing.sm;
+        final bottomFadeHeight =
+            MediaQuery.viewPaddingOf(context).bottom +
+            phoneLayout.bottomNavBottom +
+            phoneLayout.bottomNavHeight +
+            AmberDuskTokens.spacing.xxl;
 
         // Start banner animation if banner should be visible
         if (showBanner &&
@@ -292,18 +296,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
             onNotification: _onScrollNotification,
             child: Stack(
               children: [
-                // 1. Amber Dusk shell background
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        amberColors.page,
-                        amberColors.background,
-                        amberColors.heroDeep,
-                      ],
-                    ),
+                // 1. Amber Dusk shell background. The solid base keeps the app
+                // calm while the two tiny radial fades separate the phone shell
+                // from safe areas without becoming decoration.
+                const Positioned.fill(
+                  child: ColoredBox(color: AmberDuskColors.background),
+                ),
+                const Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: AmberDuskMaterial.atmosphericAmberDecoration,
+                  ),
+                ),
+                const Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: AmberDuskMaterial.atmosphericForestDecoration,
                   ),
                 ),
 
@@ -371,13 +377,32 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
                     ),
                   ),
 
-                // 5. Amber Dusk solid bottom navigation bar
+                // 5. Bottom navigation safe-area fade. It only sits behind the
+                // fixed nav so scrolled content disappears naturally at the edge.
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: bottomFadeHeight,
+                  child: const IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: AmberDuskMaterial.bottomNavFadeGradient,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 6. Amber Dusk solid bottom navigation bar
                 const CustomBottomNavBar(),
 
-                // 6. Home-owned FAB with spring entrance + scroll-aware motion
+                // 7. Home-owned FAB with spring entrance + scroll-aware motion
                 if (showCreateFab)
                   Positioned(
-                    bottom: fabBottomOffset + bottomSafePadding,
+                    // The nav bar uses Amber Dusk frame-edge positioning, so
+                    // the FAB mirrors that coordinate system and stays exactly
+                    // one spacing token above the shell.
+                    bottom: fabBottomOffset,
                     right: AppDimens.p24,
                     child: ScaleTransition(
                       scale: _fabScale,

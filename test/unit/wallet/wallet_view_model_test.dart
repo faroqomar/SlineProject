@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:sline_app/features/wallet/models/wallet_activity_model.dart';
@@ -72,7 +74,7 @@ void _stubLoadWalletSuccess(
   final txns = activities ?? _activityList(3);
   final bal = balance ?? _balance();
 
-  when(() => repo.getActivity(limit: 20)).thenAnswer((_) async => txns);
+  when(() => repo.getActivity()).thenAnswer((_) async => txns);
   when(() => repo.getWalletBalance()).thenAnswer((_) async => bal);
 }
 
@@ -82,7 +84,6 @@ void _stubLoadMoreSuccess(
 }) {
   when(
     () => repo.getActivity(
-      limit: 20,
       cursorCreatedAtIso: any(named: 'cursorCreatedAtIso'),
     ),
   ).thenAnswer((_) async => activities ?? _activityList(5));
@@ -113,7 +114,7 @@ void _stubPostWithdrawalRefresh(
   final bal = balance ?? _balance(available: 4000, pending: 2000);
 
   when(() => repo.getWalletBalance()).thenAnswer((_) async => bal);
-  when(() => repo.getActivity(limit: 20)).thenAnswer((_) async => txns);
+  when(() => repo.getActivity()).thenAnswer((_) async => txns);
 }
 
 // ---------------------------------------------------------------------------
@@ -151,7 +152,7 @@ void main() {
       await vm.loadWallet();
 
       verify(() => repo.getWalletBalance()).called(1);
-      verify(() => repo.getActivity(limit: 20)).called(1);
+      verify(() => repo.getActivity()).called(1);
       expect(vm.balance.availableBalance, 7500);
       expect(vm.balance.pendingWithdrawalBalance, 200);
       expect(vm.balance.heldBalance, 0);
@@ -261,7 +262,7 @@ void main() {
       await vm.ensureLoaded();
 
       verify(() => repo.getWalletBalance()).called(1);
-      verify(() => repo.getActivity(limit: 20)).called(1);
+      verify(() => repo.getActivity()).called(1);
     });
 
     test('forceRefresh bypasses deduplication and reloads', () async {
@@ -271,7 +272,7 @@ void main() {
       await vm.ensureLoaded(forceRefresh: true);
 
       verify(() => repo.getWalletBalance()).called(2);
-      verify(() => repo.getActivity(limit: 20)).called(2);
+      verify(() => repo.getActivity()).called(2);
     });
 
     test('concurrent ensureLoaded calls share the same future', () async {
@@ -285,8 +286,41 @@ void main() {
 
       // Only one actual load
       verify(() => repo.getWalletBalance()).called(1);
-      verify(() => repo.getActivity(limit: 20)).called(1);
+      verify(() => repo.getActivity()).called(1);
     });
+
+    test(
+      'forceRefresh requested during an active load runs a follow-up reload',
+      () async {
+        final firstActivityCompleter = Completer<List<WalletActivityModel>>();
+        final firstBalanceCompleter = Completer<WalletBalanceModel>();
+        var activityCalls = 0;
+        var balanceCalls = 0;
+
+        when(() => repo.getActivity()).thenAnswer((_) {
+          activityCalls += 1;
+          if (activityCalls == 1) return firstActivityCompleter.future;
+          return Future.value(_activityList(1));
+        });
+        when(() => repo.getWalletBalance()).thenAnswer((_) {
+          balanceCalls += 1;
+          if (balanceCalls == 1) return firstBalanceCompleter.future;
+          return Future.value(_balance(available: 7000));
+        });
+
+        final initialLoad = vm.ensureLoaded();
+        final forcedLoad = vm.ensureLoaded(forceRefresh: true);
+
+        firstActivityCompleter.complete(_activityList(2));
+        firstBalanceCompleter.complete(_balance());
+
+        await Future.wait([initialLoad, forcedLoad]);
+
+        expect(activityCalls, 2);
+        expect(balanceCalls, 2);
+        expect(vm.balance.availableBalance, 7000);
+      },
+    );
 
     test('_loadingFuture is null after ensureLoaded completes', () async {
       _stubLoadWalletSuccess(repo);
@@ -305,7 +339,7 @@ void main() {
       '_loadingFuture is null after ensureLoaded completes with error',
       () async {
         when(
-          () => repo.getActivity(limit: 20),
+          () => repo.getActivity(),
         ).thenAnswer((_) async => throw Exception('fail'));
         when(() => repo.getWalletBalance()).thenAnswer((_) async => _balance());
 
@@ -378,15 +412,14 @@ void main() {
       expect(vm.hasMore, isFalse);
 
       // Consume the loadWallet call count
-      verify(() => repo.getActivity(limit: 20)).called(1);
+      verify(() => repo.getActivity()).called(1);
 
       await vm.loadMore();
 
       // No additional getActivity calls should have been made
-      verifyNever(() => repo.getActivity(limit: 20));
+      verifyNever(() => repo.getActivity());
       verifyNever(
         () => repo.getActivity(
-          limit: 20,
           cursorCreatedAtIso: any(named: 'cursorCreatedAtIso'),
         ),
       );
@@ -397,7 +430,7 @@ void main() {
       await vm.loadWallet();
 
       // Consume the loadWallet call count
-      verify(() => repo.getActivity(limit: 20)).called(1);
+      verify(() => repo.getActivity()).called(1);
 
       // Simulate loadMore while another is in progress by setting isLoading
       vm.isLoading = true;
@@ -405,10 +438,9 @@ void main() {
       await vm.loadMore();
 
       // No additional getActivity calls should have been made
-      verifyNever(() => repo.getActivity(limit: 20));
+      verifyNever(() => repo.getActivity());
       verifyNever(
         () => repo.getActivity(
-          limit: 20,
           cursorCreatedAtIso: any(named: 'cursorCreatedAtIso'),
         ),
       );
@@ -432,7 +464,6 @@ void main() {
 
       when(
         () => repo.getActivity(
-          limit: 20,
           cursorCreatedAtIso: any(named: 'cursorCreatedAtIso'),
         ),
       ).thenAnswer((_) async => throw Exception('pagination error'));
@@ -440,7 +471,7 @@ void main() {
       await vm.loadMore();
 
       expect(vm.error, isNotNull);
-      expect(vm.error, contains('pagination error'));
+      expect(vm.error, 'An error occurred. Please try again.');
       expect(vm.isLoading, isFalse);
     });
   });
@@ -477,7 +508,6 @@ void main() {
         final refreshedBalance = _balance(
           available: 4000,
           pending: 2000,
-          held: 500,
         );
         final refreshedActivities = _activityList(4);
         _stubPostWithdrawalRefresh(
@@ -492,7 +522,7 @@ void main() {
         verify(() => repo.requestWithdrawal(amount: 1000)).called(1);
         // Verify refresh happened
         verify(() => repo.getWalletBalance()).called(1);
-        verify(() => repo.getActivity(limit: 20)).called(1);
+        verify(() => repo.getActivity()).called(1);
         expect(vm.balance.availableBalance, 4000);
         expect(vm.balance.pendingWithdrawalBalance, 2000);
         expect(vm.activities.length, 4);
@@ -528,6 +558,26 @@ void main() {
       expect(vm.error, 'Failed to request withdrawal. Please try again.');
       expect(vm.isWithdrawing, isFalse);
     });
+
+    test(
+      'successful withdrawal still returns true when post-refresh fails',
+      () async {
+        _stubGuardAllowed(guard);
+        _stubWithdrawalSuccess(repo);
+        when(
+          () => repo.getWalletBalance(),
+        ).thenThrow(Exception('refresh unavailable'));
+        when(() => repo.getActivity()).thenAnswer(
+          (_) async => _activityList(1),
+        );
+
+        final result = await vm.requestWithdrawal(amount: 1000);
+
+        expect(result, isTrue);
+        expect(vm.error, 'Failed to refresh wallet after withdrawal.');
+        verify(() => repo.requestWithdrawal(amount: 1000)).called(1);
+      },
+    );
 
     test('FormatException produces specific error message', () async {
       _stubGuardAllowed(guard);
@@ -587,30 +637,30 @@ void main() {
   group('Error & Summary', () {
     test('loadWallet failure sets error and isLoading false', () async {
       when(
-        () => repo.getActivity(limit: 20),
+        () => repo.getActivity(),
       ).thenAnswer((_) async => throw Exception('timeout'));
       when(() => repo.getWalletBalance()).thenAnswer((_) async => _balance());
 
       await vm.loadWallet();
 
       expect(vm.error, isNotNull);
-      expect(vm.error, contains('timeout'));
+      expect(vm.error, 'An error occurred. Please try again.');
       expect(vm.isLoading, isFalse);
     });
 
     test('clearError sets error to null and notifies listeners', () async {
       // Create an error state first
       when(
-        () => repo.getActivity(limit: 20),
+        () => repo.getActivity(),
       ).thenAnswer((_) async => throw Exception('some error'));
       when(() => repo.getWalletBalance()).thenAnswer((_) async => _balance());
       await vm.loadWallet();
       expect(vm.error, isNotNull);
 
       var notified = false;
-      vm.addListener(() => notified = true);
-
-      vm.clearError();
+      vm
+        ..addListener(() => notified = true)
+        ..clearError();
 
       expect(vm.error, isNull);
       expect(notified, isTrue);
@@ -637,7 +687,7 @@ void main() {
     test('summary getter reflects loaded balance and activities', () async {
       _stubLoadWalletSuccess(
         repo,
-        balance: _balance(available: 3000, pending: 1000, held: 500),
+        balance: _balance(available: 3000),
         activities: _activityList(5),
       );
 
@@ -669,7 +719,7 @@ void main() {
 
     test('loadWallet error preserves zero balance default', () async {
       when(
-        () => repo.getActivity(limit: 20),
+        () => repo.getActivity(),
       ).thenAnswer((_) async => throw Exception('failure'));
       when(() => repo.getWalletBalance()).thenAnswer((_) async => _balance());
 
@@ -685,7 +735,7 @@ void main() {
 
     test('hasLoadedWallet is false after failed loadWallet', () async {
       when(
-        () => repo.getActivity(limit: 20),
+        () => repo.getActivity(),
       ).thenAnswer((_) async => throw Exception('network error'));
       when(() => repo.getWalletBalance()).thenAnswer((_) async => _balance());
 

@@ -33,7 +33,7 @@ void main() {
           activeRole: 'freelancer',
           skills: const ['Flutter'],
           sellerLevel: 'level_2',
-          createdAt: DateTime.utc(2026, 3, 1),
+          createdAt: DateTime.utc(2026, 3),
         ),
       );
       when(

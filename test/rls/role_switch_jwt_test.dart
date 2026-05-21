@@ -184,11 +184,15 @@ void main() {
       // 4. auth.jwt()->'app_metadata'->>'active_role' reflects new role
 
       final clientJwt = TestUsers.clientUser.jwtPayload;
-      expect(clientJwt['app_metadata']['active_role'], equals('client'));
+      final clientAppMetadata =
+          clientJwt['app_metadata'] as Map<String, dynamic>;
+      expect(clientAppMetadata['active_role'], equals('client'));
 
       final freelancerJwt = TestUsers.freelancerUser.jwtPayload;
+      final freelancerAppMetadata =
+          freelancerJwt['app_metadata'] as Map<String, dynamic>;
       expect(
-        freelancerJwt['app_metadata']['active_role'],
+        freelancerAppMetadata['active_role'],
         equals('freelancer'),
       );
 

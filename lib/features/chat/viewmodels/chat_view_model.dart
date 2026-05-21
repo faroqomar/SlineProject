@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:sline_app/core/config/storage_config.dart';
 import 'package:sline_app/core/mixins/role_switch_aware.dart';
 import 'package:sline_app/core/services/account_guard_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -255,7 +254,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
               AppLogger.e('Error merging inbox messages', error: e);
             }
           },
-          onError: (error) {
+          onError: (Object error) {
             AppLogger.e(
               'Realtime inbox messages subscription error',
               error: error,
@@ -292,12 +291,13 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
                   lastMessageSenderId: message.senderId,
                 );
                 if (!conversations.any((c) => c.id == merged.id)) {
-                  conversations.add(merged);
-                  conversations.sort((a, b) {
-                    final aTime = a.lastMessageTime ?? a.createdAt;
-                    final bTime = b.lastMessageTime ?? b.createdAt;
-                    return bTime.compareTo(aTime);
-                  });
+                  conversations
+                    ..add(merged)
+                    ..sort((a, b) {
+                      final aTime = a.lastMessageTime ?? a.createdAt;
+                      final bTime = b.lastMessageTime ?? b.createdAt;
+                      return bTime.compareTo(aTime);
+                    });
                   AppLogger.d(
                     '[REALTIME] New conversation added from inbox message: ${merged.id}',
                   );
@@ -369,28 +369,29 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   }
 
   /// Map technical errors to user-friendly messages for conversation creation
-  String _mapConversationError(dynamic error) {
-    final message = error.toString().toLowerCase();
+  String _mapConversationError(Object? error) {
+    final rawMessage = error.toString().toLowerCase();
 
-    if (message.contains('freelancers cannot start')) {
+    if (rawMessage.contains('freelancers cannot start')) {
       return 'Only clients can start conversations with freelancers.';
     }
-    if (message.contains('favorites list')) {
+    if (rawMessage.contains('favorites list')) {
       return 'Add this freelancer to your favorites first to start a conversation.';
     }
-    if (message.contains('rate limit exceeded')) {
+    if (rawMessage.contains('rate limit exceeded')) {
       return "You've reached the conversation limit. Try again in an hour.";
     }
-    if (message.contains('target user not found')) {
+    if (rawMessage.contains('target user not found')) {
       return 'User not found. They may have deleted their account.';
     }
-    if (message.contains('cannot create conversation with yourself')) {
+    if (rawMessage.contains('cannot create conversation with yourself')) {
       return "You can't start a conversation with yourself.";
     }
-    if (message.contains('timeout') || message.contains('timed out')) {
+    if (rawMessage.contains('timeout') || rawMessage.contains('timed out')) {
       return 'Connection timeout. Check your internet and try again.';
     }
-    if (message.contains('unauthenticated') || message.contains('session')) {
+    if (rawMessage.contains('unauthenticated') ||
+        rawMessage.contains('session')) {
       return 'Session expired. Please log in again.';
     }
 
@@ -665,7 +666,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
               ..clear()
               ..addAll(merged);
             if ((_presenceReceiptsEnabled ?? false) && hasNewFromOther) {
-              unawaited(markReceiptsForActive(delivered: true, seen: false));
+              unawaited(markReceiptsForActive());
             }
             _offerRefreshDebounce?.cancel();
             _offerRefreshDebounce = Timer(
@@ -682,20 +683,21 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
             );
             _notify();
           },
-          onError: (error) {
+          onError: (Object error) {
             AppLogger.e(
               '[CHAT] stream_error messages subscription',
               tag: 'ChatVM',
               error: error,
             );
-            currentMessages.clear();
-            currentMessages.addAll(_lastMessages);
+            currentMessages
+              ..clear()
+              ..addAll(_lastMessages);
             _notify();
           },
         );
 
     if (_presenceReceiptsEnabled ?? false) {
-      unawaited(markReceiptsForActive(delivered: true, seen: false));
+      unawaited(markReceiptsForActive());
       final otherId = activeConversation!.user1Id == currentUserId
           ? activeConversation!.user2Id
           : activeConversation!.user1Id;
@@ -729,7 +731,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
               }
               _notify();
             },
-            onError: (e) {
+            onError: (Object e) {
               AppLogger.e(
                 '[CHAT] presence stream error',
                 tag: 'ChatVM',
@@ -769,17 +771,20 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   Future<String> resolveAttachmentSignedUrl(String storagePath) {
     return _attachmentUploader.createSignedUrl(
       storagePath,
-      expiresInSeconds: SharedStorageConfig.chatAttachmentTtlSeconds,
     );
   }
 
   /// Call when user starts or stops typing. Throttled in service; no-op if feature flag off.
-  Future<void> setTyping(bool isTyping) async {
+  Future<void> setTyping({required bool isTyping}) async {
     if (_presenceReceiptsEnabled != true || activeConversation == null) return;
     final uid = currentUserId;
     if (uid == null) return;
     try {
-      await _repo.upsertPresence(activeConversation!.id, uid, isTyping);
+      await _repo.upsertPresence(
+        activeConversation!.id,
+        uid,
+        isTyping: isTyping,
+      );
     } on Exception catch (e) {
       AppLogger.w('[CHAT] setTyping failed: $e', tag: 'ChatVM');
     }

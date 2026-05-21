@@ -27,10 +27,10 @@ void main() {
     late TaskFilterViewModel filterViewModel;
 
     final firstPage = <Task>[
-      _task('a1', DateTime.utc(2026, 3, 1, 12, 0, 0)),
-      _task('a0', DateTime.utc(2026, 3, 1, 12, 0, 0)),
+      _task('a1', DateTime.utc(2026, 3, 1, 12)),
+      _task('a0', DateTime.utc(2026, 3, 1, 12)),
     ];
-    final secondPage = <Task>[_task('b1', DateTime.utc(2026, 2, 28, 12, 0, 0))];
+    final secondPage = <Task>[_task('b1', DateTime.utc(2026, 2, 28, 12))];
 
     setUp(() {
       taskService = _MockTaskService();
@@ -56,11 +56,7 @@ void main() {
       expect(viewModel.hasMore, isFalse);
       verify(
         () => taskService.getOpenTasksForHome(
-          limit: TaskService.defaultPageSize,
-          cursorCreatedAtIso: null,
-          cursorId: null,
           requestId: any(named: 'requestId'),
-          source: 'home',
         ),
       ).called(1);
     });
@@ -76,8 +72,6 @@ void main() {
                 2,
                 28,
                 15,
-                0,
-                0,
               ).subtract(Duration(minutes: i)),
             );
           }),
@@ -107,13 +101,11 @@ void main() {
       expect(filterViewModel.filteredTasks.last.id, 'b1');
       verify(
         () => taskService.getOpenTasksForHome(
-          limit: TaskService.defaultPageSize,
           cursorCreatedAtIso: initialPage.last.createdAt
               .toUtc()
               .toIso8601String(),
           cursorId: initialPage.last.id,
           requestId: any(named: 'requestId'),
-          source: 'home',
         ),
       ).called(1);
     });
@@ -158,11 +150,7 @@ void main() {
       expect(filterViewModel.filteredTasks, firstPage);
       verify(
         () => taskService.getOpenTasksForHome(
-          limit: TaskService.defaultPageSize,
-          cursorCreatedAtIso: null,
-          cursorId: null,
           requestId: any(named: 'requestId'),
-          source: 'home',
         ),
       ).called(2);
     });

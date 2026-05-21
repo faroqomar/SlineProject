@@ -25,7 +25,7 @@ Layer 3 — COMPONENTS: All widgets in lib/core/widgets/ and lib/features/*/view
 ```
 
 **Key design decisions:**
-- `AppDimens` (raw primitives: p0-p100, r4-r50) and `AppLayout` (semantic tokens: cardPadding, avatarMedium, buttonHeight) coexist in Layer 2 with no value overlap for icon sizes.
+- `AppDimens` (raw primitives: p0-p140, r2-r50) and `AppLayout` (semantic tokens: cardPadding, avatarMedium, buttonHeight) coexist in Layer 2 with no value overlap for icon sizes.
 - Phase 0 (2026-04-07): Created Layer 1 foundation — motion tokens, interaction states, elevation scale, semantic colors, typography line heights, component themes.
 - Phase 0.7 (2026-04-08): Created `app_layout.dart` with 41 semantic layout tokens across 11 categories. Migrated 10 core widget files + main_navigation_screen.dart. 53 new tests verify token values and architecture invariants.
 - All 15 `lib/core/widgets/` files are now classified: 10 migrated, 2 clean (already tokenized), 3 skip (animation-only or selective-only).

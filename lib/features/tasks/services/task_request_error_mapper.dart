@@ -18,7 +18,7 @@ class TaskRequestErrorMapper {
   ///
   /// This is a public helper that can be used by ViewModels
   /// to get consistent error messages.
-  String mapErrorToUserMessage(dynamic error) {
+  String mapErrorToUserMessage(Object? error) {
     if (error is PriceMismatchException) {
       return error.userMessage;
     }

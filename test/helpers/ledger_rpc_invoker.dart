@@ -304,7 +304,7 @@ class FeeLockingScenarioRunner {
     AppLogger.d('  → Phase: $phase', tag: _logTag);
   }
 
-  void logComplete(bool success) {
+  void logComplete({required bool success}) {
     if (success) {
       AppLogger.i('✅ Scenario completed: $description', tag: _logTag);
     } else {

@@ -31,7 +31,7 @@ BookingModel _booking(String id) {
     paymentStatus: PaymentStatus.unpaid,
     note: null,
     price: 100,
-    createdAtUtc: DateTime.utc(2026, 3, 1),
+    createdAtUtc: DateTime.utc(2026, 3),
   );
 }
 
@@ -104,7 +104,7 @@ void main() {
           bookingId: 'booking-1',
           correlationId: 'corr-1',
           provider: 'qicard',
-          startedAt: DateTime.utc(2026, 3, 1),
+          startedAt: DateTime.utc(2026, 3),
           entityType: 'booking',
           callbackHosts: const <String>{'sline.app'},
         ),
@@ -150,7 +150,7 @@ void main() {
           bookingId: 'booking-1',
           correlationId: 'corr-1',
           provider: 'qicard',
-          startedAt: DateTime.utc(2026, 3, 1),
+          startedAt: DateTime.utc(2026, 3),
           entityType: 'booking',
           callbackHosts: const <String>{'sline.app'},
         ),
@@ -191,7 +191,7 @@ void main() {
           bookingId: 'booking-2',
           correlationId: 'corr-2',
           provider: 'qicard',
-          startedAt: DateTime.utc(2026, 3, 1),
+          startedAt: DateTime.utc(2026, 3),
           entityType: 'booking',
           callbackHosts: const <String>{'sline.app'},
         ),

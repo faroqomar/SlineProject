@@ -32,8 +32,7 @@ void main() {
       final favorite = FavoriteWithProfile(
         id: 'f2',
         freelancerId: 'fl-2',
-        createdAt: DateTime.utc(2026, 3, 1),
-        freelancerName: null,
+        createdAt: DateTime.utc(2026, 3),
       );
       await pumpApp(
         tester,
@@ -49,7 +48,7 @@ void main() {
       final favorite = FavoriteWithProfile(
         id: 'f3',
         freelancerId: 'fl-3',
-        createdAt: DateTime.utc(2026, 3, 1),
+        createdAt: DateTime.utc(2026, 3),
         freelancerName: 'Action User',
       );
       var startChatCount = 0;

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
@@ -33,6 +36,10 @@ class _MockSafetyViewModel extends Mock
 class _MockWorkManagementService extends Mock
     implements WorkManagementService {}
 
+class _MockAuthSessionViewModel extends Mock
+    with ChangeNotifier
+    implements AuthSessionViewModel {}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -60,7 +67,7 @@ UnifiedWorkItemModel _taskWorkItem({
     freelancerId: _userId,
     revisionsTotal: 3,
     revisionsUsed: 0,
-    deadline: DateTime.utc(2026, 5, 1),
+    deadline: DateTime.utc(2026, 5),
     awardedRequestId: awardedRequestId,
   );
 }
@@ -80,7 +87,7 @@ UnifiedWorkItemModel _bookingWorkItem({
     freelancerId: _userId,
     revisionsTotal: 2,
     revisionsUsed: 0,
-    deadline: DateTime.utc(2026, 6, 1),
+    deadline: DateTime.utc(2026, 6),
   );
 }
 
@@ -92,7 +99,7 @@ WorkContractModel _contractFixture() {
     version: 1,
     snapshot: const {'price': 50000, 'scope': 'Logo design'},
     contractHash: 'abc123',
-    createdAt: DateTime.utc(2026, 3, 1),
+    createdAt: DateTime.utc(2026, 3),
   );
 }
 
@@ -108,7 +115,7 @@ BookingModel _bookingFixture() {
     note: 'Please do a great job',
     price: 30000,
     createdAtUtc: DateTime.utc(2026, 3, 15),
-    dueAtUtc: DateTime.utc(2026, 6, 1),
+    dueAtUtc: DateTime.utc(2026, 6),
     deliveryDays: 7,
   );
 }
@@ -285,6 +292,38 @@ Future<void> _pumpScreen(
   );
 }
 
+/// Pumps the real production [WorkItemDetailsScreen] with an injected service
+/// so chrome and dock regressions are covered outside the legacy wrapper.
+Future<void> _pumpProductionScreen(
+  WidgetTester tester, {
+  required _MockSafetyViewModel safetyVm,
+  required _MockWorkManagementService workService,
+  required _MockChatViewModel chatVm,
+  required _MockDashboardViewModel dashboardVm,
+  String id = _workItemId,
+  WorkItemType type = WorkItemType.task,
+}) async {
+  final authVm = _MockAuthSessionViewModel();
+  when(() => authVm.currentUserId).thenReturn(_userId);
+
+  await pumpApp(
+    tester,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthSessionViewModel>.value(value: authVm),
+        ChangeNotifierProvider<ChatViewModel>.value(value: chatVm),
+        ChangeNotifierProvider<DashboardViewModel>.value(value: dashboardVm),
+        ChangeNotifierProvider<SafetyViewModel>.value(value: safetyVm),
+      ],
+      child: WorkItemDetailsScreen(
+        id: id,
+        type: type,
+        workService: workService,
+      ),
+    ),
+  );
+}
+
 /// Pumps the screen in its loading state (before loadData completes).
 Future<void> _pumpScreenLoading(
   WidgetTester tester, {
@@ -296,8 +335,6 @@ Future<void> _pumpScreenLoading(
   final vm = WorkItemDetailsViewModel(
     uid: _userId,
     workService: workService,
-    chatViewModel: null,
-    dashboardViewModel: null,
   );
   // Do NOT call loadData -- leave VM in initial/loading state
 
@@ -799,7 +836,6 @@ void main() {
         tester,
         safetyVm: safetyVm,
         workService: workService,
-        type: WorkItemType.task,
       );
       await tester.pumpAndSettle();
 
@@ -879,6 +915,79 @@ void main() {
 
       expect(find.text('Status:'), findsOneWidget);
       expect(find.text('ACTIVE'), findsOneWidget);
+    });
+
+    testWidgets('T178 production route uses floating chrome, not AppBar', (
+      tester,
+    ) async {
+      _stubWorkServiceForTask(workService);
+
+      await _pumpProductionScreen(
+        tester,
+        safetyVm: safetyVm,
+        workService: workService,
+        chatVm: chatVm,
+        dashboardVm: dashboardVm,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WorkItemDetailsScreen), findsOneWidget);
+      expect(find.byType(AppBar), findsNothing);
+      expect(find.byTooltip('Back'), findsOneWidget);
+      expect(find.text('Overview'), findsOneWidget);
+      expect(find.text('Extensions'), findsOneWidget);
+      expect(find.text('Contract'), findsOneWidget);
+    });
+
+    testWidgets('T179 production compact dock exposes icon tooltips', (
+      tester,
+    ) async {
+      _stubWorkServiceForTask(workService);
+
+      await _pumpProductionScreen(
+        tester,
+        safetyVm: safetyVm,
+        workService: workService,
+        chatVm: chatVm,
+        dashboardVm: dashboardVm,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Submit Work'), findsOneWidget);
+      expect(find.byTooltip('Request extension'), findsOneWidget);
+      expect(find.byTooltip('Open chat'), findsOneWidget);
+      expect(find.byTooltip('Report issue'), findsOneWidget);
+    });
+
+    testWidgets('T180 production loading state keeps floating back control', (
+      tester,
+    ) async {
+      final neverComplete = Completer<UnifiedWorkItemModel?>();
+      when(
+        () => workService.getUnifiedWorkItem(any(), any()),
+      ).thenAnswer((_) => neverComplete.future);
+      when(
+        () => workService.getActiveContract(any(), any()),
+      ).thenAnswer((_) async => null);
+      when(
+        () => workService.getPendingChangeRequests(any(), any()),
+      ).thenAnswer((_) async => []);
+      when(
+        () => workService.getPendingExtensionRequests(any(), any()),
+      ).thenAnswer((_) async => []);
+      when(() => workService.getBooking(any())).thenAnswer((_) async => null);
+
+      await _pumpProductionScreen(
+        tester,
+        safetyVm: safetyVm,
+        workService: workService,
+        chatVm: chatVm,
+        dashboardVm: dashboardVm,
+      );
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byTooltip('Back'), findsOneWidget);
     });
   });
 }

@@ -43,7 +43,7 @@ Task _openTask({String userId = 'other-user'}) {
     budget: 5000,
     userId: userId,
     status: TaskStatus.open,
-    createdAt: DateTime.utc(2026, 3, 1),
+    createdAt: DateTime.utc(2026, 3),
   );
 }
 
@@ -60,7 +60,7 @@ TaskRequest _existingBid({
     days: days,
     note: note,
     status: OfferStatus.pending,
-    createdAt: DateTime.utc(2026, 3, 1),
+    createdAt: DateTime.utc(2026, 3),
   );
 }
 
@@ -392,7 +392,38 @@ void main() {
       await tester.tap(submitButtons.last);
       await tester.pumpAndSettle();
 
-      expect(find.text('Invalid'), findsWidgets);
+      expect(find.text('Enter a price greater than 0'), findsWidgets);
+    });
+
+    testWidgets('T127a: zero price shows friendly validation error', (
+      tester,
+    ) async {
+      _stubNewBidHappyPath(
+        taskService: taskService,
+        requestsService: requestsService,
+        authVm: authVm,
+        controller: controller,
+      );
+
+      await _pumpHost(
+        tester,
+        taskService: taskService,
+        requestsService: requestsService,
+        authVm: authVm,
+        controller: controller,
+      );
+
+      await _openSheet(tester);
+
+      final fields = find.byType(TextFormField);
+      await tester.enterText(fields.at(0), '0');
+      await tester.enterText(fields.at(1), '7');
+      await tester.pump();
+
+      await tester.tap(find.text('Submit Proposal').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Enter a price greater than 0'), findsWidgets);
     });
 
     testWidgets('T128: empty days shows validation error on submit', (
@@ -459,7 +490,6 @@ void main() {
           taskId: _kTaskId,
           price: 100.0,
           days: 7,
-          note: null,
         ),
       ).called(1);
     });
@@ -509,7 +539,7 @@ void main() {
           budget: 5000,
           userId: 'other-user',
           status: TaskStatus.closed,
-          createdAt: DateTime.utc(2026, 3, 1),
+          createdAt: DateTime.utc(2026, 3),
         ),
       );
 
@@ -592,7 +622,7 @@ void main() {
         requestsService: requestsService,
         authVm: authVm,
         controller: controller,
-        existingBid: _existingBid(price: 300000, days: 5),
+        existingBid: _existingBid(),
       );
 
       await _pumpHost(
@@ -638,7 +668,7 @@ void main() {
         requestsService: requestsService,
         authVm: authVm,
         controller: controller,
-        existingBid: _existingBid(price: 300000, days: 5),
+        existingBid: _existingBid(),
       );
 
       await _pumpHost(
@@ -671,7 +701,7 @@ void main() {
         requestsService: requestsService,
         authVm: authVm,
         controller: controller,
-        existingBid: _existingBid(price: 300000, days: 5),
+        existingBid: _existingBid(),
       );
 
       await _pumpHost(
@@ -713,7 +743,7 @@ void main() {
         requestsService: requestsService,
         authVm: authVm,
         controller: controller,
-        existingBid: _existingBid(price: 300000, days: 5),
+        existingBid: _existingBid(),
       );
 
       await _pumpHost(

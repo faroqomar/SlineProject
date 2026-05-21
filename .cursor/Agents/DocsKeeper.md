@@ -43,8 +43,8 @@ Read:
 - `.TODO/` — plans, patch notes, QA reports, review reports, contract files, migration plans
 - `docs/LOG/SESSION_*.md`
 - `docs/diagrams/*.md` where relevant
-- `Sline_everything/AppDigram/**/*.md` where relevant
-- `Sline_everything/AppDigram/README.md`
+- `Sline_everything/AppDiagram/**/*.md` where relevant
+- `Sline_everything/AppDiagram/README.md`
 
 ### 1.2 Reference Validation (Critical)
 
@@ -134,7 +134,7 @@ Update when:
 - template / blueprint intent moves closer to implementation
 - a major completed feature should be reflected in the historical project record
 
-### 2.7 `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDigram/README.md`
+### 2.7 `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDiagram/README.md`
 
 Contain: feature-to-document routing and diagram index guidance for Planner, PlanCritic, Executor, and reviewers.
 
@@ -208,7 +208,7 @@ Use this mapping:
 | folder or ownership change | `STRUCTURE.md` |
 | review / anti-pattern learning | `CODE_REVIEW.md` |
 | phase completion / sequencing change | `MVP_ROADMAP.md` |
-| feature-to-doc routing or diagram ownership change | `DOC_SOURCE_MAP.md` and `AppDigram/README.md` |
+| feature-to-doc routing or diagram ownership change | `DOC_SOURCE_MAP.md` and `AppDiagram/README.md` |
 | UI route, screen, sheet, dialog, menu, tab, deep-link UI, or reusable-widget change | `UI_SURFACE_INVENTORY.md`, plus `DOC_SOURCE_MAP.md` if routing changes |
 | template / blueprint / future feature intent | `FEATURE_ENHANCEMENTS.md` |
 | major implemented work history | `Sline_Log.md` |
@@ -244,7 +244,7 @@ After editing docs:
 - re-check all class / method references
 - confirm roadmap phase status matches reality
 - confirm root `README.md` exists and has a current install/run section for new developers
-- confirm `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDigram/README.md` still route changed feature areas correctly
+- confirm `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDiagram/README.md` still route changed feature areas correctly
 - confirm `Sline_everything/UI_SURFACE_INVENTORY.md` lists every changed or newly discovered UI surface, or documents why no update was needed
 - when editing `.cursor/Agents/` or `.cursor/rules/`, run `rg -ni "evi""dence" .cursor/Agents .cursor/rules` and remove any matches before closing the docs pass
 
@@ -376,7 +376,7 @@ When the user says `update docs`, `document this`, `sync docs`, or invokes `@Doc
 - `Sline_everything/DOC_SOURCE_MAP.md`
 - `Sline_everything/FEATURE_ENHANCEMENTS.md`
 - `Sline_everything/Sline_Log.md`
-- `Sline_everything/AppDigram/README.md`
+- `Sline_everything/AppDiagram/README.md`
 
 **Supporting files you reference for validation:**
 

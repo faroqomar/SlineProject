@@ -40,7 +40,7 @@ void main() {
       expect(textWidget.data, isNot('Expired'));
     });
 
-    testWidgets('uses green color for safe state (>4 hours)', (tester) async {
+    testWidgets('uses teal color for safe state (>4 hours)', (tester) async {
       final expirationTime = DateTime.now().add(const Duration(hours: 5));
 
       await tester.pumpWidget(
@@ -58,9 +58,9 @@ void main() {
       final decoration = containerWidget.decoration as BoxDecoration?;
       expect(decoration, isNotNull);
 
-      // Safe state should use green color (with alpha for border)
+      // Safe state should use primary teal color with a muted border wash.
       final borderColor = decoration?.border?.bottom.color;
-      expect(borderColor, equals(Colors.green.withValues(alpha: 0.3)));
+      expect(borderColor, equals(AppColors.teal.withValues(alpha: 0.3)));
     });
 
     testWidgets('uses gold color for warning state (1-4 hours)', (
@@ -216,7 +216,7 @@ void main() {
       final container = find.byType(Container);
       final containerWidget = tester.widget<Container>(container);
       final decoration = containerWidget.decoration as BoxDecoration?;
-      expect(decoration?.color, equals(Colors.green.withValues(alpha: 0.1)));
+      expect(decoration?.color, equals(AppColors.teal.withValues(alpha: 0.1)));
     });
   });
 }

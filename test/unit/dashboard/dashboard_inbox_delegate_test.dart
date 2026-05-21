@@ -77,42 +77,42 @@ void main() {
     });
 
     test('clear resets state and marks unloaded', () {
-      final delegate = buildDelegate();
-      delegate.setInboxData(
-        offers: [_buildTaskRequest(id: 'r1', taskId: 't1')],
-        pendingRequests: [],
-        pendingPaymentTenders: [],
-        myTasks: [],
-      );
-      delegate.clear();
+      final delegate = buildDelegate()
+        ..setInboxData(
+          offers: [_buildTaskRequest(id: 'r1', taskId: 't1')],
+          pendingRequests: [],
+          pendingPaymentTenders: [],
+          myTasks: [],
+        )
+        ..clear();
       expect(delegate.inboxOffers, isEmpty);
       expect(delegate.inboxLoaded, isFalse);
     });
 
     test('removeOffer removes by ID', () {
-      final delegate = buildDelegate();
-      delegate.setInboxData(
-        offers: [
-          _buildTaskRequest(id: 'r1', taskId: 't1'),
-          _buildTaskRequest(id: 'r2', taskId: 't2'),
-        ],
-        pendingRequests: [],
-        pendingPaymentTenders: [],
-        myTasks: [],
-      );
-      delegate.removeOffer('r1');
+      final delegate = buildDelegate()
+        ..setInboxData(
+          offers: [
+            _buildTaskRequest(id: 'r1', taskId: 't1'),
+            _buildTaskRequest(id: 'r2', taskId: 't2'),
+          ],
+          pendingRequests: [],
+          pendingPaymentTenders: [],
+          myTasks: [],
+        )
+        ..removeOffer('r1');
       expect(delegate.inboxOffers, hasLength(1));
       expect(delegate.inboxOffers.first.id, 'r2');
     });
 
     test('rejectOffer calls taskService and removes from list', () async {
-      final delegate = buildDelegate();
-      delegate.setInboxData(
-        offers: [_buildTaskRequest(id: 'r1', taskId: 't1')],
-        pendingRequests: [],
-        pendingPaymentTenders: [],
-        myTasks: [],
-      );
+      final delegate = buildDelegate()
+        ..setInboxData(
+          offers: [_buildTaskRequest(id: 'r1', taskId: 't1')],
+          pendingRequests: [],
+          pendingPaymentTenders: [],
+          myTasks: [],
+        );
       when(() => mockTaskService.rejectOffer('r1')).thenAnswer((_) async {});
 
       await delegate.rejectOffer(_buildTaskRequest(id: 'r1', taskId: 't1'));
@@ -121,13 +121,13 @@ void main() {
     });
 
     test('rejectOffer does not notify when disposed', () async {
-      final delegate = buildDelegate();
-      delegate.setInboxData(
-        offers: [_buildTaskRequest(id: 'r1', taskId: 't1')],
-        pendingRequests: [],
-        pendingPaymentTenders: [],
-        myTasks: [],
-      );
+      final delegate = buildDelegate()
+        ..setInboxData(
+          offers: [_buildTaskRequest(id: 'r1', taskId: 't1')],
+          pendingRequests: [],
+          pendingPaymentTenders: [],
+          myTasks: [],
+        );
       when(() => mockTaskService.rejectOffer('r1')).thenAnswer((_) async {
         disposed = true;
       });

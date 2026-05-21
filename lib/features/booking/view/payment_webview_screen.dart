@@ -6,6 +6,7 @@ import 'package:sline_app/core/config/payment_runtime_config.dart';
 import 'package:sline_app/core/services/crash_reporting_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -672,7 +673,11 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: AppDimens.p16),
-            Icon(Icons.open_in_browser, size: 48, color: amberColors.primary),
+            Icon(
+              Icons.open_in_browser,
+              size: AppLayout.iconFeature,
+              color: amberColors.primary,
+            ),
             const SizedBox(height: AppDimens.p16),
             Text(
               'Payment in browser',
@@ -765,18 +770,18 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         if (_loadError != null)
           Center(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(AppDimens.p20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.error_outline, color: amberColors.danger),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimens.p8),
                   Text(
                     'Failed to load payment page.\n$_loadError',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: amberColors.text),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppDimens.p12),
                   FilledButton(
                     onPressed: () {
                       if (_isDisposed) return;

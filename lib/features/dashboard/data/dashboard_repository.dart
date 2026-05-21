@@ -236,7 +236,7 @@ class DashboardRepository {
           .limit(limit);
 
       final activities = (response as List)
-          .map((e) => ActivityLog.fromJson(e))
+          .map((e) => ActivityLog.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
       AppLogger.d(
         'Fetched ${activities.length} activity log items',
@@ -257,7 +257,6 @@ class DashboardRepository {
     var active = 0;
     var pending = 0;
     var offers = 0;
-    const unreadMessages = 0;
     var needsReview = 0;
     var pendingPayment = 0;
     var completed = 0;
@@ -310,7 +309,6 @@ class DashboardRepository {
     return DashboardCounters(
       activeWork: active,
       pendingRequests: pending,
-      newMessages: unreadMessages,
       newOffers: offers,
       needsReview: needsReview,
       pendingPayment: pendingPayment,
@@ -372,7 +370,9 @@ class DashboardRepository {
   /// Fetches client's awarded but unpaid offers (for "Pay Now" section)
   Future<List<Map<String, dynamic>>> fetchClientAwardedUnpaidOffers() async {
     try {
-      final result = await _client.rpc('get_client_awarded_unpaid_offers');
+      final result = await _client.rpc<dynamic>(
+        'get_client_awarded_unpaid_offers',
+      );
       final items = result as List;
       AppLogger.i(
         'Fetched ${items.length} awarded unpaid offers for client',
@@ -394,7 +394,9 @@ class DashboardRepository {
   Future<List<Map<String, dynamic>>>
   fetchFreelancerAwardedUnpaidOffers() async {
     try {
-      final result = await _client.rpc('get_freelancer_awarded_unpaid_offers');
+      final result = await _client.rpc<dynamic>(
+        'get_freelancer_awarded_unpaid_offers',
+      );
       final items = result as List;
       AppLogger.i(
         'Fetched ${items.length} awarded unpaid offers for freelancer',

@@ -62,7 +62,6 @@ void main() {
           Exception('payment failed'),
           StackTrace.current,
           reason: 'QiCard timeout',
-          fatal: false,
         ),
         completes,
       );

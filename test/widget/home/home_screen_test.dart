@@ -4,6 +4,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
 import 'package:sline_app/features/home/view/home_screen.dart';
 import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
@@ -12,6 +13,7 @@ import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/view/widgets/booking_task_card.dart';
+import 'package:sline_app/features/tasks/view/widgets/discovery_task_sliver.dart';
 import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
@@ -66,7 +68,7 @@ _HomeBundle _buildHomeBundle() {
   when(() => homeVm.isLoadingMore).thenReturn(false);
   when(() => homeVm.hasMore).thenReturn(false);
   when(
-    () => homeVm.refresh(filterController: filterVm, surface: 'home'),
+    () => homeVm.refresh(filterController: filterVm),
   ).thenAnswer((_) async {});
 
   when(() => filterVm.selectedCategory).thenReturn('');
@@ -104,7 +106,7 @@ Task _task({
     userId: 'user-1',
     status: TaskStatus.open,
     taskType: taskType,
-    createdAt: DateTime.utc(2026, 3, 1),
+    createdAt: DateTime.utc(2026, 3),
     category: category,
     categoryName: category,
   );
@@ -163,11 +165,19 @@ void main() {
       expect(find.byKey(HomeScreen.discoveryAllWorkKey), findsOneWidget);
       expect(find.byKey(HomeScreen.discoveryBookingsKey), findsOneWidget);
       expect(find.byKey(HomeScreen.discoveryTendersKey), findsOneWidget);
-      expect(find.text('All posts'), findsWidgets);
-      expect(find.text('Tender posts'), findsOneWidget);
+      expect(find.text('All'), findsWidgets);
+      expect(find.text('Tasks'), findsOneWidget);
       expect(find.text('FEED'), findsOneWidget);
-      expect(find.text('0 items'), findsOneWidget);
+      expect(find.text('0 posts'), findsOneWidget);
       expect(find.byType(SkeletonTaskCard), findsWidgets);
+      expect(find.byType(SafeArea), findsWidgets);
+      final discoverySliver = tester.widget<DiscoveryTaskSliver>(
+        find.byType(DiscoveryTaskSliver),
+      );
+      expect(
+        discoverySliver.bottomPadding,
+        greaterThan(AmberDuskTokens.phoneLayout.bottomScrollPadding),
+      );
     });
 
     testWidgets(
@@ -204,7 +214,6 @@ void main() {
       verify(
         () => bundle.homeVm.refresh(
           filterController: bundle.filterVm,
-          surface: 'home',
         ),
       ).called(1);
       verify(bundle.profileVm.loadHeaderProfile).called(1);

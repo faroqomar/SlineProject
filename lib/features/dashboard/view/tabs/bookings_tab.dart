@@ -178,7 +178,7 @@ class BookingsTab extends StatelessWidget {
                     width: AppDimens.emptyStateIconContainer,
                     height: AppDimens.emptyStateIconContainer,
                     decoration: BoxDecoration(
-                      color: amber.activeGlow,
+                      color: amber.primary.withValues(alpha: 0.105),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(

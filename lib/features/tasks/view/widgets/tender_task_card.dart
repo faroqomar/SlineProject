@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/format_price.dart';
@@ -11,10 +9,10 @@ import 'package:sline_app/core/widgets/scale_button.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 
-/// Quiet Amber Dusk card for tender-style discovery tasks.
+/// Original SLine V2 Amber Dusk card for tender-style discovery tasks.
 ///
 /// The card keeps task navigation and saved-state callbacks untouched while
-/// rendering tender work as the compact raised panels shown in Phase 3.
+/// rendering tender work as a full client task post, not a dashboard row.
 class TenderTaskCard extends StatelessWidget {
   /// Creates a tender task card for the discovery feed.
   const TenderTaskCard({
@@ -35,7 +33,6 @@ class TenderTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
     const amberColors = AmberDuskTokens.colors;
     final cardTheme = AmberDuskTokens.widgetTheme.cards;
     final authorName = task.userName ?? 'Client';
@@ -64,20 +61,8 @@ class TenderTaskCard extends StatelessWidget {
       label: '${task.title} tender task card',
       child: Container(
         margin: const EdgeInsets.only(bottom: AppDimens.p12),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: cardTheme.taskGradientStops,
-          ),
-          borderRadius: BorderRadius.circular(
-            AmberDuskTokens.spacing.taskCardRadius,
-          ),
-          border: Border.all(
-            color: cardTheme.border,
-            width: cardTheme.borderWidth,
-          ),
-          boxShadow: AppDecorations.elevation(2, isDark: colorScheme.isDark),
+        decoration: AmberDuskMaterial.taskCardDecoration(
+          radius: AmberDuskTokens.spacing.taskCardRadius,
         ),
         child: ScaleButton(
           onPressed: () {
@@ -90,7 +75,6 @@ class TenderTaskCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     _AuthorAvatar(
                       name: authorName,
@@ -126,24 +110,15 @@ class TenderTaskCard extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: cardTheme.taskSectionSpacing),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        task.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: cardTheme.taskTitleStyle.copyWith(
-                          color: amberColors.text,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppDimens.p12),
-                    _PricePill(amount: task.budget),
-                  ],
+                Text(
+                  task.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: cardTheme.taskTitleStyle.copyWith(
+                    color: amberColors.text,
+                  ),
                 ),
-                const SizedBox(height: AppDimens.p8),
+                const SizedBox(height: AppDimens.p6),
                 Text(
                   task.description,
                   maxLines: 1,
@@ -152,7 +127,7 @@ class TenderTaskCard extends StatelessWidget {
                     color: amberColors.muted,
                   ),
                 ),
-                const SizedBox(height: AppDimens.p12),
+                const SizedBox(height: AppDimens.p10),
                 Wrap(
                   spacing: AppDimens.p6,
                   runSpacing: AppDimens.p6,
@@ -189,10 +164,13 @@ class TenderTaskCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(width: AppDimens.p8),
+                    _PricePill(amount: task.budget),
+                    const SizedBox(width: AppDimens.p8),
                     Container(
                       height: cardTheme.cardActionHeight,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimens.p18,
+                        horizontal: AppDimens.p14,
                       ),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
@@ -261,7 +239,6 @@ class _AuthorAvatar extends StatelessWidget {
         storagePathOrUrl: path,
         radius: avatarSize / 2,
         borderColor: amberColors.surfaceHighest,
-        borderWidth: 2,
       );
     }
 
@@ -323,7 +300,7 @@ class _PricePill extends StatelessWidget {
     final cardTheme = AmberDuskTokens.widgetTheme.cards;
     final price = _splitFormattedPrice(_formatCardPrice(amount));
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 128),
+      constraints: const BoxConstraints(maxWidth: 112),
       child: Container(
         padding: cardTheme.taskPricePadding,
         decoration: BoxDecoration(

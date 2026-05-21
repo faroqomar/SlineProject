@@ -94,7 +94,7 @@ void main() {
       // Primary
       await pumpCoreWidget(
         tester,
-        AppStyledButton(text: 'Primary', onPressed: () {}, isPrimary: true),
+        AppStyledButton(text: 'Primary', onPressed: () {}),
       );
       final primaryContainers = tester.widgetList<Container>(
         find.byType(Container),

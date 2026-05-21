@@ -31,7 +31,7 @@ Task _bookingTask({
     userId: 'user-1',
     status: status,
     taskType: TaskType.booking,
-    createdAt: DateTime.utc(2026, 4, 1),
+    createdAt: DateTime.utc(2026, 4),
     skills: const ['Design', 'Branding'],
     userName: userName ?? 'Jane Doe',
     userAvatar: userAvatar,
@@ -108,7 +108,7 @@ void main() {
     testWidgets('renders avatar with initials when no image', (tester) async {
       await _pumpBookingTaskCard(
         tester,
-        task: _bookingTask(userName: 'John Smith', userAvatar: null),
+        task: _bookingTask(userName: 'John Smith'),
         savedVm: mockSavedVm,
       );
 
@@ -139,6 +139,28 @@ void main() {
       expect(find.text('Featured'), findsOneWidget);
       expect(find.text('PER MONTH'), findsOneWidget);
       expect(find.byIcon(Icons.chat_bubble_outline), findsOneWidget);
+    });
+
+    testWidgets('keeps details CTA compact instead of full width', (
+      tester,
+    ) async {
+      await _pumpBookingTaskCard(
+        tester,
+        task: _bookingTask(),
+        savedVm: mockSavedVm,
+      );
+
+      final cardWidth = tester.getSize(find.byType(BookingTaskCard)).width;
+      final actionWidth = tester
+          .getSize(
+            find.byKey(
+              const ValueKey<String>('booking_task_card_details_action'),
+            ),
+          )
+          .width;
+
+      expect(actionWidth, lessThan(cardWidth * 0.55));
+      expect(actionWidth, greaterThan(120));
     });
   });
 }

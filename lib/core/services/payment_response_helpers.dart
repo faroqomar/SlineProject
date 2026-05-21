@@ -7,7 +7,7 @@
 library;
 
 /// Safely cast a dynamic value to a typed map, or return null.
-Map<String, dynamic>? asResponseMap(dynamic data) {
+Map<String, dynamic>? asResponseMap(Object? data) {
   if (data is Map<String, dynamic>) return data;
   if (data is Map) {
     return data.map((key, value) => MapEntry(key.toString(), value));
@@ -50,7 +50,7 @@ String? extractErrorFromPayload(Map<String, dynamic>? data) {
 
 /// Normalise an error value that may be a plain String or a Map with `code` /
 /// `message` keys.
-String? normalizeErrorValue(dynamic error) {
+String? normalizeErrorValue(Object? error) {
   if (error is String && error.isNotEmpty) return error;
   if (error is Map) {
     final message = error['message'];
@@ -65,7 +65,7 @@ String? normalizeErrorValue(dynamic error) {
 }
 
 /// Parse an ISO-8601 date string, returning null on failure.
-DateTime? parseDateOrNull(dynamic value) {
+DateTime? parseDateOrNull(Object? value) {
   if (value is! String || value.isEmpty) return null;
   return DateTime.tryParse(value);
 }

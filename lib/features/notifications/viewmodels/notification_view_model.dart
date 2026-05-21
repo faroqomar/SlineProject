@@ -18,13 +18,13 @@ class NotificationViewModel extends ChangeNotifier {
     SupabaseClient? client,
     Duration realtimeReconnectBaseDelay = const Duration(seconds: 2),
   }) : _service = service ?? NotificationService(),
-       _injectedClient = client,
+       _client = client ?? Supabase.instance.client,
        _realtimeReconnectBaseDelay = realtimeReconnectBaseDelay {
     _init(authStateChanges);
   }
 
   final NotificationService _service;
-  final SupabaseClient? _injectedClient;
+  final SupabaseClient _client;
   final Duration _realtimeReconnectBaseDelay;
   StreamSubscription<List<NotificationItem>>? _subscription;
   StreamSubscription<AuthState>? _authSubscription;
@@ -37,10 +37,6 @@ class NotificationViewModel extends ChangeNotifier {
   List<NotificationItem> _notifications = [];
   bool _isLoading = false;
   String? _error;
-
-  /// Lazily resolves the Supabase client. Uses injected client if provided,
-  /// otherwise falls back to Supabase.instance.client at call time.
-  SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
 
   List<NotificationItem> get notifications => List.unmodifiable(_notifications);
   bool get isLoading => _isLoading;
@@ -128,7 +124,7 @@ class NotificationViewModel extends ChangeNotifier {
 
     // Plan 13_notification-routing: fetch unread first so badge is correct (avoid limit-50 truncation)
     try {
-      final unread = await _service.getUnreadNotifications(limit: 50);
+      final unread = await _service.getUnreadNotifications();
       if (unread.isNotEmpty) {
         _notifications = unread;
         AppLogger.d(
@@ -193,10 +189,9 @@ class NotificationViewModel extends ChangeNotifier {
       } else {
         _safeNotify();
       }
-    } on Exception catch (_) {
-      _safeNotify();
-    } on Error catch (_) {
-      // Supabase not initialized (e.g., in tests)
+    } on Object catch (_) {
+      // Supabase can be uninitialized in tests; retry should still notify so
+      // widgets leave the loading/error branch deterministically.
       _safeNotify();
     }
   }
@@ -274,7 +269,12 @@ class NotificationViewModel extends ChangeNotifier {
     if (error is! RealtimeSubscribeException) return false;
     final details = error.details;
     if (details is RealtimeCloseEvent) {
-      return details.code == 1002 || details.code == 1006;
+      // Supabase realtime can emit normal websocket lifecycle closes during
+      // app suspend/resume or backend restarts; keep the badge alive by
+      // reconnecting instead of surfacing a hard notification error.
+      return details.code == 1001 ||
+          details.code == 1002 ||
+          details.code == 1006;
     }
     return error.status == RealtimeSubscribeStatus.timedOut;
   }

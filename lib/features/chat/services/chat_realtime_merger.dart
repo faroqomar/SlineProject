@@ -24,16 +24,16 @@ class ChatRealtimeMerger {
           tag: 'ChatMerger',
           error: e,
         );
-      } on TypeError catch (e) {
+      } on Object catch (e) {
         AppLogger.w(
-          'Skipped malformed message row (TypeError)',
+          'Skipped malformed message row',
           tag: 'ChatMerger',
           error: e,
         );
       }
     }
-    final list = byId.values.toList();
-    list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    final list = byId.values.toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     return list;
   }
 }

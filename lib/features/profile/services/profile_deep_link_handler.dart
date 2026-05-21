@@ -12,8 +12,9 @@ import 'package:sline_app/features/profile/view/public_profile_screen.dart';
 ///
 /// Handles: 'profile' (own profile tab), 'user' (public profile screen).
 void registerProfileDeepLinks(DeepLinkRegistry registry) {
-  registry.register('profile', _handleProfile);
-  registry.register('user', _handleUserProfile);
+  registry
+    ..register('profile', _handleProfile)
+    ..register('user', _handleUserProfile);
 }
 
 Future<void> _handleProfile(
@@ -27,8 +28,10 @@ Future<void> _handleProfile(
   if (!context.mounted) return;
   Navigator.popUntil(context, (route) => route.isFirst);
   if (context.mounted) {
-    final navProvider = Provider.of<NavigationProvider>(context, listen: false);
-    navProvider.setCurrentIndex(MainNavDestinations.profile);
+    Provider.of<NavigationProvider>(
+      context,
+      listen: false,
+    ).setCurrentIndex(MainNavDestinations.profile);
   }
 }
 

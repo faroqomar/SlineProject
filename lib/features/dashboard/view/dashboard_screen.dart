@@ -7,11 +7,8 @@ import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/payment_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/web_url_utils_stub.dart'
     if (dart.library.html) 'package:sline_app/core/utils/web_url_utils_web.dart'
@@ -174,69 +171,83 @@ class _DashboardContentState extends State<_DashboardContent>
 
   /// Opens a bottom sheet with dashboard settings (role switcher).
   ///
-  /// Phase 7 redesign: migrated from AlertDialog to BottomSheet for a more
-  /// native mobile feel. The sheet uses solid surface (cardBackground),
-  /// drag handle, and safe-area-aware bottom padding.
+  /// The sheet uses the Amber Dusk scoped-sheet recipe so dashboard settings
+  /// feel like the rest of the phone shell instead of the legacy app theme.
   void _showSettings(BuildContext context, DashboardViewModel vm) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
+    final sheetRecipe = AmberDuskTokens.surfaces.sheet;
 
     AppLogger.d('DashboardScreen: opening settings sheet', tag: 'Dashboard');
 
     unawaited(
       showModalBottomSheet(
         context: context,
-        // Rounded top corners for premium sheet appearance
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppDimens.r24),
-          ),
-        ),
-        backgroundColor: colorScheme.cardBackground,
-        builder: (sheetContext) => SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppLayout.screenHorizontalMargin,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: AppLayout.spacingStandard),
-                // Drag handle — visual affordance for dismissibility
-                Container(
-                  width: AppDimens.p40,
-                  height: AppDimens.p4,
-                  decoration: BoxDecoration(
-                    color: colorScheme.textTertiary,
-                    borderRadius: BorderRadius.circular(AppDimens.r4),
-                  ),
+        showDragHandle: false,
+        backgroundColor: AmberDuskColors.transparent,
+        barrierColor: amber.scrim,
+        builder: (sheetContext) {
+          final bottomSafePadding = MediaQuery.viewPaddingOf(
+            sheetContext,
+          ).bottom;
+          return SafeArea(
+            top: false,
+            child: Container(
+              decoration: BoxDecoration(
+                color: AmberDuskMaterial.raisedSurface,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(sheetRecipe.radius),
                 ),
-                const SizedBox(height: AppLayout.spacingSection),
-                Text(
-                  'Dashboard Settings',
-                  style: AppTypography.h5.copyWith(color: colorScheme.text),
+                boxShadow: AmberDuskMaterial.strongSurfaceDepthShadows,
+              ),
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AmberDuskSpacing.contentHorizontalPadding,
+                  AppDimens.p12,
+                  AmberDuskSpacing.contentHorizontalPadding,
+                  AppDimens.p20 + bottomSafePadding,
                 ),
-                const SizedBox(height: AppLayout.spacingScreen),
-                // Section label for role switcher
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'User Role',
-                    style: AppTypography.captionBold.copyWith(
-                      color: colorScheme.textSecondary,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Single Amber Dusk handle; showModalBottomSheet's
+                    // built-in handle stays disabled to avoid duplicate layers.
+                    Container(
+                      width: AppDimens.p40,
+                      height: AppDimens.p4,
+                      decoration: BoxDecoration(
+                        color: amber.surfaceHighest,
+                        borderRadius: BorderRadius.circular(AppDimens.r4),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: AppDimens.p18),
+                    Text(
+                      'Dashboard Settings',
+                      style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                        color: amber.text,
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.p20),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'User Role',
+                        style: AmberDuskTokens.typography.chip.copyWith(
+                          color: amber.textSubtle,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.p12),
+                    ChangeNotifierProvider.value(
+                      value: vm,
+                      child: const _RoleSwitch(),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppLayout.spacingStandard),
-                // Role switcher — shared via Provider so it reads VM state
-                ChangeNotifierProvider.value(
-                  value: vm,
-                  child: const _RoleSwitch(),
-                ),
-                const SizedBox(height: AppLayout.spacingScreen),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -245,7 +256,6 @@ class _DashboardContentState extends State<_DashboardContent>
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
     const amber = AmberDuskTokens.colors;
-    final tabTheme = AmberDuskTokens.widgetTheme.tabs;
     const spacing = AmberDuskTokens.spacing;
     const typography = AmberDuskTokens.typography;
 
@@ -255,97 +265,76 @@ class _DashboardContentState extends State<_DashboardContent>
     }
 
     return Scaffold(
-      backgroundColor: amber.page,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                spacing.contentHorizontalPadding,
-                spacing.md,
-                spacing.contentHorizontalPadding,
-                spacing.sm,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Semantics(
-                      header: true,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _dashboardTabLabel(vm.currentTab).toUpperCase(),
-                            style: typography.chip.copyWith(
-                              color: amber.muted,
-                              fontWeight: FontWeight.w600,
+      backgroundColor: amber.background,
+      body: AmberDuskBackground(
+        // Match HomeScreen's page-level atmospheric background so the main
+        // bottom-nav tabs feel like one Amber Dusk shell instead of separate
+        // flat surfaces.
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  spacing.contentHorizontalPadding,
+                  spacing.md,
+                  spacing.contentHorizontalPadding,
+                  spacing.sm,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Semantics(
+                        header: true,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _dashboardTabLabel(vm.currentTab).toUpperCase(),
+                              style: typography.chip.copyWith(
+                                color: amber.muted,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: AppDimens.p4),
-                          Text(
-                            'Dashboard',
-                            style: typography.screenTitle.copyWith(
-                              color: amber.text,
+                            const SizedBox(height: AppDimens.p4),
+                            Text(
+                              'Dashboard',
+                              style: typography.screenTitle.copyWith(
+                                color: amber.text,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: 'Dashboard settings',
-                    icon: Icon(
-                      key: DashboardScreen.settingsButtonKey,
-                      Icons.settings_outlined,
-                      color: amber.textSubtle,
+                    IconButton(
+                      tooltip: 'Dashboard settings',
+                      icon: Icon(
+                        key: DashboardScreen.settingsButtonKey,
+                        Icons.settings_outlined,
+                        color: amber.textSubtle,
+                      ),
+                      onPressed: () => _showSettings(context, vm),
                     ),
-                    onPressed: () => _showSettings(context, vm),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: spacing.contentHorizontalPadding,
-              ),
-              child: Semantics(
-                label: 'Dashboard tabs',
-                child: TabBar(
-                  controller: _tabController,
-                  // Keep scrollable for narrow/localized phone widths where
-                  // the five labels would otherwise compress below touch size.
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  indicator: BoxDecoration(
-                    color: amber.activeGlow,
-                    borderRadius: BorderRadius.circular(
-                      spacing.compactControlRadius,
-                    ),
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelColor: tabTheme.activeLabelColor,
-                  labelStyle: tabTheme.labelStyle,
-                  unselectedLabelColor: tabTheme.inactiveLabelColor,
-                  unselectedLabelStyle: tabTheme.inactiveLabelStyle,
-                  dividerColor: AmberDuskColors.transparent,
-                  labelPadding: EdgeInsets.symmetric(horizontal: spacing.md),
-                  onTap: vm.setTab,
-                  tabs: _dashboardTabLabels
-                      .map((label) => Tab(text: label))
-                      .toList(growable: false),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: AppDimens.p8),
-            Expanded(
-              child: Padding(
-                // Padding avoids overlap with the app-level bottom nav.
-                padding: const EdgeInsets.only(
-                  bottom: AppLayout.tabViewBottomPadding,
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: spacing.contentHorizontalPadding,
                 ),
+                child: Semantics(
+                  label: 'Dashboard tabs',
+                  child: _DashboardTabStrip(
+                    currentIndex: vm.currentTab.index,
+                    onSelected: vm.setTab,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppDimens.p8),
+              Expanded(
                 child: TabBarView(
                   controller: _tabController,
                   physics: const NeverScrollableScrollPhysics(),
@@ -360,8 +349,8 @@ class _DashboardContentState extends State<_DashboardContent>
                       ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -371,21 +360,111 @@ class _DashboardContentState extends State<_DashboardContent>
   String _dashboardTabLabel(DashboardTab tab) => _dashboardTabLabels[tab.index];
 }
 
+/// Centered dashboard tab strip with exactly one visual active state.
+///
+/// A custom strip avoids Material TabBar pressed/focus overlays that can make a
+/// second tab look selected while keeping horizontal scrolling for localization.
+class _DashboardTabStrip extends StatelessWidget {
+  const _DashboardTabStrip({
+    required this.currentIndex,
+    required this.onSelected,
+  });
+
+  final int currentIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    const spacing = AmberDuskTokens.spacing;
+    final tabTheme = AmberDuskTokens.widgetTheme.tabs;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(_dashboardTabLabels.length, (index) {
+                final isActive = index == currentIndex;
+                final label = _dashboardTabLabels[index];
+                return Padding(
+                  padding: EdgeInsets.only(
+                    right: index == _dashboardTabLabels.length - 1
+                        ? 0
+                        : spacing.xs,
+                  ),
+                  child: Semantics(
+                    button: true,
+                    selected: isActive,
+                    label: '$label dashboard tab',
+                    child: GestureDetector(
+                      key: ValueKey<String>('dashboard_tab_$label'),
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        AppInteractionStates.hapticTap();
+                        onSelected(index);
+                      },
+                      child: AnimatedContainer(
+                        duration: AppMotion.fast,
+                        curve: AppMotion.curveStandard,
+                        constraints: const BoxConstraints(
+                          minHeight: AppDimens.p48,
+                        ),
+                        alignment: Alignment.center,
+                        padding: EdgeInsets.symmetric(horizontal: spacing.md),
+                        decoration: BoxDecoration(
+                          gradient: isActive
+                              ? AmberDuskMaterial.activeWashGradient
+                              : null,
+                          color: isActive ? null : AmberDuskColors.transparent,
+                          borderRadius: BorderRadius.circular(
+                            spacing.compactControlRadius,
+                          ),
+                        ),
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              (isActive
+                                      ? tabTheme.labelStyle
+                                      : tabTheme.inactiveLabelStyle)
+                                  .copyWith(
+                                    color: isActive
+                                        ? tabTheme.activeLabelColor
+                                        : tabTheme.inactiveLabelColor,
+                                  ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _RoleSwitch extends StatelessWidget {
   const _RoleSwitch();
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
-    final colorScheme = context.colorScheme;
     final isFreelancer = vm.currentRole == UserRole.freelancer;
 
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(AppDimens.p4),
       decoration: BoxDecoration(
-        color: colorScheme.inputBackground,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.inputBorder),
+        color: AmberDuskWidgetTheme.fieldSurface,
+        borderRadius: BorderRadius.circular(AppDimens.r20),
+        boxShadow: AmberDuskMaterial.surfaceDepthShadows,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -423,7 +502,7 @@ class _RoleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
 
     return Semantics(
       button: true,
@@ -434,7 +513,16 @@ class _RoleButton extends StatelessWidget {
       child: GestureDetector(
         onTap: () {
           AppInteractionStates.hapticTap();
+          if (isActive) return;
           onTap();
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text('Role changed to $label.'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
         },
         child: AnimatedContainer(
           key: buttonKey,
@@ -446,16 +534,13 @@ class _RoleButton extends StatelessWidget {
             vertical: AppDimens.p6,
           ),
           decoration: BoxDecoration(
-            color: isActive ? colorScheme.primary : AmberDuskColors.transparent,
+            color: isActive ? amber.primary : AmberDuskColors.transparent,
             borderRadius: BorderRadius.circular(AppDimens.r16),
           ),
           child: Text(
             label,
-            style: AppTypography.captionBold.copyWith(
-              // onPrimary (Material ColorScheme) ensures legible contrast against the primary-colored active background
-              color: isActive
-                  ? Theme.of(context).colorScheme.onPrimary
-                  : colorScheme.textSecondary,
+            style: AmberDuskTokens.typography.control.copyWith(
+              color: isActive ? amber.textInverse : amber.textSubtle,
             ),
           ),
         ),

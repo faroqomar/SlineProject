@@ -68,12 +68,13 @@ class _MessageBubbleState extends State<MessageBubble> {
   /// Uses Extended_Pictographic to exclude digits (#, *, 0-9) that \p{Emoji} includes.
   /// DECISION-1: \p{Extended_Pictographic} chosen over \p{Emoji} to avoid
   /// false positives on digits and symbol characters.
-  // Analyzer reports valid_regexps false positive because it doesn't understand
-  // \p{Extended_Pictographic} unicode property escapes. Runtime tests confirm
-  // this pattern is valid with unicode: true.
+  static const _emojiOnlySource =
+      // Analyzer does not understand this Unicode property escape even though
+      // Dart's runtime RegExp supports it with unicode: true.
+      r'^\s*(\p{Extended_Pictographic}(\u{FE0F}|\u{200D}|\p{Extended_Pictographic})*\s*){1,3}\s*$';
+
   static final _emojiOnlyPattern = RegExp(
-    // ignore: valid_regexps
-    r'^\s*(\p{Extended_Pictographic}(\u{FE0F}|\u{200D}|\p{Extended_Pictographic})*\s*){1,3}\s*$',
+    _emojiOnlySource,
     unicode: true,
   );
 
@@ -125,7 +126,9 @@ class _MessageBubbleState extends State<MessageBubble> {
     final fg = widget.isMine ? amberColors.textInverse : amberColors.text;
     final metaColor = widget.isMine
         ? amberColors.textInverse.withValues(alpha: 0.7)
-        : amberColors.muted;
+        // Received-message timestamps sit on raised dark surfaces, so they use
+        // the stronger subtle text token instead of muted secondary copy.
+        : amberColors.textSubtle.withValues(alpha: 0.82);
 
     // Corner radius: inner corner towards adjacent grouped bubble is smaller.
     final radius = _buildBorderRadius();
@@ -188,7 +191,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                         style: AppTypography.micro.copyWith(color: metaColor),
                       ),
                       if (widget.isMine && widget.status != null) ...[
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppDimens.p6),
                         AnimatedSwitcher(
                           duration: AppMotion.fast,
                           child: _statusIcon(

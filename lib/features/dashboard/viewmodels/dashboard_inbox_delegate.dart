@@ -65,8 +65,8 @@ class DashboardInboxDelegate {
 
     final groups = <InboxTaskGroup>[];
     for (final entry in map.entries) {
-      final offers = entry.value;
-      offers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      final offers = entry.value
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
       groups.add(
         InboxTaskGroup(
           taskId: entry.key,

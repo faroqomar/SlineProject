@@ -22,7 +22,7 @@ class _StubBookingBuilder extends Fake
   @override
   PostgrestFilterBuilder<Map<String, dynamic>> eq(
     String column,
-    dynamic value,
+    Object value,
   ) => this;
 
   @override
@@ -43,8 +43,7 @@ class _StubBookingListBuilder extends Fake
   _StubBookingListBuilder(this._data);
 
   @override
-  PostgrestFilterBuilder<PostgrestList> eq(String column, dynamic value) =>
-      this;
+  PostgrestFilterBuilder<PostgrestList> eq(String column, Object value) => this;
 
   @override
   PostgrestTransformBuilder<PostgrestMap> single() =>

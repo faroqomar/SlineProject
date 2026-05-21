@@ -78,7 +78,7 @@ Future<void> _pumpDialogLauncher(
               request: request,
               vm: vm,
               budget: budget,
-              onAwardingChanged: (_) {},
+              onAwardingChanged: ({required isAwarding}) {},
             ),
             child: const Text('Open'),
           ),
@@ -129,7 +129,7 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('T272: shows bid price', (tester) async {
       // 50000 -> "50K IQD" per PriceFormatter
-      final request = _makeRequest(price: 50000);
+      final request = _makeRequest();
       await _pumpDialogLauncher(tester, request: request, vm: mockVm);
       await _openDialog(tester);
 
@@ -151,7 +151,7 @@ void main() {
     // T274: shows budget comparison
     // -----------------------------------------------------------------------
     testWidgets('T274: shows budget comparison', (tester) async {
-      final request = _makeRequest(price: 50000);
+      final request = _makeRequest();
       await _pumpDialogLauncher(
         tester,
         request: request,
@@ -200,7 +200,7 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('T277: under-budget shows green indicator', (tester) async {
       // Bid price 50000, budget 60000 -> under budget
-      final request = _makeRequest(price: 50000);
+      final request = _makeRequest();
       await _pumpDialogLauncher(
         tester,
         request: request,

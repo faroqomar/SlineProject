@@ -145,12 +145,12 @@ class _AppButtonState extends State<AppButton>
     unawaited(
       _flashController.forward().then((_) {
         // Show check icon for 200ms after flash
-        Future.delayed(const Duration(milliseconds: 200), () {
+        Future<void>.delayed(const Duration(milliseconds: 200), () {
           if (!mounted) return;
           unawaited(
             _flashController.reverse().then((_) {
               // Auto-revert after revertDelay
-              Future.delayed(AppInteractionStates.revertDelay, () {
+              Future<void>.delayed(AppInteractionStates.revertDelay, () {
                 if (!mounted) return;
                 setState(() => _isInSuccessState = false);
               });
@@ -165,7 +165,7 @@ class _AppButtonState extends State<AppButton>
     AppInteractionStates.hapticHeavy();
     unawaited(
       _flashController.forward().then((_) {
-        Future.delayed(AppInteractionStates.flashDuration, () {
+        Future<void>.delayed(AppInteractionStates.flashDuration, () {
           if (mounted) unawaited(_flashController.reverse());
         });
       }),

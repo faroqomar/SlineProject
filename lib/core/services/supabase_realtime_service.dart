@@ -122,7 +122,7 @@ class SupabaseRealtimeService {
           }
         }
       },
-      onError: (error, stackTrace) {
+      onError: (Object error, StackTrace stackTrace) {
         AppLogger.e(
           'Realtime stream error',
           tag: _logTag,
@@ -224,7 +224,7 @@ class SupabaseRealtimeService {
           }
         }
       },
-      onError: (error, stackTrace) {
+      onError: (Object error, StackTrace stackTrace) {
         AppLogger.e(
           'Bid status stream error',
           tag: _logTag,
@@ -290,8 +290,7 @@ class SupabaseRealtimeService {
     );
 
     // Copy keys to avoid concurrent modification
-    final channelNames = List<String>.from(_controllers.keys);
-    channelNames.forEach(_cleanupChannel);
+    List<String>.from(_controllers.keys).forEach(_cleanupChannel);
 
     // Clear all tracking maps
     _controllers.clear();

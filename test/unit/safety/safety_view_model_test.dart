@@ -66,7 +66,6 @@ void main() {
             entityType: 'task',
             entityId: 'task-1',
             reason: 'Spam content',
-            category: null,
           ),
         ).called(1);
       },
@@ -147,9 +146,7 @@ void main() {
         verify(
           () => mockDisputeService.submitDispute(
             taskId: 'task-42',
-            directOfferId: null,
             reason: 'Work not delivered',
-            defendantId: null,
           ),
         ).called(1);
       },

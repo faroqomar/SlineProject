@@ -7,9 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/navigation/main_nav_destinations.dart';
 import 'package:sline_app/core/providers/navigation_provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 
@@ -17,11 +15,11 @@ import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 ///
 /// ## Solid Surface Policy
 ///
-/// The bar uses the staged Amber Dusk nav surface with elevation shadow and
+/// The bar uses the staged Amber Dusk nav surface with inset depth and
 /// keeps the existing four-destination shell contract.
 ///
 /// ## Phase 1 Changes
-/// - Solid surface: Amber Dusk nav surface + elevation Level 3 shadow
+/// - Solid surface: Amber Dusk nav surface + quiet tactile depth
 /// - Migrated all animation values to AppMotion tokens
 /// - Added tiny label text below each icon (fades in/out with active state)
 /// - Notification badge: pill with count text (max "99+"), animated entrance
@@ -53,10 +51,10 @@ class CustomBottomNavBar extends StatelessWidget {
   static const Key activeCapsuleKey = ValueKey<String>(
     'bottom_nav_active_capsule',
   );
+  static const Key activeRailKey = ValueKey<String>('bottom_nav_active_rail');
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final navTheme = AmberDuskTokens.widgetTheme.bottomNav;
     const phoneLayout = AmberDuskTokens.phoneLayout;
 
@@ -106,36 +104,42 @@ class CustomBottomNavBar extends StatelessWidget {
           );
         }
 
-        final bottomSafePadding = MediaQuery.viewPaddingOf(context).bottom;
-
         return Positioned(
-          bottom: phoneLayout.bottomNavBottom + bottomSafePadding,
+          // bottomNavBottom is measured from the phone frame edge in the
+          // Amber Dusk source artboard, so adding MediaQuery safe padding here
+          // double-lifts the shell on iPhones with a home indicator.
+          bottom: phoneLayout.bottomNavBottom,
           left: phoneLayout.bottomNavInset,
           right: phoneLayout.bottomNavInset,
           child: Container(
             key: navSurfaceKey,
             height: phoneLayout.bottomNavHeight,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.p6,
+              vertical: AppDimens.p6,
+            ),
             decoration: BoxDecoration(
               color: navTheme.surface,
               borderRadius: BorderRadius.circular(navTheme.radius),
-              boxShadow: AppDecorations.elevation(3, isDark: isDark),
+              boxShadow: AmberDuskMaterial.surfaceDepthShadows,
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: navItems.map((item) {
                 final isActive = currentIndex == item.index;
 
-                return _SolidNavItem(
-                  item: item,
-                  isActive: isActive,
-                  onTap: () {
-                    unawaited(HapticFeedback.selectionClick());
-                    AppLogger.i(
-                      'Bottom nav tap -> ${item.label} (${item.index})',
-                      tag: 'Navigation',
-                    );
-                    navigationProvider.setCurrentIndex(item.index);
-                  },
+                return Expanded(
+                  child: _SolidNavItem(
+                    item: item,
+                    isActive: isActive,
+                    onTap: () {
+                      unawaited(HapticFeedback.selectionClick());
+                      AppLogger.i(
+                        'Bottom nav tap -> ${item.label} (${item.index})',
+                        tag: 'Navigation',
+                      );
+                      navigationProvider.setCurrentIndex(item.index);
+                    },
+                  ),
                 );
               }).toList(),
             ),
@@ -243,6 +247,7 @@ class _SolidNavItemState extends State<_SolidNavItem>
   @override
   Widget build(BuildContext context) {
     final navTheme = AmberDuskTokens.widgetTheme.bottomNav;
+    const amberColors = AmberDuskTokens.colors;
 
     return Semantics(
       label: widget.item.label,
@@ -255,77 +260,125 @@ class _SolidNavItemState extends State<_SolidNavItem>
         child: AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
-            return SizedBox(
-              width: AppLayout.minTouchTarget,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            final activeScale = widget.isActive ? _pillAnimation.value : 0.96;
+            final activeOpacity = widget.isActive ? _pillAnimation.value : 0.0;
+            final iconColor = widget.isActive
+                ? navTheme.activeForeground
+                : navTheme.inactiveForeground;
+            final labelColor = widget.isActive
+                ? navTheme.activeForeground
+                : navTheme.inactiveForeground;
+
+            return SizedBox.expand(
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
                 children: [
-                  SizedBox(
-                    width: AppLayout.minTouchTarget,
-                    height: AppDimens.p40,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      clipBehavior: Clip.none,
-                      children: [
-                        // The active capsule uses the Amber Dusk nav geometry
-                        // so the shell stays aligned with the Open Design pack.
-                        Transform.scale(
-                          scale: widget.isActive ? _pillAnimation.value : 0,
-                          child: Container(
-                            key: widget.isActive
-                                ? CustomBottomNavBar.activeCapsuleKey
-                                : null,
-                            width: navTheme.activeIconSize.width,
-                            height: navTheme.activeIconSize.height,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(
-                                navTheme.activeIconRadius,
-                              ),
-                              color: navTheme.activeIconBackground,
-                            ),
+                  // The active destination is a full touch-tile surface, not
+                  // just a small icon blob, so users can recognize the current
+                  // tab at a glance without relying only on color.
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: activeOpacity,
+                      child: Transform.scale(
+                        scale: activeScale,
+                        child: Container(
+                          key: widget.isActive
+                              ? CustomBottomNavBar.activeCapsuleKey
+                              : null,
+                          decoration: BoxDecoration(
+                            gradient: AmberDuskMaterial.activeWashGradient,
+                            borderRadius: BorderRadius.circular(AppDimens.r18),
                           ),
                         ),
-                        Transform.scale(
-                          scale: _scaleAnimation.value,
-                          child: Icon(
-                            widget.isActive
-                                ? widget.item.activeIcon
-                                : widget.item.icon,
-                            size: AmberDuskTokens
-                                .widgetTheme
-                                .iconButtons
-                                .iconSize,
-                            color: widget.isActive
-                                ? navTheme.activeForeground
-                                : navTheme.inactiveForeground,
-                          ),
-                        ),
-                        // Notification badge keeps the existing marker behavior
-                        // while using the Amber Dusk rust status accent.
-                        if (widget.item.showsNotification)
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: _buildNotificationBadge(navTheme),
-                          ),
-                      ],
-                    ),
-                  ),
-                  // Label text (fades with active state)
-                  AnimatedOpacity(
-                    opacity: widget.isActive ? 1.0 : 0.5,
-                    duration: AppMotion.fast,
-                    child: Text(
-                      widget.item.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: navTheme.labelStyle.copyWith(
-                        color: widget.isActive
-                            ? navTheme.activeForeground
-                            : navTheme.inactiveForeground,
                       ),
                     ),
+                  ),
+                  if (widget.isActive)
+                    Positioned(
+                      top: AppDimens.p4,
+                      child: FadeTransition(
+                        opacity: _pillAnimation,
+                        child: Container(
+                          key: CustomBottomNavBar.activeRailKey,
+                          width: AppDimens.p28,
+                          height: AppDimens.p4,
+                          decoration: BoxDecoration(
+                            color: amberColors.primary,
+                            borderRadius: BorderRadius.circular(AppDimens.r50),
+                          ),
+                        ),
+                      ),
+                    ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: AppDimens.p40,
+                        height: AppDimens.p32,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          clipBehavior: Clip.none,
+                          children: [
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: widget.isActive
+                                    ? amberColors.primary.withValues(
+                                        alpha: 0.16,
+                                      )
+                                    : AmberDuskColors.transparent,
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.r14,
+                                ),
+                              ),
+                              child: const SizedBox(
+                                width: AppDimens.p40,
+                                height: AppDimens.p32,
+                              ),
+                            ),
+                            Transform.scale(
+                              scale: _scaleAnimation.value,
+                              child: Icon(
+                                widget.isActive
+                                    ? widget.item.activeIcon
+                                    : widget.item.icon,
+                                size: AmberDuskTokens
+                                    .widgetTheme
+                                    .iconButtons
+                                    .iconSize,
+                                color: iconColor,
+                              ),
+                            ),
+                            // Notification badge keeps the existing marker
+                            // behavior while using the Amber Dusk rust accent.
+                            if (widget.item.showsNotification)
+                              Positioned(
+                                top: -AppDimens.p2,
+                                right: -AppDimens.p2,
+                                child: _buildNotificationBadge(navTheme),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppDimens.p2),
+                      AnimatedDefaultTextStyle(
+                        duration: AppMotion.fast,
+                        curve: AppMotion.curveStandard,
+                        style: navTheme.labelStyle.copyWith(
+                          color: labelColor,
+                          fontWeight: widget.isActive
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                        ),
+                        child: Text(
+                          widget.item.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

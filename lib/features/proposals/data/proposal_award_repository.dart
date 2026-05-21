@@ -14,7 +14,7 @@ class ProposalAwardRepository {
     AppLogger.i('Proposals: awardOffer request=$requestId', tag: 'Proposals');
     try {
       final result =
-          await _client.rpc(
+          await _client.rpc<dynamic>(
                 'award_task_offer',
                 params: {'p_request_id': requestId},
               )
@@ -45,7 +45,7 @@ class ProposalAwardRepository {
     );
     try {
       final result =
-          await _client.rpc(
+          await _client.rpc<dynamic>(
                 'finalize_awarded_offer_payment',
                 params: {'p_request_id': requestId},
               )
@@ -81,7 +81,7 @@ class ProposalAwardRepository {
     );
     try {
       final result =
-          await _client.rpc(
+          await _client.rpc<dynamic>(
                 'pay_awarded_offer',
                 params: {'p_request_id': requestId},
               )
@@ -106,7 +106,7 @@ class ProposalAwardRepository {
     );
     try {
       final result =
-          await _client.rpc(
+          await _client.rpc<dynamic>(
                 'cancel_awarded_offer',
                 params: {'p_request_id': requestId},
               )
@@ -134,7 +134,7 @@ class ProposalAwardRepository {
     AppLogger.d('Proposals: getClientAwardedUnpaid', tag: 'Proposals');
     try {
       final result =
-          await _client.rpc('get_client_awarded_unpaid_offers')
+          await _client.rpc<dynamic>('get_client_awarded_unpaid_offers')
               as List<dynamic>?;
       if (result == null || result.isEmpty) return [];
       return result
@@ -161,7 +161,7 @@ class ProposalAwardRepository {
     AppLogger.d('Proposals: getFreelancerAwardedUnpaid', tag: 'Proposals');
     try {
       final result =
-          await _client.rpc('get_freelancer_awarded_unpaid_offers')
+          await _client.rpc<dynamic>('get_freelancer_awarded_unpaid_offers')
               as List<dynamic>?;
       if (result == null || result.isEmpty) return [];
       return result

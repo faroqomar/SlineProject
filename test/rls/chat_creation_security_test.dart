@@ -23,7 +23,7 @@ import '../supabase_test_helper.dart';
 /// 2. Seed test fixtures
 /// 3. Run: `flutter test test/rls/chat_creation_security_test.dart --dart-define=SUPABASE_INTEGRATION=1`
 const String? _skipReason =
-    String.fromEnvironment('SUPABASE_INTEGRATION', defaultValue: '') != '1'
+    String.fromEnvironment('SUPABASE_INTEGRATION') != '1'
     ? 'Requires Supabase; run with --dart-define=SUPABASE_INTEGRATION=1'
     : null;
 
@@ -77,7 +77,7 @@ void main() {
 
         // Attempt to start DM
         expect(
-          () => client.rpc(
+          () => client.rpc<dynamic>(
             'start_direct_conversation_v1',
             params: {'p_target_id': testClientId},
           ),
@@ -118,7 +118,7 @@ void main() {
         await _ensureFavoriteExists(client);
 
         // Should succeed
-        final result = await client.rpc(
+        final result = await client.rpc<dynamic>(
           'start_direct_conversation_v1',
           params: {'p_target_id': testFreelancerAId},
         );
@@ -135,7 +135,7 @@ void main() {
         await _removeFavorite(client, testFreelancerBId);
 
         expect(
-          () => client.rpc(
+          () => client.rpc<dynamic>(
             'start_direct_conversation_v1',
             params: {'p_target_id': testFreelancerBId},
           ),
@@ -215,7 +215,7 @@ void main() {
           final freelancerId = 'rate-test-freelancer-$i';
           await _setupFreelancerAndFavorite(client, freelancerId);
 
-          await client.rpc(
+          await client.rpc<dynamic>(
             'start_direct_conversation_v1',
             params: {'p_target_id': freelancerId},
           );
@@ -223,7 +223,7 @@ void main() {
 
         // 21st should fail
         expect(
-          () => client.rpc(
+          () => client.rpc<dynamic>(
             'start_direct_conversation_v1',
             params: {'p_target_id': 'one-more-freelancer'},
           ),
@@ -249,7 +249,7 @@ void main() {
         await _authenticateAsClient(client);
 
         expect(
-          () => client.rpc(
+          () => client.rpc<dynamic>(
             'start_direct_conversation_v1',
             params: {'p_target_id': testClientId}, // Same as caller
           ),
@@ -269,7 +269,7 @@ void main() {
         await _authenticateAsClient(client);
 
         try {
-          await client.rpc(
+          await client.rpc<dynamic>(
             'start_direct_conversation_v1',
             params: {'p_target_id': testFreelancerBId}, // Not in favorites
           );

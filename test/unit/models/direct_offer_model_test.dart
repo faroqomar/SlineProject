@@ -55,17 +55,17 @@ void main() {
       expect(o.days, 14);
       expect(o.status, 'sent');
       expect(o.paymentStatus, 'unpaid');
-      expect(o.createdAt, DateTime.utc(2026, 3, 20, 10, 0, 0));
-      expect(o.updatedAt, DateTime.utc(2026, 3, 20, 10, 0, 0));
+      expect(o.createdAt, DateTime.utc(2026, 3, 20, 10));
+      expect(o.updatedAt, DateTime.utc(2026, 3, 20, 10));
       expect(o.currency, 'IQD');
       expect(o.feeRateAppliedBps, 500);
       expect(o.paymentRequestId, 'pr-123');
       expect(o.paymentGatewayId, 'pg-456');
       expect(o.paymentCorrelationId, 'pc-789');
-      expect(o.paymentExpiresAt, DateTime.utc(2026, 3, 21, 10, 0, 0));
-      expect(o.paymentRecoveredAt, DateTime.utc(2026, 3, 22, 12, 0, 0));
-      expect(o.deliveredAt, DateTime.utc(2026, 4, 1, 8, 0, 0));
-      expect(o.reviewExpiresAt, DateTime.utc(2026, 4, 4, 8, 0, 0));
+      expect(o.paymentExpiresAt, DateTime.utc(2026, 3, 21, 10));
+      expect(o.paymentRecoveredAt, DateTime.utc(2026, 3, 22, 12));
+      expect(o.deliveredAt, DateTime.utc(2026, 4, 1, 8));
+      expect(o.reviewExpiresAt, DateTime.utc(2026, 4, 4, 8));
     });
 
     test('createdAt and updatedAt are parsed as UTC', () {

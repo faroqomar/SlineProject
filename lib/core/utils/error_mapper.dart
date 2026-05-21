@@ -18,7 +18,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Reference: .cursor/rules/error-handling.mdc
 class ErrorMapper {
   /// Maps any exception to a user-friendly message.
-  static String map(dynamic error) {
+  static String map(Object? error) {
     if (error is PostgrestException) {
       return _mapPostgrestError(error);
     }
@@ -43,7 +43,7 @@ class ErrorMapper {
       return 'Network error occurred. Please try again.';
     }
 
-    // Check for wrapped exceptions (only surface unwrapped text if it looks user-friendly)
+    // Check wrapped exceptions, then map only known safe domain messages.
     if (error is Exception) {
       final raw = error.toString();
       var unwrapped = raw;
@@ -59,14 +59,36 @@ class ErrorMapper {
           message.contains('sign in')) {
         return 'Please sign in to continue.';
       }
-      // Only return unwrapped content if it does not look like technical leakage
-      if (unwrapped != raw && !_looksLikeTechnicalMessage(unwrapped)) {
-        return unwrapped;
+      final mapped = _mapSafeDomainMessage(unwrapped);
+      if (mapped != null) {
+        return mapped;
       }
     }
 
     // Fallback
     return 'An error occurred. Please try again.';
+  }
+
+  /// Maps known safe domain messages that may be wrapped as generic Exceptions.
+  static String? _mapSafeDomainMessage(String message) {
+    if (_looksLikeTechnicalMessage(message)) return null;
+
+    if (message.contains('Can only request revision on delivered work')) {
+      return 'You can only request a revision when the work is delivered.';
+    }
+    if (message.contains('No revisions remaining')) {
+      return 'No revisions remaining. You have used all allowed revision requests.';
+    }
+    if (message.contains('Only client can request revision')) {
+      return 'Only the client can request a revision.';
+    }
+    if (message.contains('Cannot submit delivery: dispute in progress')) {
+      return 'Cannot submit delivery while a dispute is in progress.';
+    }
+    if (message.contains('Cannot request revision: dispute in progress')) {
+      return 'Cannot request a revision while a dispute is in progress.';
+    }
+    return null;
   }
 
   /// Maps PostgrestException to user-friendly message.
@@ -234,7 +256,7 @@ class ErrorMapper {
   }
 
   /// Check if error indicates session expired (for redirect to login).
-  static bool isSessionExpired(dynamic error) {
+  static bool isSessionExpired(Object? error) {
     if (error is PostgrestException && error.code == '42501') {
       return true;
     }

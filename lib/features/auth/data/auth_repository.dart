@@ -132,7 +132,7 @@ class AuthRepository {
           'Waiting ${delay.inMilliseconds}ms before retry',
           tag: 'Auth',
         );
-        await Future.delayed(delay);
+        await Future<void>.delayed(delay);
       }
     }
 

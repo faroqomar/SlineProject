@@ -120,13 +120,13 @@ void main() {
     test('pins borderless card recipes and material depth levels', () {
       final cards = AmberDuskTokens.widgetTheme.cards;
 
-      expect(cards.task.background, AmberDuskColors.surface);
+      expect(cards.task.background, AmberDuskColors.surfaceRaised);
       expect(cards.task.radius, closeTo(22, 0.001));
       expect(cards.task.elevationLevel, 2);
-      expect(cards.panel.background, AmberDuskColors.surface);
+      expect(cards.panel.background, AmberDuskColors.surfaceRaised);
       expect(cards.panel.radius, closeTo(18, 0.001));
       expect(cards.panel.elevationLevel, 1);
-      expect(cards.message.background, AmberDuskColors.surface);
+      expect(cards.message.background, AmberDuskColors.surfaceRaised);
       expect(cards.message.radius, closeTo(18, 0.001));
       expect(cards.message.elevationLevel, 1);
       expect(cards.border, Colors.transparent);

@@ -82,7 +82,7 @@ class BookingLogisticsSection extends StatelessWidget {
         ),
         const SizedBox(height: AppDimens.p16),
         Container(
-          padding: const EdgeInsets.all(4),
+          padding: const EdgeInsets.all(AppDimens.p4),
           decoration: BoxDecoration(
             color: colorScheme.cardBackground,
             borderRadius: BorderRadius.circular(AppDimens.r14),

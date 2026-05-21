@@ -188,7 +188,7 @@ Read in full:
 - `Sline_everything/STRUCTURE.md`
 - `Sline_everything/DOC_SOURCE_MAP.md`
 - `Sline_everything/UI_SURFACE_INVENTORY.md` when UI, navigation, modal, popup, tab, route, redesign, or reusable-widget work is involved
-- `Sline_everything/AppDigram/README.md`
+- `Sline_everything/AppDiagram/README.md`
 
 Plus: scan the full `.TODO/` directory and read any doc relevant to the current plan.
 If a session log for this plan already exists, read it before continuing.
@@ -390,9 +390,10 @@ For each Sub-Phase:
 
 After completing each sub-phase that modifies source code:
 1. Run `flutter analyze` — must pass (no new warnings or errors).
-2. Run `flutter test` — must pass (same pass/skip/fail counts as baseline).
-3. If either fails, do NOT proceed to next sub-phase. Fix immediately.
-4. Log the gate result in the session log.
+2. Run `dart run custom_lint` — must pass with no SLine MVVM or theme-token diagnostics.
+3. Run `flutter test` — must pass (same pass/skip/fail counts as baseline).
+4. If any gate fails, do NOT proceed to next sub-phase. Fix immediately.
+5. Log the gate result in the session log.
 
 This catches regressions at the smallest possible scope.
 
@@ -402,12 +403,13 @@ This catches regressions at the smallest possible scope.
 After creating files, removing imports, or replacing token usages:
 
 1. Run `flutter analyze` immediately after any new Dart file or theme file is created.
-2. Before removing an import, grep the file for all types/classes provided by that import, not just the obvious constants.
-3. After removing code that used a local variable, verify the variable declaration is not orphaned.
-4. Use `final` without explicit local variable type annotations unless the type is required for clarity or inference fails.
-5. Check whether referenced tokens are `static const` or `static final` before introducing `const` constructors.
-6. When token files supersede existing constants, compare every predecessor value; preserve exact values unless the plan explicitly authorizes drift, and document any intentional drift in comments or session proof.
-7. Re-scan touched Dart files for comment coverage before leaving the sub-phase. If a touched public API, widget, helper, or non-obvious block has no useful comment, add one before verification.
+2. Run `dart run custom_lint` after MVVM, UI, widget, theme, layout, or motion edits so local SLine rules are not skipped.
+3. Before removing an import, grep the file for all types/classes provided by that import, not just the obvious constants.
+4. After removing code that used a local variable, verify the variable declaration is not orphaned.
+5. Use `final` without explicit local variable type annotations unless the type is required for clarity or inference fails.
+6. Check whether referenced tokens are `static const` or `static final` before introducing `const` constructors.
+7. When token files supersede existing constants, compare every predecessor value; preserve exact values unless the plan explicitly authorizes drift, and document any intentional drift in comments or session proof.
+8. Re-scan touched Dart files for comment coverage before leaving the sub-phase. If a touched public API, widget, helper, or non-obvious block has no useful comment, add one before verification.
 
 
 ### Step 3.1.2 — UI Runtime Test Pattern Gate
@@ -421,6 +423,8 @@ When a UI change adds animation, navigation, route pushes, or route-level provid
 
 
 When a shared screen or wrapper starts consuming app theme extensions such as `context.colorScheme`, `context.amberColors`, or `ThemeExtension` values, update every wrapper/entry test that pumps that screen so it uses the production app theme or the established app test harness. Do not fix only the primary feature test.
+
+When a route-level UI change removes or replaces production chrome, tabs, or bottom action bars, wrapper-only tests are not enough. Add at least one production-route or production-route-body widget test for the changed navigation chrome, loading/error escape hatch, compact dock primary action, icon-only secondary action tooltips, and hidden/disabled guard states. Keep any Supabase-safe wrapper tests for content coverage, but do not let copied wrappers be the only assertions for production chrome or action priority.
 
 
 ### Step 3.1.3 — Visual Proof Gate

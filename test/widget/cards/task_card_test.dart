@@ -30,7 +30,7 @@ Task _testTask({
     userId: 'user-1',
     status: status,
     taskType: taskType,
-    createdAt: DateTime.utc(2026, 4, 1),
+    createdAt: DateTime.utc(2026, 4),
     skills: const ['Flutter', 'Dart'],
   );
 }
@@ -76,7 +76,7 @@ void main() {
     });
 
     testWidgets('displays title and status badge', (tester) async {
-      final task = _testTask(title: 'Design a Logo', taskType: TaskType.tender);
+      final task = _testTask(title: 'Design a Logo');
 
       await pumpApp(
         tester,
@@ -108,7 +108,6 @@ void main() {
       final task = _testTask(
         title: 'Landing page for clothing brand',
         description: 'Creative landing page for a new clothes line',
-        taskType: TaskType.tender,
       );
 
       await pumpApp(
@@ -120,7 +119,6 @@ void main() {
               child: TaskCard(
                 task: task,
                 onTap: () => tapped = true,
-                useLegacyLayout: false,
               ),
             ),
           ),

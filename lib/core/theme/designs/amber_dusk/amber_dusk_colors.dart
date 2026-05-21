@@ -40,14 +40,17 @@ abstract final class AmberDuskColors {
   /// Dark page background from the Amber Dusk phone artboard.
   static const Color page = Color(0xFF0E0B08);
 
-  /// First elevated dark background step.
+  /// First elevated dark background step from the Open Design phone shell.
   static const Color background = Color(0xFF1A1612);
 
   /// Default dark card surface step.
   static const Color surface = Color(0xFF241F1A);
 
-  /// Raised dark card surface step for active or stacked cards.
-  static const Color surfaceRaised = Color(0xFF2F2822);
+  /// Secondary dark surface step from the Open Design variable set.
+  static const Color surface2 = Color(0xFF2F2822);
+
+  /// Raised dark card surface step matching `rgba(36,31,26,.9)`.
+  static const Color surfaceRaised = Color.fromRGBO(36, 31, 26, 0.90);
 
   /// Highest dark neutral surface available for strongest neutral contrast.
   static const Color surfaceHighest = Color(0xFF3A312A);
@@ -67,13 +70,13 @@ abstract final class AmberDuskColors {
   /// Darker muted copy color used for lower-emphasis labels.
   static const Color mutedDark = Color(0xFF7A6F63);
 
-  /// Top stop for the hero rust gradient.
+  /// Top stop for the V2 booking hero gradient.
   static const Color heroTop = Color(0xFF4A2D1F);
 
-  /// Middle stop for the hero rust gradient.
+  /// Middle stop for the V2 booking hero gradient.
   static const Color hero = Color(0xFF3E2418);
 
-  /// Deep stop for the hero rust gradient.
+  /// Deep stop for the V2 booking hero gradient.
   static const Color heroDeep = Color(0xFF2E1810);
 
   /// Cream text color tuned for hero surfaces.
@@ -90,6 +93,27 @@ abstract final class AmberDuskColors {
 
   /// Divider color used within hero booking surfaces.
   static const Color heroDivider = Color(0x1AF5E8D0);
+
+  /// Hairline separator used inside raised surfaces instead of visible borders.
+  static const Color rowSeparator = Color.fromRGBO(242, 232, 213, 0.058);
+
+  /// First color stop for the quiet active or unread amber row wash.
+  static const Color activeWashStart = Color.fromRGBO(212, 144, 106, 0.105);
+
+  /// Middle color stop for the quiet active or unread amber row wash.
+  static const Color activeWashMiddle = Color.fromRGBO(212, 144, 106, 0.018);
+
+  /// Top stop for bottom navigation safe-area fade.
+  static const Color bottomNavFadeTop = Color.fromRGBO(26, 22, 18, 0);
+
+  /// Middle stop for bottom navigation safe-area fade.
+  static const Color bottomNavFadeMiddle = Color.fromRGBO(26, 22, 18, 0.92);
+
+  /// Low-opacity amber top-shell atmospheric fade from `.phone:before`.
+  static const Color atmosphericAmber = Color.fromRGBO(212, 144, 106, 0.13);
+
+  /// Low-opacity forest top-shell atmospheric fade from `.phone:before`.
+  static const Color atmosphericForest = Color.fromRGBO(127, 168, 114, 0.08);
 
   /// Top highlight that preserves the hero material sheen without blur.
   static const Color heroHighlight = Color(0x0AFFFFFF);
@@ -243,6 +267,9 @@ final class AmberDuskColorTokens {
   /// Default card surface color from the default dark scheme.
   Color get surface => dark.surface;
 
+  /// Secondary surface step from the Open Design variable set.
+  Color get surface2 => AmberDuskColors.surface2;
+
   /// Raised surface color from the default dark scheme.
   Color get surfaceRaised => dark.surfaceRaised;
 
@@ -275,6 +302,27 @@ final class AmberDuskColorTokens {
 
   /// Hero divider color from the default dark scheme.
   Color get heroDivider => dark.heroDivider;
+
+  /// Hairline separator used inside surfaces instead of card borders.
+  Color get rowSeparator => AmberDuskColors.rowSeparator;
+
+  /// First color stop for active and unread row washes.
+  Color get activeWashStart => AmberDuskColors.activeWashStart;
+
+  /// Middle color stop for active and unread row washes.
+  Color get activeWashMiddle => AmberDuskColors.activeWashMiddle;
+
+  /// Top transparent stop for bottom navigation safe-area fade.
+  Color get bottomNavFadeTop => AmberDuskColors.bottomNavFadeTop;
+
+  /// Middle stop for bottom navigation safe-area fade.
+  Color get bottomNavFadeMiddle => AmberDuskColors.bottomNavFadeMiddle;
+
+  /// Low-opacity amber top-shell atmospheric fade.
+  Color get atmosphericAmber => AmberDuskColors.atmosphericAmber;
+
+  /// Low-opacity forest top-shell atmospheric fade.
+  Color get atmosphericForest => AmberDuskColors.atmosphericForest;
 
   /// Hero highlight color from the default dark scheme.
   Color get heroHighlight => dark.heroHighlight;

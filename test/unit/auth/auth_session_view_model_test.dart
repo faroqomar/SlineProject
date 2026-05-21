@@ -493,11 +493,11 @@ void main() {
         expect(vm.error, isNotNull);
 
         var notified = false;
-        vm.addListener(() {
-          notified = true;
-        });
-
-        vm.clearError();
+        vm
+          ..addListener(() {
+            notified = true;
+          })
+          ..clearError();
 
         expect(vm.error, isNull);
         expect(notified, isTrue);
@@ -602,10 +602,8 @@ void main() {
 
     group('Dispose', () {
       test('cancels auth subscription on dispose', () async {
-        final vm = buildUnauthenticatedVM();
-
         // Dispose the VM.
-        vm.dispose();
+        buildUnauthenticatedVM().dispose();
 
         // Emitting after dispose should not cause errors.
         // The controller is still open (tearDown closes it), but the
@@ -625,8 +623,7 @@ void main() {
       });
 
       test('stream error after dispose does not crash', () async {
-        final vm = buildUnauthenticatedVM();
-        vm.dispose();
+        buildUnauthenticatedVM().dispose();
 
         // Should not throw.
         authStreamController.addError(Exception('post-dispose error'));
@@ -645,15 +642,10 @@ void main() {
           vm.dispose();
 
           // Emit multiple events after dispose.
-          authStreamController.add(
-            const AuthState(AuthChangeEvent.signedIn, null),
-          );
-          authStreamController.add(
-            const AuthState(AuthChangeEvent.userUpdated, null),
-          );
-          authStreamController.add(
-            const AuthState(AuthChangeEvent.signedOut, null),
-          );
+          authStreamController
+            ..add(const AuthState(AuthChangeEvent.signedIn, null))
+            ..add(const AuthState(AuthChangeEvent.userUpdated, null))
+            ..add(const AuthState(AuthChangeEvent.signedOut, null));
 
           await Future<void>.delayed(Duration.zero);
 

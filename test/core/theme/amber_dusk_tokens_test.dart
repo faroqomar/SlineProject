@@ -35,7 +35,11 @@ void main() {
       expect(dark.page, equals(const Color(0xFF0E0B08)));
       expect(dark.background, equals(const Color(0xFF1A1612)));
       expect(dark.surface, equals(const Color(0xFF241F1A)));
-      expect(dark.surfaceRaised, equals(const Color(0xFF2F2822)));
+      expect(
+        dark.surfaceRaised,
+        equals(const Color.fromRGBO(36, 31, 26, 0.90)),
+      );
+      expect(AmberDuskTokens.colors.surface2, equals(const Color(0xFF2F2822)));
       expect(dark.surfaceHighest, equals(const Color(0xFF3A312A)));
       expect(dark.text, equals(const Color(0xFFF2E8D5)));
       expect(dark.textSubtle, equals(const Color(0xFFE6D7BE)));
@@ -43,6 +47,34 @@ void main() {
       expect(dark.mutedStrong, equals(const Color(0xFF7A6F63)));
       expect(dark.border, equals(Colors.transparent));
       expect(dark.divider, equals(Colors.transparent));
+      expect(
+        AmberDuskTokens.colors.rowSeparator,
+        equals(const Color.fromRGBO(242, 232, 213, 0.058)),
+      );
+      expect(
+        AmberDuskTokens.colors.activeWashStart,
+        equals(const Color.fromRGBO(212, 144, 106, 0.105)),
+      );
+      expect(
+        AmberDuskTokens.colors.activeWashMiddle,
+        equals(const Color.fromRGBO(212, 144, 106, 0.018)),
+      );
+      expect(
+        AmberDuskTokens.colors.bottomNavFadeTop,
+        equals(const Color.fromRGBO(26, 22, 18, 0)),
+      );
+      expect(
+        AmberDuskTokens.colors.bottomNavFadeMiddle,
+        equals(const Color.fromRGBO(26, 22, 18, 0.92)),
+      );
+      expect(
+        AmberDuskTokens.colors.atmosphericAmber,
+        equals(const Color.fromRGBO(212, 144, 106, 0.13)),
+      );
+      expect(
+        AmberDuskTokens.colors.atmosphericForest,
+        equals(const Color.fromRGBO(127, 168, 114, 0.08)),
+      );
     });
 
     test('keeps hero substates aligned with the Open Design app artifact', () {
@@ -137,6 +169,7 @@ void main() {
       expect(typography.titleFamily, equals('Fraunces'));
       expect(typography.nameFamily, equals('Fraunces'));
       expect(typography.moneyFamily, equals('Fraunces'));
+      expect(typography.walletAmountFamily, equals('DM Sans'));
       expect(
         typography.displayFallbacks,
         equals(const <String>[
@@ -157,6 +190,9 @@ void main() {
       expect(typography.screenTitle.fontSize, equals(30));
       expect(typography.screenTitle.fontWeight, equals(FontWeight.w700));
       expect(typography.screenTitle.letterSpacing, equals(0));
+      expect(typography.notificationTitle.fontFamily, equals('DM Sans'));
+      expect(typography.notificationTitle.fontSize, equals(18));
+      expect(typography.notificationTitle.fontWeight, isNull);
       expect(typography.bookingName.fontFamily, equals('Fraunces'));
       expect(typography.bookingName.fontSize, equals(22));
       expect(typography.bookingName.fontWeight, equals(FontWeight.w700));
@@ -164,6 +200,15 @@ void main() {
       expect(typography.moneyLarge.fontWeight, equals(FontWeight.w800));
       expect(typography.moneyMedium.fontSize, equals(36));
       expect(typography.moneyMedium.fontWeight, equals(FontWeight.w800));
+      expect(typography.walletAmount.fontFamily, equals('DM Sans'));
+      expect(typography.walletAmount.fontSize, equals(38));
+      expect(typography.walletAmount.fontWeight, equals(FontWeight.w900));
+      expect(typography.walletAmountCompact.fontFamily, equals('DM Sans'));
+      expect(typography.walletAmountCompact.fontSize, equals(30));
+      expect(
+        typography.walletAmountCompact.fontWeight,
+        equals(FontWeight.w900),
+      );
       expect(typography.body.fontFamily, equals('DM Sans'));
       expect(typography.body.fontSize, equals(14));
       expect(typography.control.fontWeight, equals(FontWeight.w700));
@@ -239,34 +284,38 @@ void main() {
       }
     });
 
-    test('preserves OD shadow token names and hero material detail', () {
-      const surfaces = AmberDuskTokens.surfaces;
+    test(
+      'preserves shadow token names and restores V2 hero card gradients',
+      () {
+        const surfaces = AmberDuskTokens.surfaces;
 
-      expect(surfaces.base.shadowTokenName, equals('shadow-surface'));
-      expect(surfaces.raised.shadowTokenName, equals('shadow-raised'));
-      expect(surfaces.nav.shadowTokenName, equals('shadow-nav'));
-      expect(surfaces.sheet.shadowTokenName, equals('shadow-raised'));
-      expect(surfaces.cta.shadowTokenName, equals('shadow-cta'));
-      expect(surfaces.cta.radius, equals(999));
+        expect(surfaces.base.shadowTokenName, equals('shadow-surface'));
+        expect(surfaces.raised.shadowTokenName, equals('shadow-raised'));
+        expect(surfaces.nav.shadowTokenName, equals('shadow-nav'));
+        expect(surfaces.sheet.shadowTokenName, equals('shadow-raised'));
+        expect(surfaces.cta.shadowTokenName, equals('shadow-cta'));
+        expect(surfaces.cta.radius, equals(999));
 
-      final hero = surfaces.hero;
-      expect(hero.shadowTokenName, equals('shadow-hero'));
-      expect(hero.radius, equals(24));
-      expect(hero.gradientAngleDegrees, equals(172));
-      expect(hero.hasGradient, isTrue);
-      expect(
-        hero.gradientStops,
-        equals(const <Color>[
-          Color(0xFF4A2D1F),
-          Color(0xFF3E2418),
-          Color(0xFF2E1810),
-        ]),
-      );
-      expect(hero.hasHighlight, isTrue);
-      expect(hero.highlightColor, equals(const Color(0x0AFFFFFF)));
-      expect(hero.hasRim, isTrue);
-      expect(hero.rimColor, equals(const Color(0x0FFFFFFF)));
-    });
+        final hero = surfaces.hero;
+        expect(hero.shadowTokenName, equals('shadow-hero'));
+        expect(hero.radius, equals(24));
+        expect(hero.fill, equals(AmberDuskColors.hero));
+        expect(hero.gradientAngleDegrees, equals(172));
+        expect(hero.hasGradient, isTrue);
+        expect(
+          hero.gradientStops,
+          equals(const <Color>[
+            Color(0xFF4A2D1F),
+            Color(0xFF3E2418),
+            Color(0xFF2E1810),
+          ]),
+        );
+        expect(hero.hasHighlight, isTrue);
+        expect(hero.highlightColor, equals(const Color(0x0AFFFFFF)));
+        expect(hero.hasRim, isTrue);
+        expect(hero.rimColor, equals(const Color(0x0FFFFFFF)));
+      },
+    );
   });
 
   group('AmberDuskTokens - Motion', () {

@@ -413,7 +413,7 @@ class DirectOffersService {
       json: {'offerId': offerId},
     );
     try {
-      await _client.rpc(
+      await _client.rpc<dynamic>(
         'rpc_approve_delivery',
         params: {'entity_type': 'direct_offer', 'entity_id': offerId},
       );

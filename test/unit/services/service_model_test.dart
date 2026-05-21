@@ -91,7 +91,7 @@ void main() {
         deliveryDays: 7,
         status: ServiceStatus.active,
         imageUrls: ['audit.png'],
-        createdAt: DateTime.utc(2026, 3, 1),
+        createdAt: DateTime.utc(2026, 3),
       );
 
       final json = model.toJson();
@@ -125,7 +125,7 @@ void main() {
       freelancerId: 'user-111',
       title: 'Original',
       status: ServiceStatus.draft,
-      createdAt: DateTime.utc(2026, 1, 1),
+      createdAt: DateTime.utc(2026),
     );
 
     test('updates only specified fields', () {

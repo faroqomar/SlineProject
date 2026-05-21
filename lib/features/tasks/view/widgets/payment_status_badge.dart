@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 
 /// Compact badge showing payment status with icon and color coding.
 ///
@@ -35,17 +37,20 @@ class PaymentStatusBadge extends StatelessWidget {
     return Semantics(
       label: label,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.p8,
+          vertical: AppDimens.p4,
+        ),
         decoration: BoxDecoration(
           color: config.backgroundColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: config.borderColor, width: 1),
+          borderRadius: BorderRadius.circular(AppDimens.r8),
+          border: Border.all(color: config.borderColor),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(config.icon, size: iconSize, color: config.textColor),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppDimens.p4),
             Flexible(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -123,22 +128,24 @@ class PaymentStatusBadge extends StatelessWidget {
   }
 
   _BadgeConfig _getConfig(BuildContext context) {
+    final amberColors = context.amberColors;
+
     switch (status) {
       case PaymentStatus.unpaid:
         return _BadgeConfig(
           icon: Icons.warning_amber_rounded,
           label: 'Payment Pending',
-          backgroundColor: Colors.orange.withValues(alpha: 0.12),
-          borderColor: Colors.orange.withValues(alpha: 0.3),
-          textColor: Colors.orange.shade800,
+          backgroundColor: amberColors.warning.withValues(alpha: 0.12),
+          borderColor: amberColors.warning.withValues(alpha: 0.3),
+          textColor: amberColors.warning,
         );
       case PaymentStatus.held:
         return _BadgeConfig(
           icon: Icons.verified_rounded,
           label: 'Escrow Held',
-          backgroundColor: Colors.green.withValues(alpha: 0.12),
-          borderColor: Colors.green.withValues(alpha: 0.3),
-          textColor: Colors.green.shade700,
+          backgroundColor: amberColors.success.withValues(alpha: 0.12),
+          borderColor: amberColors.success.withValues(alpha: 0.3),
+          textColor: amberColors.success,
         );
       case PaymentStatus.released:
         return _BadgeConfig(

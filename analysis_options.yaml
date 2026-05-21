@@ -1,15 +1,17 @@
 include: package:very_good_analysis/analysis_options.yaml
 
 analyzer:
+  plugins:
+    - custom_lint
   errors:
     missing_return: error
     dead_code: warning
     unused_import: warning
     unused_local_variable: warning
   language:
-    strict-casts: false
-    strict-inference: false
-    strict-raw-types: false
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
   exclude:
     - '**.g.dart'
     - '**.freezed.dart'
@@ -30,16 +32,44 @@ linter:
     one_member_abstracts: false
     sort_pub_dependencies: false
 
+    # --- Enabled: formerly Phase F candidates now active ---
+    cascade_invocations: true
+    avoid_redundant_argument_values: true
+    avoid_annotating_with_dynamic: true
+    prefer_for_elements_to_map_fromiterable: true
+    document_ignores: true
+    no_default_cases: true
+    avoid_positional_boolean_parameters: true
+    avoid_equals_and_hash_code_on_mutable_classes: true
+    avoid_dynamic_calls: true
+    avoid_catching_errors: true
+
     # --- Disabled: cosmetic/noisy, tracked for Phase F adoption ---
     sort_constructors_first: false
     always_put_required_named_parameters_first: false
-    cascade_invocations: false
-    avoid_redundant_argument_values: false
     prefer_int_literals: false
     comment_references: false
-    document_ignores: false
-    no_default_cases: false
-    avoid_positional_boolean_parameters: false
-    avoid_equals_and_hash_code_on_mutable_classes: false
-    avoid_dynamic_calls: false
-    avoid_catching_errors: false
+
+    # --- Disabled: formatter conflicts, experimental, deprecated, superseded, or noisy for SLine ---
+    always_put_control_body_on_new_line: false
+    always_specify_types: false
+    annotate_redeclares: false
+    avoid_classes_with_only_static_members: false
+    avoid_futureor_void: false
+    avoid_implementing_value_types: false
+    close_sinks: false
+    diagnostic_describe_all_properties: false
+    do_not_use_environment: false
+    library_names: false
+    omit_obvious_local_variable_types: false
+    omit_obvious_property_types: false
+    package_prefixed_library_names: false
+    prefer_double_quotes: false
+    prefer_expression_function_bodies: false
+    prefer_relative_imports: false
+    prefer_void_to_null: false
+    specify_nonobvious_local_variable_types: false
+    unnecessary_async: false
+    unnecessary_final: false
+    unsafe_variance: false
+    use_decorated_box: false

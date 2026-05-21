@@ -5,6 +5,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
+import 'package:sline_app/l10n/app_localizations.dart';
 
 /// Compact wallet balance snapshot for dashboard overview.
 ///
@@ -20,9 +21,8 @@ class WalletSnapshotCard extends StatelessWidget {
     const amber = AmberDuskTokens.colors;
     const spacing = AmberDuskTokens.spacing;
     const typography = AmberDuskTokens.typography;
-    final totalBalance =
-        (walletVM.balance.availableBalance + walletVM.balance.heldBalance)
-            .toDouble();
+    final l10n = AppLocalizations.of(context);
+    final availableBalance = walletVM.balance.availableBalance.toDouble();
 
     return Container(
       decoration: BoxDecoration(
@@ -33,31 +33,48 @@ class WalletSnapshotCard extends StatelessWidget {
       ),
       padding: EdgeInsets.all(spacing.lg),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'AVAILABLE BALANCE',
-            style: typography.chip.copyWith(
-              color: amber.heroMuted,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          SizedBox(height: spacing.sm),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  PriceFormatter.formatPrice(totalBalance),
-                  style: typography.moneyMedium.copyWith(color: amber.heroText),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AVAILABLE BALANCE',
+                      style: typography.chip.copyWith(
+                        color: amber.heroMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: spacing.xs),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        PriceFormatter.formatPrice(availableBalance),
+                        style: typography.walletAmountCompact.copyWith(
+                          color: amber.heroText,
+                        ),
+                        maxLines: 1,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(width: spacing.sm),
-              Text(
-                'IQD',
-                style: typography.bodySmall.copyWith(color: amber.heroMuted),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _SnapshotStatusPill(
+                    label: '${l10n?.withdraw ?? 'Withdraw'} soon',
+                  ),
+                  SizedBox(height: spacing.xs),
+                  _SnapshotStatusPill(label: '${l10n?.topUp ?? 'Top up'} soon'),
+                ],
               ),
             ],
           ),
@@ -65,35 +82,19 @@ class WalletSnapshotCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _SnapshotActionPill(
-                  label: 'Withdraw soon',
-                  foreground: amber.heroMuted,
-                  background: amber.heroChip,
+                child: _BreakdownChip(
+                  label: 'Available',
+                  amount: walletVM.balance.availableBalance.toDouble(),
+                  color: amber.primary,
                 ),
-              ),
-              SizedBox(width: spacing.md),
-              Expanded(
-                child: _SnapshotActionPill(
-                  label: 'Top up soon',
-                  foreground: amber.heroMuted,
-                  background: amber.heroChip,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: spacing.md),
-          Row(
-            children: [
-              _BreakdownChip(
-                label: 'Available',
-                amount: walletVM.balance.availableBalance.toDouble(),
-                color: amber.primary,
               ),
               SizedBox(width: spacing.sm),
-              _BreakdownChip(
-                label: 'Held',
-                amount: walletVM.balance.heldBalance.toDouble(),
-                color: amber.star,
+              Expanded(
+                child: _BreakdownChip(
+                  label: 'Held',
+                  amount: walletVM.balance.heldBalance.toDouble(),
+                  color: amber.star,
+                ),
               ),
             ],
           ),
@@ -103,45 +104,43 @@ class WalletSnapshotCard extends StatelessWidget {
   }
 }
 
-/// Disabled dashboard wallet action matching the Open Design affordance.
+/// Non-interactive dashboard wallet status matching the Open Design affordance.
 ///
 /// The full withdraw and top-up flows remain owned by the wallet screen; this
-/// overview snapshot only mirrors the dashboard reference controls.
-class _SnapshotActionPill extends StatelessWidget {
+/// overview snapshot only mirrors the roadmap state without fake buttons.
+class _SnapshotStatusPill extends StatelessWidget {
   final String label;
-  final Color foreground;
-  final Color background;
 
-  const _SnapshotActionPill({
-    required this.label,
-    required this.foreground,
-    required this.background,
-  });
+  const _SnapshotStatusPill({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    final buttons = AmberDuskTokens.widgetTheme.buttons;
+    const amber = AmberDuskTokens.colors;
+    const spacing = AmberDuskTokens.spacing;
+    const typography = AmberDuskTokens.typography;
 
     return Semantics(
-      button: true,
       enabled: false,
       label: label,
       hint: 'Wallet actions are coming soon',
-      child: MouseRegion(
-        cursor: SystemMouseCursors.forbidden,
-        child: Opacity(
-          opacity: 0.5,
-          child: Container(
-            height: buttons.minHeight,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: background,
-              borderRadius: BorderRadius.circular(buttons.radius),
+      child: Opacity(
+        opacity: 0.68,
+        child: Container(
+          constraints: BoxConstraints(minHeight: spacing.lg + spacing.md),
+          padding: EdgeInsets.symmetric(
+            horizontal: spacing.md,
+            vertical: spacing.sm,
+          ),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: amber.heroChip,
+            borderRadius: BorderRadius.circular(
+              AmberDuskTokens.spacing.pillRadius,
             ),
-            child: Text(
-              label,
-              style: buttons.textStyle.copyWith(color: foreground),
-            ),
+          ),
+          child: Text(
+            label,
+            style: typography.chip.copyWith(color: amber.heroMuted),
           ),
         ),
       ),
@@ -166,8 +165,7 @@ class _BreakdownChip extends StatelessWidget {
     const amber = AmberDuskTokens.colors;
     const spacing = AmberDuskTokens.spacing;
     const typography = AmberDuskTokens.typography;
-    // wallet_snapshot_card uses existing spacing tokens instead of deriving
-    // former denseSix/compactTen values from arithmetic.
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: spacing.md,
@@ -178,7 +176,6 @@ class _BreakdownChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(spacing.md),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             width: spacing.sm,
@@ -186,21 +183,26 @@ class _BreakdownChip extends StatelessWidget {
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           SizedBox(width: spacing.sm),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: typography.chip.copyWith(
-                  color: amber.heroMuted,
-                  fontWeight: FontWeight.w600,
-                ),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: typography.chip.copyWith(
+                color: amber.heroMuted,
+                fontWeight: FontWeight.w600,
               ),
-              Text(
-                PriceFormatter.formatPrice(amount),
-                style: typography.chip.copyWith(color: amber.heroText),
-              ),
-            ],
+            ),
+          ),
+          SizedBox(width: spacing.xs),
+          Flexible(
+            child: Text(
+              PriceFormatter.formatPrice(amount),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: typography.chip.copyWith(color: amber.heroText),
+            ),
           ),
         ],
       ),

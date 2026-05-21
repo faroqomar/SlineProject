@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-05-14 (Amber Dusk Phases 9-12, Transactional QA Recovery, SystemEvolution 2026-05-14, and DocsKeeper sync documented)
+**Last Updated:** 2026-05-21 (detail-surface chrome/dock refresh, SystemEvolution 2026-05-21, and DocsKeeper sync documented)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -11,20 +11,22 @@ sline_app/
 ├── .agents/              # Local skills and workflows used by the coding agents
 ├── .cursor/              # Cursor agent definitions and project rules
 ├── .github/workflows/    # CI pipeline (lint, test, coverage artifact, build, architecture guard)
-├── .githooks/            # Pre-commit hook (format + analyze)
+├── .githooks/            # Pre-commit hook (format + analyze + custom_lint + dependency validation)
 ├── .TODO/                # Audits, plans, execution logs, QA notes, docs-sync notes
 ├── docs/LOG/             # Session logs and SystemEvolution reports
 ├── docs/diagrams/        # Feature diagrams (Mermaid + explanations)
 ├── Sline_everything/     # Source-of-truth project documentation
 ├── assets/               # Bundled app assets
 ├── lib/                  # Flutter application source
+├── packages/             # Local tooling packages such as SLine custom lints
 ├── supabase/             # Edge functions and SQL migrations
 ├── test/                 # Unit and widget tests
 ├── integration_test/     # End-to-end test entrypoints
 ├── android/ ios/ web/    # Platform runners
 ├── linux/ macos/ windows/# Desktop runners
 ├── pubspec.yaml          # Flutter package manifest
-├── analysis_options.yaml # Lint rules (34 rules: core + safety + code quality)
+├── analysis_options.yaml # very_good_analysis + SLine safety rules + strict Dart modes
+├── dart_dependency_validator.yaml # Dependency validator intentional-ignore config
 ├── MIGRATION_REVIEW_CHECKLIST.md  # Phase D: 7-point checklist for migration PRs
 └── README.md             # Repository overview
 ```
@@ -42,7 +44,7 @@ sline_app/
   - **Core agents**: `Architect.md` (MVVM logic), `Pixel.md` (UI/UX), `Supabase_Ops.md` (backend), `DocsKeeper.md` (documentation), `Sentinel.md` (QA/verification)
   - **Planning & execution**: `Planner.md` (implementation architect), `Executor.md` (task orchestrator), `PlanCritic.md` (plan auditor), `Orchestrator.md` (multi-agent coordinator)
   - **Specialized**: `CodeGuard.md` (performance/security audit), `ThreatModeler.md` (security design), `APIContract.md` (contract alignment), `DataMigration.md` (schema safety), `Observability.md` (telemetry), `TemplateOwner.md` (task templates)
-  - **Meta**: `SystemEvolution.md` (cross-session agent improvement — scans logs and agent files, produces upgrade reports; explicit merge runs may update agent files after the report; latest merge report: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md`)
+  - **Meta**: `SystemEvolution.md` (cross-session agent improvement — scans logs and agent files, produces upgrade reports; explicit merge runs may update agent files after the report; latest merge report: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-21.md`)
 - `rules/`: project-specific rules used by Cursor tooling (`flutter-mvvm.mdc`, `error-handling.mdc`)
 - `skills/`: skill definitions referenced by agents for specialized work
 
@@ -100,7 +102,7 @@ Recent migration themes in `supabase/migrations/`:
 - ledger introduction and wallet views
 - booking server authority and payment remediation
 - repeat slotless booking support
-- management timeline scope index
+- internal work-log scope indexes
 - escrow idempotency (stable key + FOR UPDATE in `rpc_approve_delivery`, migration `20260307000001_escrow_idempotency_stable_key.sql`)
 - **Hardened Payment Gateway & Administrator Views (v2.20, 2026-03-07):** Added `payment_intents`, `payment_events`, and `orphan_payments` tables. New admin financial views `vw_admin_finance_metrics`, `vw_admin_escrow_open`, and `vw_admin_booking_finance`.
 - direct_offers table, RLS, triggers, ledger RPC and enum fix (20260303–20260308); 20260308 fixes release_with_fee zero-amount and enum cast
@@ -166,7 +168,7 @@ Current subfolders:
 - `theme/`: Three-layer design system (Theme → Layout → Components)
   - `app_colors.dart` — color palette + 44-property AppColorScheme (semantic status + interactive colors)
   - `app_typography.dart` — 14 text styles with per-style line heights (1.0–1.5)
-  - `app_dimens.dart` — raw spacing primitives (p0–p100), border radii (r4–r50), icon sizes
+  - `app_dimens.dart` — raw spacing primitives (p0–p140), border radii (r2–r50), icon sizes
   - `app_layout.dart` — **Phase 0.7** semantic layout tokens (card, avatar, button, spacing, icon, nav, border)
   - `app_motion.dart` — **Phase 0** animation tokens (7 durations, 7 curves, 4 scales, 3 staggers)
   - `app_states.dart` — **Phase 0** interaction state constants (8-state model, haptic mapping)
@@ -231,7 +233,7 @@ Not every feature uses every subfolder, but the standard live convention is:
 ### Feature Highlights
 
 - `lib/features/auth/`: login, signup, forgot password, auth session handling. Amber Dusk Phase 5 tokenizes auth and system-gate screens while preserving existing Auth/ViewModel behavior. Transactional QA recovery resets successful signup to Main/Home to avoid stale detail-route stacks.
-- `lib/features/booking/`: direct booking checkout, booking lists/details, payment return/webview screens. Amber Dusk Phase 8 tokenizes booking/payment surfaces, keeps payment authority in existing services, and restricts WebView logging to safe URL facts. Transactional QA recovery passes booking intent streams into WebView, accepts sanitized callbacks, refreshes booking/dashboard state after held recovery, and keeps raw payment metadata out of customer UI.
+- `lib/features/booking/`: direct booking checkout, booking lists/details, payment return/webview screens. Amber Dusk Phase 8 tokenizes booking/payment surfaces, keeps payment authority in existing services, and restricts WebView logging to safe URL facts. Transactional QA recovery passes booking intent streams into WebView, accepts sanitized callbacks, refreshes booking/dashboard state after held recovery, and keeps raw payment metadata out of customer UI. The 2026-05-21 details refresh keeps booking behavior intact while moving `booking_details_screen.dart` to floating back chrome with an in-content booking/task identity surface.
   - `viewmodels/booking_payment_delegate.dart` — **Phase E** Payment coordination delegate
   - `services/booking_deep_link_handler.dart` — **Phase E** Deep link handler for booking routes
   - `view/widgets/payment_order_summary_card.dart` — **Phase E** Extracted payment order summary widget
@@ -246,13 +248,13 @@ Not every feature uses every subfolder, but the standard live convention is:
   - `view/widgets/message_bubble.dart` — **Phase 6** Emoji-only rendering, link detection, reply quotes
   - `view/widgets/offer_message_bubble.dart` — **Phase 6** Elevated offer card with status borders
 - `lib/features/dashboard/`: unified dashboard tabs (Overview, Bookings, Work, Wallet, Inbox) and role-based work summaries, including the live bottom-nav dashboard slot. Amber Dusk Phase 4 updates dashboard shell/tabs/cards in this feature while keeping card ownership in booking/tasks/wallet. Transactional QA recovery adds empty-state CTAs, removes the disabled Inbox Sent placeholder, and keeps canceled/terminal booking drafts out of active/upcoming buckets. Tab cards (booking, offer, wallet snapshot) live in owning features: `booking/view/widgets/dashboard_booking_card.dart`, `tasks/view/widgets/dashboard_offer_card.dart`, `wallet/view/widgets/wallet_snapshot_card.dart`; dedicated Wallet tab in `view/tabs/wallet_tab.dart`; shared status helpers in `core/utils/status_presenter.dart`
-- `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery
+- `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery. The 2026-05-21 details refresh keeps ViewModel/payment/chat behavior intact while moving `direct_offer_details_screen.dart` to Amber Dusk floating back chrome and a compact action dock.
   - `services/direct_offer_deep_link_handler.dart` — **Phase E** Deep link handler for direct offer routes
 - `lib/features/notifications/`: in-app notification list (server-authority; foreground sync then stream), badge/modal/deep links; `PushDeviceService` registers FCM tokens in `user_devices`; push delivery via `notification_push_queue` + Edge (`push-notify`, `process-push-queue`). `NotificationViewModel` preserves cached notifications and reconnects on transient Supabase Realtime close codes `1002`/`1006`. Diagram: `Sline_everything/AppDiagram/All_Diagrams/13_notification-routing.md`. Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`.
-- `lib/features/management/`: order timeline / note management for tasks and bookings
+- `lib/features/management/`: internal work-log models/services used for system event logging; the task/booking Order Timeline & Notes UI was removed.
 - `lib/features/orders/`: decommissioned placeholder folder with `README.md` only; standalone orders runtime was removed on 2026-03-01
 - `lib/features/proposals/`: proposal models, data (repositories), routes (payment); view re-exports from tasks for list/submit/tile/payment screens
-- `lib/features/tasks/`: task creation, details, requests/offers, tender payment, delivery flows. Amber Dusk Phases 2-4 touch create flow, task/tender/booking card widgets, dashboard offer cards, and `models/task_model.dart` package-detail helper accessors without changing Supabase contracts. Amber Dusk Phase 7 tokenizes tender/request/payment-adjacent work surfaces while preserving ViewModel/service lifecycle authority. Transactional QA recovery adds `CreateTaskResult`, poster-visible Home refresh, category-specific Home copy, and whole-IQD proposal/request amount handling.
+- `lib/features/tasks/`: task creation, details, requests/offers, tender payment, delivery flows. Amber Dusk Phases 2-4 touch create flow, task/tender/booking card widgets, dashboard offer cards, and `models/task_model.dart` package-detail helper accessors without changing Supabase contracts. Amber Dusk Phase 7 tokenizes tender/request/payment-adjacent work surfaces while preserving ViewModel/service lifecycle authority. Transactional QA recovery adds `CreateTaskResult`, poster-visible Home refresh, category-specific Home copy, and whole-IQD proposal/request amount handling. The 2026-05-21 details refresh keeps task behavior intact while aligning `task_details_screen.dart` and task cards with titleless chrome/compact dock review expectations.
   - `exceptions/offer_exceptions.dart` — **NEW (v2.20)** Custom exceptions: `PriceMismatchException`, `OfferAlreadyAcceptedException`
   - `models/expired_bid_filter.dart` — **Phase D** Extracted `ExpiredBidFilter` enum + extension for bid list filtering
   - `viewmodels/award_expiration_monitor.dart` — **NEW (v2.20)** Countdown timer for unpaid awards with urgency levels
@@ -268,7 +270,7 @@ Not every feature uses every subfolder, but the standard live convention is:
 - `lib/features/wallet/`: wallet state and ledger-backed balance views; `utils/transaction_label_helper.dart` — human-readable transaction source/destination labels. Amber Dusk Phases 4 and 8 update wallet screen/dashboard card surfaces, localization labels, disabled action semantics, and accessibility labels without changing wallet data contracts or activating withdrawals. Transactional QA recovery makes withdraw unavailability intentional with a reason and preserves IQD display semantics.
   - `view/widgets/wallet_hero_card.dart` — **Phase E** Extracted wallet hero/balance card
   - `view/widgets/wallet_timeline_card.dart` — **Phase E** Extracted wallet transaction timeline card
-- `lib/features/work/`: unified work item details and CTA resolution
+- `lib/features/work/`: unified work item details and CTA resolution. The 2026-05-21 details refresh keeps `WorkItemDetailsViewModel` as the authority while moving `work_item_details_screen.dart` to floating back/tab chrome and `work_item_bottom_actions.dart` to a compact dock with stable async report guard spacing.
   - `services/work_deep_link_handler.dart` — **Phase E** Deep link handler for work routes
   - `view/widgets/work_item_bottom_actions.dart` — **Phase E** Extracted work item bottom action bar
   - `view/widgets/work_item_booking_details.dart` — **Phase E** Extracted work item booking details section
@@ -394,7 +396,7 @@ Current bundled asset folder:
 - Chat feature includes `models/chat_offer_payload.dart` (canonical offer payload) and `services/chat_realtime_merger.dart` (realtime snapshot merge); archive uses RPC `archive_conversation_v1`. Inbox realtime: `subscribeToInboxMessages(userId)` (messages stream, not conversations); see diagram 18 and `.TODO/PLAN_RealtimeSubscriptionTopology_2026-03-07.md`.
 - Booking flow now uses `payment_checkout_screen.dart`, `payment_webview_screen.dart`, and `payment_return_screen.dart` instead of older slot-sheet-only docs.
 - Core runtime now includes `payment_runtime_config.dart`, `payment_pending_store.dart`, and `flutter_error_filters.dart`.
-- Management now includes `work_log_scope.dart` and `view/widgets/order_management_section.dart`.
+- Management now keeps `work_log_scope.dart` for internal work-log service calls; the reusable `OrderManagementSection` UI was removed from task and booking details.
 - Loading overlays use `LoadingHandle` from `lib/core/utils/loading_utils.dart`; the old dialog `show/hide` pattern is obsolete.
 - Profile cross-user reads are centralized in `lib/features/profile/services/profile_summary_service.dart`; views and sibling features should not query another user from base `profiles`.
 - Home, Tenders, and Booking discovery now share `lib/features/tasks/viewmodels/discovery_feed_view_model_contract.dart` as their feed API, while `home/viewmodels/home_view_model.dart` remains the concrete notifier.

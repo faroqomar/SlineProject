@@ -156,9 +156,9 @@ class DashboardBookingDelegate {
 
   Future<List<BookingModel>> _fetchBookingsInternal(UserRole currentRole) {
     if (currentRole == UserRole.freelancer) {
-      return _bookingService.listBookingsAsProvider(limit: 50);
+      return _bookingService.listBookingsAsProvider();
     } else {
-      return _bookingService.listBookingsAsClient(limit: 50);
+      return _bookingService.listBookingsAsClient();
     }
   }
 }

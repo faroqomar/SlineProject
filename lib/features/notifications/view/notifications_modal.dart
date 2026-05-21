@@ -21,6 +21,7 @@ class NotificationsModalKeys {
   NotificationsModalKeys._();
   static const Key modal = ValueKey<String>('notifications_modal');
   static const Key loading = ValueKey<String>('notifications_loading');
+  static const Key list = ValueKey<String>('notifications_list');
   static const Key empty = ValueKey<String>('notifications_empty');
   static const Key error = ValueKey<String>('notifications_error');
 
@@ -45,6 +46,7 @@ class NotificationsModal extends StatefulWidget {
     return showModalBottomSheet<NotificationItem>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       barrierColor: context.amberColors.scrim,
       backgroundColor: AmberDuskColors.transparent,
       builder: (_) => const NotificationsModal(),
@@ -191,12 +193,13 @@ class _NotificationsModalState extends State<NotificationsModal>
                       return Semantics(
                         label: 'Notifications list',
                         child: ListView.separated(
+                          key: NotificationsModalKeys.list,
                           controller: scrollController,
-                          padding: const EdgeInsets.fromLTRB(
+                          padding: EdgeInsets.fromLTRB(
                             AppDimens.p16,
                             AppDimens.p4,
                             AppDimens.p16,
-                            AppDimens.p16,
+                            _bottomListPadding(context),
                           ),
                           itemCount: vm.notifications.length,
                           separatorBuilder: (_, _) =>
@@ -271,22 +274,56 @@ class _NotificationsModalState extends State<NotificationsModal>
   Widget _buildHeader(BuildContext context) {
     final amberColors = context.amberColors;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimens.p16,
-        AppDimens.p8,
-        AppDimens.p16,
-        AppDimens.p12,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Notifications',
-            style: AppTypography.h3.copyWith(color: amberColors.text),
+    return Consumer<NotificationViewModel>(
+      builder: (context, vm, child) {
+        final notificationCount = vm.notifications.length;
+        final unreadCount = vm.unreadCount;
+        final summary = notificationCount == 0
+            ? 'No updates waiting'
+            : unreadCount == 0
+            ? '$notificationCount read updates'
+            : '$unreadCount unread of $notificationCount updates';
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppDimens.p20,
+            AppDimens.p8,
+            AppDimens.p16,
+            AppDimens.p14,
           ),
-          Row(
+          child: Row(
             children: [
+              _HeaderIconBadge(unreadCount: unreadCount),
+              const SizedBox(width: AppDimens.p12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Notifications',
+                      style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                        color: amberColors.text,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppDimens.p2),
+                    Text(
+                      summary,
+                      style: AmberDuskTokens.typography.bodySmall.copyWith(
+                        color: unreadCount == 0
+                            ? amberColors.muted
+                            : amberColors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppDimens.p8),
               Semantics(
                 button: true,
                 label: 'Mark all notifications as read',
@@ -296,7 +333,16 @@ class _NotificationsModalState extends State<NotificationsModal>
                       AppDimens.touchTarget,
                       AppDimens.touchTarget,
                     ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p12,
+                    ),
                     foregroundColor: amberColors.primary,
+                    backgroundColor: amberColors.infoMuted,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        AmberDuskTokens.radius.pill,
+                      ),
+                    ),
                   ),
                   onPressed: _isMarkingAllRead
                       ? null
@@ -349,24 +395,36 @@ class _NotificationsModalState extends State<NotificationsModal>
                     'Mark all as read',
                     style: AppTypography.caption.copyWith(
                       color: amberColors.primary,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
               ),
+              const SizedBox(width: AppDimens.p8),
               Semantics(
                 button: true,
                 label: 'Close notifications',
                 child: IconButton(
                   tooltip: 'Close notifications',
-                  icon: Icon(Icons.close, color: amberColors.text),
+                  style: IconButton.styleFrom(
+                    backgroundColor: amberColors.surfaceRaised,
+                    foregroundColor: amberColors.text,
+                    minimumSize: const Size(
+                      AppDimens.touchTarget,
+                      AppDimens.touchTarget,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimens.r16),
+                    ),
+                  ),
+                  icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -374,11 +432,11 @@ class _NotificationsModalState extends State<NotificationsModal>
   Widget _buildSkeletonList() {
     return ListView.separated(
       key: NotificationsModalKeys.loading,
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppDimens.p16,
         AppDimens.p4,
         AppDimens.p16,
-        AppDimens.p16,
+        _bottomListPadding(context),
       ),
       itemCount: 5,
       separatorBuilder: (_, _) => const SizedBox(height: AppDimens.p12),
@@ -395,7 +453,12 @@ class _NotificationsModalState extends State<NotificationsModal>
       child: Semantics(
         label: 'No notifications. You are all caught up.',
         child: Padding(
-          padding: const EdgeInsets.all(AppDimens.p24),
+          padding: EdgeInsets.fromLTRB(
+            AppDimens.p24,
+            AppDimens.p24,
+            AppDimens.p24,
+            _bottomListPadding(context),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -434,7 +497,12 @@ class _NotificationsModalState extends State<NotificationsModal>
       child: Semantics(
         label: 'Error loading notifications. Tap retry.',
         child: Padding(
-          padding: const EdgeInsets.all(AppDimens.p24),
+          padding: EdgeInsets.fromLTRB(
+            AppDimens.p24,
+            AppDimens.p24,
+            AppDimens.p24,
+            _bottomListPadding(context),
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -484,6 +552,15 @@ class _NotificationsModalState extends State<NotificationsModal>
       ),
     );
   }
+
+  /// Bottom inset for scrollable notification states.
+  ///
+  /// The modal is draggable and can sit above the home indicator, so rows need
+  /// explicit safe-area clearance inside the scroll view rather than relying on
+  /// the route to pad only the sheet shell.
+  double _bottomListPadding(BuildContext context) {
+    return AppDimens.p24 + MediaQuery.viewPaddingOf(context).bottom;
+  }
 }
 
 /// Decorative icon well for notification empty and error states.
@@ -508,6 +585,70 @@ class _StateIcon extends StatelessWidget {
       height: AppDimens.emptyStateIconContainer,
       decoration: BoxDecoration(color: background, shape: BoxShape.circle),
       child: Icon(icon, size: AppDimens.emptyStateIconSize, color: foreground),
+    );
+  }
+}
+
+/// Header icon well with an unread count badge.
+///
+/// The badge makes the notification center recognizable before users scan the
+/// list, while all count authority remains in [NotificationViewModel].
+class _HeaderIconBadge extends StatelessWidget {
+  const _HeaderIconBadge({required this.unreadCount});
+
+  final int unreadCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final amberColors = context.amberColors;
+
+    return SizedBox(
+      width: AppDimens.p48,
+      height: AppDimens.p48,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: AppDimens.p48,
+            height: AppDimens.p48,
+            decoration: BoxDecoration(
+              color: amberColors.infoMuted,
+              borderRadius: BorderRadius.circular(AppDimens.r16),
+            ),
+            child: Icon(
+              Icons.notifications_none,
+              color: amberColors.primary,
+              size: AppDimens.iconSizeMedium,
+            ),
+          ),
+          if (unreadCount > 0)
+            Positioned(
+              top: -AppDimens.p2,
+              right: -AppDimens.p2,
+              child: Container(
+                constraints: const BoxConstraints(
+                  minWidth: AppDimens.iconSizeMedium,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.p6,
+                  vertical: AppDimens.p2,
+                ),
+                decoration: BoxDecoration(
+                  color: amberColors.rust,
+                  borderRadius: BorderRadius.circular(AppDimens.r50),
+                ),
+                child: Text(
+                  unreadCount > 99 ? '99+' : unreadCount.toString(),
+                  textAlign: TextAlign.center,
+                  style: AmberDuskTokens.typography.chip.copyWith(
+                    color: amberColors.text,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

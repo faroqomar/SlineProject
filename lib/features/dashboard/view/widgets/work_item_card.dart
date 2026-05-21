@@ -7,6 +7,7 @@ import 'package:sline_app/core/services/deep_link_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
+import 'package:sline_app/core/utils/content_safety_filter.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
@@ -87,9 +88,10 @@ class WorkItemCard extends StatelessWidget {
         : (isBooking ? 'Booking' : 'Task');
     final statusLabel = _getStatusDisplayLabel(item.statusRaw);
     final progressValue = _progressForStatus(item.statusRaw);
+    final safeTitle = ContentSafetyFilter.displayTitle(item.title);
 
     return Semantics(
-      label: '$typeLabel: ${item.title}, $statusLabel',
+      label: '$typeLabel: $safeTitle, $statusLabel',
       child: AppCard(
         onTap: () async {
           AppLogger.d('WorkItemCard tapped', tag: 'Cards');
@@ -137,7 +139,7 @@ class WorkItemCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.title,
+                        safeTitle,
                         style: typography.body.copyWith(
                           color: amber.text,
                           fontWeight: FontWeight.w800,
@@ -206,7 +208,7 @@ class WorkItemCard extends StatelessWidget {
                   vertical: spacing.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: amber.dangerMuted,
+                  gradient: AmberDuskMaterial.activeWashGradient,
                   borderRadius: BorderRadius.circular(spacing.moduleRadius),
                 ),
                 child: Row(

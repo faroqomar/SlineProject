@@ -34,7 +34,7 @@ class AppDecorations {
     return BoxDecoration(
       borderRadius: borderRadius ?? BorderRadius.circular(AppDimens.r8),
       color: colorScheme.hotBadgeBackground,
-      border: Border.all(color: colorScheme.hotBadgeBorder, width: 1.0),
+      border: Border.all(color: colorScheme.hotBadgeBorder),
     );
   }
 

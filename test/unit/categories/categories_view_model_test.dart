@@ -14,7 +14,7 @@ CategoryModel _cat({required String id, required String name}) {
     id: id,
     name: name,
     iconUrl: null,
-    createdAt: DateTime.utc(2026, 1, 1),
+    createdAt: DateTime.utc(2026),
   );
 }
 
@@ -201,7 +201,7 @@ void main() {
 
       await vm.setSearchQuery('');
 
-      verify(() => repo.getAll(search: null)).called(1);
+      verify(() => repo.getAll()).called(1);
     });
   });
 }

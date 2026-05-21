@@ -4,6 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Read/update-only notification service. All notification creation is server-side.
 class NotificationService {
+  /// Keeps realtime notification streams newest-first without relying on
+  /// Supabase's default argument at the callsite.
+  static bool get _newestNotificationsFirst => false;
+
   final SupabaseClient _supabase = Supabase.instance.client;
 
   /// Fetches unread notifications (e.g. for foreground sync before stream).
@@ -32,7 +36,11 @@ class NotificationService {
           .order('created_at', ascending: false)
           .limit(limit);
       final list = (response as List)
-          .map((e) => NotificationItem.fromJson(e))
+          .map(
+            (e) => NotificationItem.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
           .toList();
       AppLogger.d(
         'getUnreadNotifications: got ${list.length} unread',
@@ -69,7 +77,11 @@ class NotificationService {
           .limit(limit);
 
       final list = (response as List)
-          .map((e) => NotificationItem.fromJson(e))
+          .map(
+            (e) => NotificationItem.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
           .toList();
       AppLogger.d('getNotifications: got ${list.length}', tag: 'Notifications');
       return list;
@@ -101,7 +113,7 @@ class NotificationService {
         .from('notifications')
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
-        .order('created_at', ascending: false)
+        .order('created_at', ascending: _newestNotificationsFirst)
         .limit(50)
         .map((response) {
           final list = response.map(NotificationItem.fromJson).toList();

@@ -56,7 +56,6 @@ bool _isTrustedRuntimeFinishUri(Uri uri) {
 Uri _normalizeRuntimeFinishUri(Uri uri) {
   return uri.replace(
     queryParameters: const <String, String>{'payment_return': '1'},
-    fragment: null,
   );
 }
 

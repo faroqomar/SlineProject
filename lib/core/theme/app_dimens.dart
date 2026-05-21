@@ -23,15 +23,19 @@ class AppDimens {
   static const double p24 = 24.0;
   static const double p28 = 28.0;
   static const double p32 = 32.0;
+  static const double p36 = 36.0;
   static const double p40 = 40.0;
   static const double p48 = 48.0;
   static const double p50 = 50.0;
   static const double p52 = 52.0;
   static const double p54 = 54.0;
   static const double p60 = 60.0;
+  static const double p64 = 64.0;
   static const double p70 = 70.0;
   static const double p80 = 80.0;
   static const double p100 = 100.0;
+  static const double p120 = 120.0;
+  static const double p140 = 140.0;
 
   /// Header height for booking skeleton cards.
   static const double bookingHeaderHeight = p80 + p10;
@@ -40,6 +44,7 @@ class AppDimens {
   static const double hairlineDivider = 0.5;
 
   // --- Border Radii ---
+  static const double r2 = 2.0;
   static const double r4 = 4.0;
   static const double r8 = 8.0;
   static const double r10 = 10.0;
@@ -104,4 +109,7 @@ class AppDimens {
 
   /// Image preview height for manage-portfolio edit rows.
   static const double managePortfolioImagePreviewHeight = 150.0;
+
+  /// Maximum readable width for modal dialogs on tablet and landscape layouts.
+  static const double dialogMaxWidth = 640.0;
 }

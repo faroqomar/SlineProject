@@ -16,7 +16,7 @@ class _MC extends Mock implements SupabaseClient {
   PostgrestFilterBuilder<T> rpc<T>(
     String fn, {
     Map<String, dynamic>? params,
-    dynamic get = false,
+    Object? get = false,
   }) {
     return (super.noSuchMethod(
           Invocation.method(#rpc, [fn], {#params: params, #get: get}),
@@ -46,14 +46,14 @@ class _StubFB<T> extends Fake
   PostgrestTransformBuilder<PostgrestList> select([String columns = '*']) =>
       _StubFB<PostgrestList>(_data);
   @override
-  PostgrestFilterBuilder<T> eq(String column, dynamic value) => this;
+  PostgrestFilterBuilder<T> eq(String column, Object value) => this;
   @override
   PostgrestFilterBuilder<T> or(String filters, {String? referencedTable}) =>
       this;
   @override
   PostgrestFilterBuilder<T> isFilter(String column, bool? value) => this;
   @override
-  PostgrestFilterBuilder<T> lt(String column, dynamic value) => this;
+  PostgrestFilterBuilder<T> lt(String column, Object value) => this;
   @override
   PostgrestTransformBuilder<T> order(
     String column, {
@@ -86,20 +86,22 @@ class _FB<T> extends _StubFB<T> {
 }
 
 class _QB extends Fake implements SupabaseQueryBuilder {
-  final dynamic next;
+  final Object? next;
   _QB(this.next);
+
+  Object? _resolvedNext() => next is _StubFB ? (next! as _StubFB)._data : next;
 
   @override
   PostgrestFilterBuilder<PostgrestList> select([String columns = '*']) =>
-      _StubFB<PostgrestList>(next is _StubFB ? next._data : next);
+      _StubFB<PostgrestList>(_resolvedNext());
   @override
   PostgrestFilterBuilder<Map<String, dynamic>> insert(
-    dynamic values, {
+    Object values, {
     bool defaultToNull = true,
-  }) => _StubFB<Map<String, dynamic>>(next is _StubFB ? next._data : next);
+  }) => _StubFB<Map<String, dynamic>>(_resolvedNext());
   @override
-  PostgrestFilterBuilder update(Map values) =>
-      _StubFB<dynamic>(next is _StubFB ? next._data : next);
+  PostgrestFilterBuilder<PostgrestList> update(Map<dynamic, dynamic> values) =>
+      _StubFB<PostgrestList>(_resolvedNext());
 }
 
 // --- Test Main ---
@@ -135,7 +137,7 @@ void main() {
           () => mockClient.from('app_config'),
         ).thenAnswer((_) => _QB(_FB<Map<String, dynamic>>({'value': 'true'})));
         when(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'start_direct_conversation_v1',
             params: any(named: 'params'),
           ),
@@ -150,7 +152,7 @@ void main() {
 
         expect(result.id, equals('550e8400-e29b-41d4-a716-446655440032'));
         verify(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'start_direct_conversation_v1',
             params: any(named: 'params'),
           ),
@@ -188,7 +190,7 @@ void main() {
 
         expect(result.id, equals(existingDirectConversation['id']));
         verifyNever(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'start_direct_conversation_v1',
             params: any(named: 'params'),
           ),
@@ -239,7 +241,7 @@ void main() {
         setupBasics();
 
         when(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'mark_conversation_seen',
             params: any(named: 'params'),
           ),
@@ -248,7 +250,7 @@ void main() {
         await messageService.markSeen('conv-id');
 
         verify(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'mark_conversation_seen',
             params: any(named: 'params'),
           ),
@@ -259,7 +261,7 @@ void main() {
         setupBasics();
 
         when(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'mark_conversation_delivered',
             params: any(named: 'params'),
           ),
@@ -268,7 +270,7 @@ void main() {
         await messageService.markDelivered('conv-id');
 
         verify(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'mark_conversation_delivered',
             params: any(named: 'params'),
           ),

@@ -18,7 +18,7 @@ Conversation _convo({String id = 'conv-1', String? taskId}) => Conversation(
   taskId: taskId,
   user1Id: 'user-1',
   user2Id: 'user-2',
-  createdAt: DateTime.utc(2026, 1, 1),
+  createdAt: DateTime.utc(2026),
 );
 
 Message _msg({String id = 'msg-1', Map<String, dynamic> payload = const {}}) =>
@@ -28,7 +28,7 @@ Message _msg({String id = 'msg-1', Map<String, dynamic> payload = const {}}) =>
       senderId: 'user-1',
       receiverId: 'user-2',
       content: 'Hello',
-      createdAt: DateTime.utc(2026, 1, 1),
+      createdAt: DateTime.utc(2026),
       messageType: MessageType.text,
       payload: payload,
     );
@@ -42,8 +42,8 @@ DirectOffer _offer() => DirectOffer(
   days: 3,
   status: 'sent',
   paymentStatus: 'unpaid',
-  createdAt: DateTime.utc(2026, 1, 1),
-  updatedAt: DateTime.utc(2026, 1, 1),
+  createdAt: DateTime.utc(2026),
+  updatedAt: DateTime.utc(2026),
 );
 
 // -- Mock stub helpers (reduce 10-param repetition) --
@@ -322,14 +322,13 @@ void main() {
 
   group('Dispose safety', () {
     test('dispose completes without error and guards notifyListeners', () {
-      final vm2 = ChatViewModel(
+      ChatViewModel(
         repo: repo,
         accountGuardService: guard,
         directOffersService: offers,
         attachmentUploader: SupabaseAttachmentUploader(),
-      );
+      ).dispose();
       // _mounted = false prevents _notify from calling notifyListeners
-      vm2.dispose();
       RoleSwitchCoordinator().clearForTesting();
     });
 

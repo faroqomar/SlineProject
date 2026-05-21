@@ -118,7 +118,6 @@ void main() {
         clientId: 'client-1',
         providerId: 'provider-1',
         price: 100000,
-        feeRateBps: testFeeRateBps,
       );
 
       expect(scenario['booking'], isNotNull);
@@ -135,8 +134,6 @@ void main() {
         clientId: 'client-1',
         providerId: 'provider-1',
         price: 100000,
-        initialFeeRateBps: 1200,
-        newFeeRateBps: 3000,
       );
 
       expect(scenario['booking'], isNotNull);
@@ -281,8 +278,6 @@ void main() {
         clientId: 'client-1',
         providerId: 'provider-1',
         price: 100000,
-        paymentStatus: 'unpaid',
-        feeRateAppliedBps: null, // Not locked yet
       );
 
       final bookingAfter = createBookingFixture(
@@ -357,16 +352,13 @@ void main() {
     test('should run complete scenario flow', () {
       AppLogger.i('Testing scenario runner', tag: _logTag);
 
-      final runner = FeeLockingScenarioRunner(
-        'Complete escrow -> fee change -> release flow',
-      );
-
-      runner.logStart();
-      runner.logPhase('1. Create booking');
-      runner.logPhase('2. Escrow with fee lock');
-      runner.logPhase('3. Change global fee rate');
-      runner.logPhase('4. Release (should use locked rate)');
-      runner.logComplete(true);
+      FeeLockingScenarioRunner('Complete escrow -> fee change -> release flow')
+        ..logStart()
+        ..logPhase('1. Create booking')
+        ..logPhase('2. Escrow with fee lock')
+        ..logPhase('3. Change global fee rate')
+        ..logPhase('4. Release (should use locked rate)')
+        ..logComplete(success: true);
 
       // This test documents the intended flow
       // Real RPC integration tests would go here when backend is ready
@@ -380,14 +372,14 @@ void main() {
       AppLogger.i('Testing platform settings fixture', tag: _logTag);
 
       final settings = createPlatformSettingsFixture(
-        key: 'fee_rate_default_bps',
         feeRateBps: testFeeRateBps,
         feeLockingEnabled: true,
         updatedBy: 'admin-user-id',
       );
 
       expect(settings['key'], equals('fee_rate_default_bps'));
-      expect(settings['value']['value'], equals(testFeeRateBps));
+      final settingsValue = settings['value'] as Map<String, dynamic>;
+      expect(settingsValue['value'], equals(testFeeRateBps));
       expect(settings['updated_by'], equals('admin-user-id'));
 
       AppLogger.i(

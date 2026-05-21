@@ -76,7 +76,9 @@ class TaskOfferService {
           .or('owner_id.eq.$userId,user_id.eq.$userId,client_id.eq.$userId');
 
       final taskIds = (ownedTasks as List<dynamic>)
-          .map((row) => row['id'] as String?)
+          .map(
+            (row) => Map<String, dynamic>.from(row as Map)['id'] as String?,
+          )
           .whereType<String>()
           .toList();
 
@@ -97,7 +99,9 @@ class TaskOfferService {
           .inFilter('task_id', taskIds)
           .order('created_at', ascending: false);
 
-      final rows = response as List;
+      final rows = (response as List<dynamic>)
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
       if (rows.isEmpty) return [];
 
       final bidderIds = rows
@@ -115,7 +119,7 @@ class TaskOfferService {
       );
 
       return rows.map((json) {
-        final map = Map<String, dynamic>.from(json as Map);
+        final map = Map<String, dynamic>.from(json);
         final bidderId =
             map['freelancer_id'] as String? ?? map['bidder_id'] as String?;
         if (bidderId != null && profilesMap.containsKey(bidderId)) {
@@ -295,7 +299,7 @@ class TaskOfferService {
     int? expectedPriceCents,
   }) async {
     try {
-      final result = await _client.rpc(
+      final result = await _client.rpc<dynamic>(
         'award_task_offer',
         params: {
           'p_request_id': offerId,
@@ -364,7 +368,9 @@ class TaskOfferService {
         throw Exception('Offer is already paid or held');
       }
 
-      final deadline = DateTime.tryParse(offerData['payment_deadline'] ?? '');
+      final deadline = DateTime.tryParse(
+        offerData['payment_deadline'] as String? ?? '',
+      );
       if (deadline != null && deadline.isBefore(DateTime.now())) {
         throw Exception('Payment deadline has expired');
       }
@@ -382,7 +388,7 @@ class TaskOfferService {
 
       // 3. Mark the offer as paid in the database AFTER ledger succeeds
       final result =
-          await _client.rpc(
+          await _client.rpc<dynamic>(
                 'pay_awarded_offer',
                 params: {'p_request_id': offerId},
               )
@@ -408,7 +414,7 @@ class TaskOfferService {
   Future<Map<String, dynamic>> cancelAwardedOffer(String requestId) async {
     try {
       final result =
-          await _client.rpc(
+          await _client.rpc<dynamic>(
                 'cancel_awarded_offer',
                 params: {'p_request_id': requestId},
               )
@@ -426,7 +432,9 @@ class TaskOfferService {
   /// Get client's awarded but unpaid offers (for "Pay Now" UI)
   Future<List<Map<String, dynamic>>> getClientAwardedUnpaidOffers() async {
     try {
-      final result = await _client.rpc('get_client_awarded_unpaid_offers');
+      final result = await _client.rpc<dynamic>(
+        'get_client_awarded_unpaid_offers',
+      );
       return (result as List).cast<Map<String, dynamic>>();
     } on Exception catch (e, st) {
       AppLogger.e(
@@ -441,7 +449,9 @@ class TaskOfferService {
   /// Get freelancer's awarded but unpaid offers (for "Waiting for Payment" UI)
   Future<List<Map<String, dynamic>>> getFreelancerAwardedUnpaidOffers() async {
     try {
-      final result = await _client.rpc('get_freelancer_awarded_unpaid_offers');
+      final result = await _client.rpc<dynamic>(
+        'get_freelancer_awarded_unpaid_offers',
+      );
       return (result as List).cast<Map<String, dynamic>>();
     } on Exception catch (e, st) {
       AppLogger.e(

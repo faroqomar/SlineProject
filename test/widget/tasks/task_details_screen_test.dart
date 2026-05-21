@@ -3,10 +3,6 @@
 // Type A screen: StatefulWidget that reads TaskViewModel, ChatViewModel,
 // AccountGuardService, and SafetyViewModel from context.
 // Tests inject file-local mocks via Provider ancestors.
-//
-// Supabase.initialize is called in setUpAll to prevent assertion errors from
-// OrderManagementSection (rendered when currentUserId is non-null), which
-// internally creates WorkLogService -> Supabase.instance.client.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,16 +10,15 @@ import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/account_guard_service.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
-import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../supabase_test_helper.dart';
 import '../../test_support/pump_app.dart';
 
 // ---------------------------------------------------------------------------
@@ -78,7 +73,7 @@ Task _task({
     userId: userId,
     status: status,
     taskType: taskType,
-    createdAt: createdAt ?? DateTime.utc(2026, 4, 1),
+    createdAt: createdAt ?? DateTime.utc(2026, 4),
     deadline: deadline,
     categoryName: categoryName,
     userName: userName,
@@ -171,19 +166,6 @@ void main() {
   late _MockChatViewModel mockChatVm;
   late _MockAccountGuardService mockGuard;
   late _MockSafetyViewModel mockSafety;
-
-  setUpAll(() async {
-    ensureSupabaseTestEnvironment();
-    await Supabase.initialize(
-      url: 'https://test.supabase.co',
-      anonKey: 'test-anon-key',
-      debug: false,
-      authOptions: FlutterAuthClientOptions(
-        localStorage: supabaseTestLocalStorage,
-        pkceAsyncStorage: supabaseTestPkceStorage,
-      ),
-    );
-  });
 
   setUp(() {
     mockTaskVm = _MockTaskViewModel();
@@ -302,12 +284,11 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -321,7 +302,7 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
@@ -341,7 +322,7 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId, offers: 5),
+        task: _task(offers: 5),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
@@ -373,6 +354,35 @@ void main() {
       expect(find.byType(TaskDetailsScreen), findsOneWidget);
     });
 
+    testWidgets('T238b exposes task facts above long descriptions', (
+      tester,
+    ) async {
+      await _pumpScreen(
+        tester,
+        task: _task(
+          budget: 25000,
+          deadline: DateTime.now().toUtc().add(const Duration(days: 3)),
+          categoryName: 'Graphic Design',
+          description: 'Line one.\n\nLine two.',
+        ),
+        taskVm: mockTaskVm,
+        chatVm: mockChatVm,
+        guardService: mockGuard,
+        safetyVm: mockSafety,
+        currentUserId: null,
+      );
+      await tester.pump();
+
+      expect(find.text('25K IQD'), findsOneWidget);
+      expect(find.text('Graphic Design'), findsOneWidget);
+
+      final scrollView = tester.widget<SingleChildScrollView>(
+        find.byType(SingleChildScrollView),
+      );
+      final padding = scrollView.padding! as EdgeInsets;
+      expect(padding.bottom, AppDimens.p32);
+    });
+
     // ---- T239: Manage Task button disabled for owner -------------------------
 
     testWidgets('T239 Manage Task button is disabled for owner', (
@@ -380,7 +390,7 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId, status: TaskStatus.open),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
@@ -406,7 +416,7 @@ void main() {
       (tester) async {
         await _pumpScreen(
           tester,
-          task: _task(userId: _kOwnerId, status: TaskStatus.closed),
+          task: _task(status: TaskStatus.closed),
           taskVm: mockTaskVm,
           chatVm: mockChatVm,
           guardService: mockGuard,
@@ -466,12 +476,11 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(taskType: TaskType.tender),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -483,12 +492,12 @@ void main() {
 
     // ---- Additional coverage ------------------------------------------------
 
-    testWidgets('T244 header shows Job Details for tender task', (
+    testWidgets('T244 top chrome stays titleless for tender task', (
       tester,
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(taskType: TaskType.tender),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
@@ -497,10 +506,11 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Job Details'), findsOneWidget);
+      expect(find.text('Job Details'), findsNothing);
+      expect(find.byTooltip('Back'), findsOneWidget);
     });
 
-    testWidgets('T245 header shows Booking Details for booking task', (
+    testWidgets('T245 top chrome stays titleless for booking task', (
       tester,
     ) async {
       await _pumpScreen(
@@ -514,18 +524,18 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Booking Details'), findsOneWidget);
+      expect(find.text('Booking Details'), findsNothing);
+      expect(find.byTooltip('Back'), findsOneWidget);
     });
 
     testWidgets('T246 non-owner sees chat bubble icon', (tester) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -535,7 +545,7 @@ void main() {
     testWidgets('T247 owner does not see chat bubble icon', (tester) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
@@ -555,14 +565,13 @@ void main() {
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
       expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
     });
 
-    testWidgets('T249 AppCardContainer wraps header and bottom bar', (
+    testWidgets('T249 compact dock keeps primary action visible', (
       tester,
     ) async {
       await _pumpScreen(
@@ -576,13 +585,13 @@ void main() {
       );
       await tester.pump();
 
-      // The header remains card-backed while the Amber Dusk bottom bar is a
-      // full-width transactional surface with the primary AppButton inside.
-      expect(find.byType(AppCardContainer), findsAtLeastNWidgets(1));
+      // The top chrome is titleless; the compact dock still owns the primary
+      // task action and icon-only secondary actions.
+      expect(find.byTooltip('Back'), findsOneWidget);
       expect(find.byType(AppButton), findsWidgets);
     });
 
-    testWidgets('T250 back arrow icon is present in header', (tester) async {
+    testWidgets('T250 floating back arrow icon is present', (tester) async {
       await _pumpScreen(
         tester,
         task: _task(),
@@ -594,10 +603,12 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byIcon(Icons.arrow_back_ios), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     });
 
-    testWidgets('T251 share icon is present in header', (tester) async {
+    testWidgets('T251 share icon is removed from titleless chrome', (
+      tester,
+    ) async {
       await _pumpScreen(
         tester,
         task: _task(),
@@ -609,7 +620,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byIcon(Icons.share), findsOneWidget);
+      expect(find.byIcon(Icons.share), findsNothing);
     });
 
     testWidgets('T252 View Profile text appears in author section', (
@@ -634,7 +645,7 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(userName: null),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
@@ -651,12 +662,11 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _bookingTask(status: TaskStatus.completed, userId: _kOwnerId),
+        task: _bookingTask(status: TaskStatus.completed),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -668,12 +678,11 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _bookingTask(userId: _kOwnerId),
+        task: _bookingTask(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -704,12 +713,11 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _bookingTask(userId: _kOwnerId),
+        task: _bookingTask(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -730,12 +738,11 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId, offers: 3),
+        task: _task(offers: 3),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -750,7 +757,6 @@ void main() {
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -797,5 +803,52 @@ void main() {
       // _selectedPackageTier.toUpperCase() for the badge
       expect(find.text('BASIC'), findsOneWidget);
     });
+
+    testWidgets(
+      'T262 booking details remove order notes and keep long content usable on small screens',
+      (tester) async {
+        final previousSize = tester.view.physicalSize;
+        final previousRatio = tester.view.devicePixelRatio;
+        tester.view
+          ..physicalSize = const Size(390, 640)
+          ..devicePixelRatio = 1;
+        addTearDown(() {
+          tester.view
+            ..physicalSize = previousSize
+            ..devicePixelRatio = previousRatio;
+        });
+
+        const longDescription =
+            'Need a private tutor for help with calculus and algebra topics. '
+            'One session first, with possibility of more later. '
+            'Please include preparation, examples, and follow-up review.';
+
+        await _pumpScreen(
+          tester,
+          task: _bookingTask(description: longDescription),
+          taskVm: mockTaskVm,
+          chatVm: mockChatVm,
+          guardService: mockGuard,
+          safetyVm: mockSafety,
+          currentUserId: _kOwnerId,
+        );
+        await tester.pump();
+
+        expect(find.text('Order Timeline & Notes'), findsNothing);
+        expect(find.text('No activity yet.'), findsNothing);
+        expect(find.text('Add a note...'), findsNothing);
+        expect(find.byIcon(Icons.lock), findsNothing);
+        expect(find.byIcon(Icons.send), findsNothing);
+
+        final descriptionFinder = find.text(longDescription);
+        final description = tester.widget<Text>(descriptionFinder);
+        final descriptionContext = tester.element(descriptionFinder);
+        expect(
+          description.style?.color,
+          equals(descriptionContext.amberColors.textSubtle),
+        );
+        expect(find.text('Manage Task'), findsOneWidget);
+      },
+    );
   });
 }

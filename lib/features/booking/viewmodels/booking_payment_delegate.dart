@@ -195,7 +195,7 @@ class BookingPaymentDelegate {
           'recovery_result': result.recoveryResult,
         },
       );
-      await Future.delayed(delay);
+      await Future<void>.delayed(delay);
       result = await recoverBookingPayment(bookingId: bookingId);
       attempt += 1;
     }

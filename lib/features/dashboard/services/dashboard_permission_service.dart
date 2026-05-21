@@ -29,16 +29,10 @@ class DashboardPermissionService {
     if (role == UserRole.freelancer) {
       return WorkItemPermissions(
         canStart: status == UnifiedWorkStatus.active,
-        canComplete: false,
-        canApprove: false,
-        canCancel: false,
       );
     } else {
       // Client permissions (task awarded pending payment: can pay or cancel)
       return WorkItemPermissions(
-        canStart: false,
-        canComplete: false,
-        canApprove: false,
         canCancel: status == UnifiedWorkStatus.pendingPayment,
         // v1 client permissions
         canReview: status == UnifiedWorkStatus.delivered,
@@ -64,13 +58,10 @@ class DashboardPermissionService {
         canReschedule:
             status == BookingStatus.pending ||
             status == BookingStatus.confirmed,
-        canApprove: false,
       );
     } else {
       // Client permissions
       return WorkItemPermissions(
-        canStart: false,
-        canComplete: false,
         canApprove: status == BookingStatus.completed,
         canCancel:
             status == BookingStatus.pending ||
@@ -97,11 +88,8 @@ class DashboardPermissionService {
     } else {
       // Client permissions
       return WorkItemPermissions(
-        canStart: false,
-        canComplete: false,
         canApprove: status == TaskStatus.completed,
         canCancel: status == TaskStatus.open || status == TaskStatus.assigned,
-        canReschedule: false,
       );
     }
   }
