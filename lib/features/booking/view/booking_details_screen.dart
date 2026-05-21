@@ -13,6 +13,7 @@ import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/utils/unified_cta_resolver.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
+import 'package:sline_app/core/widgets/circle_icon_button.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
@@ -39,384 +40,449 @@ class BookingDetailsScreen extends StatelessWidget {
     final taskTitle = taskTitleValue is String
         ? taskTitleValue
         : l10n.bookedService;
+    final topInset = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
       backgroundColor: amber.page,
-      appBar: AppBar(
-        title: Text(
-          l10n.bookingDetails,
-          style: AmberDuskTokens.typography.sectionTitle.copyWith(
-            color: amber.text,
-          ),
-        ),
-        backgroundColor: amber.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: amber.text,
-            size: AppDimens.iconSizeSmall,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimens.p24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: AmberDuskBackground(
+        child: Stack(
           children: [
-            // Status Banner
-            _buildStatusBanner(context, booking.status),
-
-            // CTA Resolver Banner
-            Builder(
-              builder: (_) {
-                final ctaMeta = UnifiedCtaResolver.resolveActions(
-                  status: booking.status.name,
-                  paymentStatus: booking.paymentStatus.name,
-                  actorRole: isProvider ? 'provider' : 'client',
-                  entityType: 'booking',
-                );
-                if (ctaMeta.badgeText != null && ctaMeta.badgeColor != null) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: AppDimens.p12),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(AppDimens.p12),
-                      decoration: BoxDecoration(
-                        color: ctaMeta.badgeColor!.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppDimens.r8),
-                        border: Border.all(color: ctaMeta.badgeColor!),
-                      ),
-                      child: Text(
-                        ctaMeta.badgeText!,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: ctaMeta.badgeColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
+            Positioned.fill(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  AmberDuskSpacing.contentHorizontalPadding,
+                  topInset + AppDimens.p64,
+                  AmberDuskSpacing.contentHorizontalPadding,
+                  AppDimens.p32,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.bookingDetails,
+                      style: AmberDuskTokens.typography.bookingName.copyWith(
+                        color: amber.heroText,
                       ),
                     ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-            const SizedBox(height: AppDimens.p24),
-
-            _BookingDisputeBanner(bookingId: booking.id),
-
-            // Service Card (Task Info)
-            _buildSectionHeader(context, l10n.bookingService),
-            const SizedBox(height: AppDimens.p12),
-            AppCardContainer(
-              padding: const EdgeInsets.all(AppDimens.p16),
-              child: Row(
-                children: [
-                  Container(
-                    width: AppLayout.thumbnailSmall,
-                    height: AppLayout.thumbnailSmall,
-                    decoration: BoxDecoration(
-                      color: colorScheme.cardBackground,
-                      borderRadius: BorderRadius.circular(AppDimens.r12),
-                    ),
-                    child: Icon(Icons.work_outline, color: amber.primary),
-                  ),
-                  const SizedBox(width: AppDimens.p16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          taskTitle,
-                          style: AppTypography.h6.copyWith(
-                            color: colorScheme.text,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: AppDimens.p4),
-                        Text(
-                          l10n.bookedOn(formatUtcToLocal(booking.createdAtUtc)),
-                          style: AppTypography.bodySmall.copyWith(
-                            color: colorScheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppDimens.p24),
-
-            // Counterparty Info
-            _buildSectionHeader(
-              context,
-              isProvider ? l10n.bookingClient : l10n.bookingProvider,
-            ),
-            const SizedBox(height: AppDimens.p12),
-            AppCardContainer(
-              padding: const EdgeInsets.all(AppDimens.p16),
-              child: Row(
-                children: [
-                  const SignedAvatar(
-                    // Ideally we fetch profiles, but for now we might only have IDs.
-                    storagePathOrUrl: null,
-                    radius: 24,
-                  ),
-                  const SizedBox(width: AppDimens.p16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isProvider
-                              ? l10n.bookingClient
-                              : l10n.bookingProvider,
-                          style: AppTypography.bodyLarge.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.text,
-                          ),
-                        ),
-                        Text(
-                          isProvider
-                              ? l10n.bookingRequester
-                              : l10n.assignedServiceProvider,
-                          style: AppTypography.caption.copyWith(
-                            color: colorScheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.chat_bubble_outline, color: amber.primary),
-                    onPressed: () => _handleMessage(context, booking),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppDimens.p24),
-
-            // Timeline
-            _buildSectionHeader(context, l10n.bookingTimeline),
-            const SizedBox(height: AppDimens.p12),
-            AppCardContainer(
-              padding: const EdgeInsets.all(AppDimens.p16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _timelineRow(
-                    context,
-                    l10n.bookingTimelineBooked,
-                    formatUtcToLocal(booking.createdAtUtc),
-                  ),
-                  const SizedBox(height: AppDimens.p8),
-                  _timelineRow(
-                    context,
-                    l10n.bookingTimelineDue,
-                    booking.dueAtUtc != null
-                        ? formatUtcToLocal(booking.dueAtUtc!)
-                        : l10n.noDeadline,
-                  ),
-                  if (booking.deliveryDays != null) ...[
-                    const SizedBox(height: AppDimens.p8),
-                    _timelineRow(
-                      context,
-                      l10n.bookingTimelineDelivery,
-                      l10n.bookingDeliveryDays(booking.deliveryDays!),
-                    ),
-                  ],
-                  if (booking.slotId != null) ...[
-                    const SizedBox(height: AppDimens.p12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimens.p10,
-                        vertical: AppDimens.p8,
+                    const SizedBox(height: AppDimens.p6),
+                    Text(
+                      taskTitle,
+                      style: AmberDuskTokens.typography.body.copyWith(
+                        color: amber.textSubtle,
                       ),
-                      decoration: BoxDecoration(
-                        color: amber.warningMuted,
-                        borderRadius: BorderRadius.circular(AppDimens.r8),
-                        border: Border.all(
-                          color: amber.warning.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Text(
-                        l10n.legacySlotBasedBooking,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: amber.warning,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ],
-                ],
-              ),
-            ),
+                    const SizedBox(height: AppDimens.p20),
+                    // Status Banner
+                    _buildStatusBanner(context, booking.status),
 
-            const SizedBox(height: AppDimens.p24),
-
-            // Actions
-            if (isProvider &&
-                booking.status == BookingStatus.pending &&
-                booking.paymentStatus != PaymentStatus.held)
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      text: l10n.reject,
-                      isPrimary: false,
-                      onPressed: () => _updateStatus(
-                        context,
-                        booking,
-                        BookingStatus.canceled,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppDimens.p16),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimens.p12,
-                        vertical: AppDimens.p14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: amber.warningMuted,
-                        borderRadius: BorderRadius.circular(AppDimens.r12),
-                        border: Border.all(
-                          color: amber.warning.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Text(
-                        l10n.awaitingPayment,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: amber.warning,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-            if (!isProvider && booking.status == BookingStatus.pending)
-              AppButton(
-                text: l10n.cancelBooking,
-                isPrimary: false,
-                onPressed: () =>
-                    _updateStatus(context, booking, BookingStatus.canceled),
-              ),
-
-            // --- Dynamic Actions based on CTA Resolver ---
-            Builder(
-              builder: (ctx) {
-                final ctaMeta = UnifiedCtaResolver.resolveActions(
-                  status: booking.status.name,
-                  paymentStatus: booking.paymentStatus.name,
-                  actorRole: isProvider ? 'provider' : 'client',
-                  entityType: 'booking',
-                );
-
-                final dynamicActions = <Widget>[];
-
-                if (ctaMeta.allowedActions.contains('escrow_hold')) {
-                  dynamicActions.addAll([
-                    AppButton(
-                      text: l10n.escrowFunds,
-                      onPressed: () => ctx
-                          .read<BookingViewModel>()
-                          .escrowHoldBooking(booking.id),
-                    ),
-                    const SizedBox(height: AppDimens.p12),
-                  ]);
-                }
-
-                if (ctaMeta.allowedActions.contains('release_with_fee')) {
-                  dynamicActions.addAll([
-                    _ApproveWithDisputeGuard(
-                      booking: booking,
-                      onRelease: () => ctx
-                          .read<BookingViewModel>()
-                          .releaseBookingWithFee(booking.id),
-                    ),
-                    const SizedBox(height: AppDimens.p12),
-                  ]);
-                }
-
-                if (ctaMeta.allowedActions.contains('refund')) {
-                  dynamicActions.addAll([
-                    AppButton(
-                      text: l10n.issueRefund,
-                      isPrimary: false,
-                      onPressed: () {
-                        // The refund logic can be wired here if the provider needs an explicit refund button
-                        // Usually handled automatically on decline though.
+                    // CTA Resolver Banner
+                    Builder(
+                      builder: (_) {
+                        final ctaMeta = UnifiedCtaResolver.resolveActions(
+                          status: booking.status.name,
+                          paymentStatus: booking.paymentStatus.name,
+                          actorRole: isProvider ? 'provider' : 'client',
+                          entityType: 'booking',
+                        );
+                        if (ctaMeta.badgeText != null &&
+                            ctaMeta.badgeColor != null) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: AppDimens.p12),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(AppDimens.p12),
+                              decoration: BoxDecoration(
+                                color: ctaMeta.badgeColor!.withValues(
+                                  alpha: AmberDuskOpacity.mutedBackground,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.r8,
+                                ),
+                                border: Border.all(
+                                  color: ctaMeta.badgeColor!,
+                                ),
+                              ),
+                              child: Text(
+                                ctaMeta.badgeText!,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: ctaMeta.badgeColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
                       },
                     ),
+                    const SizedBox(height: AppDimens.p24),
+
+                    _BookingDisputeBanner(bookingId: booking.id),
+
+                    // Service Card (Task Info)
+                    _buildSectionHeader(context, l10n.bookingService),
                     const SizedBox(height: AppDimens.p12),
-                  ]);
-                }
+                    AppCardContainer(
+                      padding: const EdgeInsets.all(AppDimens.p16),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: AppLayout.thumbnailSmall,
+                            height: AppLayout.thumbnailSmall,
+                            decoration: BoxDecoration(
+                              color: colorScheme.cardBackground,
+                              borderRadius: BorderRadius.circular(
+                                AppDimens.r12,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.work_outline,
+                              color: amber.primary,
+                            ),
+                          ),
+                          const SizedBox(width: AppDimens.p16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  taskTitle,
+                                  style: AppTypography.h6.copyWith(
+                                    color: colorScheme.text,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: AppDimens.p4),
+                                Text(
+                                  l10n.bookedOn(
+                                    formatUtcToLocal(booking.createdAtUtc),
+                                  ),
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: colorScheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.p24),
 
-                return Column(children: dynamicActions);
-              },
-            ),
+                    // Counterparty Info
+                    _buildSectionHeader(
+                      context,
+                      isProvider ? l10n.bookingClient : l10n.bookingProvider,
+                    ),
+                    const SizedBox(height: AppDimens.p12),
+                    AppCardContainer(
+                      padding: const EdgeInsets.all(AppDimens.p16),
+                      child: Row(
+                        children: [
+                          const SignedAvatar(
+                            // Ideally we fetch profiles, but for now we might only have IDs.
+                            storagePathOrUrl: null,
+                            radius: 24,
+                          ),
+                          const SizedBox(width: AppDimens.p16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isProvider
+                                      ? l10n.bookingClient
+                                      : l10n.bookingProvider,
+                                  style: AppTypography.bodyLarge.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.text,
+                                  ),
+                                ),
+                                Text(
+                                  isProvider
+                                      ? l10n.bookingRequester
+                                      : l10n.assignedServiceProvider,
+                                  style: AppTypography.caption.copyWith(
+                                    color: colorScheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.chat_bubble_outline,
+                              color: amber.primary,
+                            ),
+                            onPressed: () => _handleMessage(context, booking),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.p24),
 
-            // 1. Provider Actions (Legacy status-based checks that don't overlap with Payment matrix directly yet)
-            if (isProvider) ...[
-              // Accept Request (Funds held)
-              if (booking.status == BookingStatus.paidRequestPending ||
-                  (booking.status == BookingStatus.pending &&
-                      booking.paymentStatus == PaymentStatus.held)) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppButton(
-                        text: l10n.decline,
+                    // Timeline
+                    _buildSectionHeader(context, l10n.bookingTimeline),
+                    const SizedBox(height: AppDimens.p12),
+                    AppCardContainer(
+                      padding: const EdgeInsets.all(AppDimens.p16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _timelineRow(
+                            context,
+                            l10n.bookingTimelineBooked,
+                            formatUtcToLocal(booking.createdAtUtc),
+                          ),
+                          const SizedBox(height: AppDimens.p8),
+                          _timelineRow(
+                            context,
+                            l10n.bookingTimelineDue,
+                            booking.dueAtUtc != null
+                                ? formatUtcToLocal(booking.dueAtUtc!)
+                                : l10n.noDeadline,
+                          ),
+                          if (booking.deliveryDays != null) ...[
+                            const SizedBox(height: AppDimens.p8),
+                            _timelineRow(
+                              context,
+                              l10n.bookingTimelineDelivery,
+                              l10n.bookingDeliveryDays(booking.deliveryDays!),
+                            ),
+                          ],
+                          if (booking.slotId != null) ...[
+                            const SizedBox(height: AppDimens.p12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppDimens.p10,
+                                vertical: AppDimens.p8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: amber.warningMuted,
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.r8,
+                                ),
+                                border: Border.all(
+                                  color: amber.warning.withValues(
+                                    alpha: AmberDuskOpacity.mutedBorder,
+                                  ),
+                                ),
+                              ),
+                              child: Text(
+                                l10n.legacySlotBasedBooking,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: amber.warning,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: AppDimens.p24),
+
+                    // Actions
+                    if (isProvider &&
+                        booking.status == BookingStatus.pending &&
+                        booking.paymentStatus != PaymentStatus.held)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: AppButton(
+                              text: l10n.reject,
+                              isPrimary: false,
+                              onPressed: () => _updateStatus(
+                                context,
+                                booking,
+                                BookingStatus.canceled,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppDimens.p16),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppDimens.p12,
+                                vertical: AppDimens.p14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: amber.warningMuted,
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.r12,
+                                ),
+                                border: Border.all(
+                                  color: amber.warning.withValues(
+                                    alpha: AmberDuskOpacity.mutedBorder,
+                                  ),
+                                ),
+                              ),
+                              child: Text(
+                                l10n.awaitingPayment,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: amber.warning,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                    if (!isProvider && booking.status == BookingStatus.pending)
+                      AppButton(
+                        text: l10n.cancelBooking,
                         isPrimary: false,
-                        onPressed: () => context
-                            .read<BookingViewModel>()
-                            .declineBooking(booking.id),
+                        onPressed: () => _updateStatus(
+                          context,
+                          booking,
+                          BookingStatus.canceled,
+                        ),
                       ),
+
+                    // --- Dynamic Actions based on CTA Resolver ---
+                    Builder(
+                      builder: (ctx) {
+                        final ctaMeta = UnifiedCtaResolver.resolveActions(
+                          status: booking.status.name,
+                          paymentStatus: booking.paymentStatus.name,
+                          actorRole: isProvider ? 'provider' : 'client',
+                          entityType: 'booking',
+                        );
+
+                        final dynamicActions = <Widget>[];
+
+                        if (ctaMeta.allowedActions.contains('escrow_hold')) {
+                          dynamicActions.addAll([
+                            AppButton(
+                              text: l10n.escrowFunds,
+                              onPressed: () => ctx
+                                  .read<BookingViewModel>()
+                                  .escrowHoldBooking(booking.id),
+                            ),
+                            const SizedBox(height: AppDimens.p12),
+                          ]);
+                        }
+
+                        if (ctaMeta.allowedActions.contains(
+                          'release_with_fee',
+                        )) {
+                          dynamicActions.addAll([
+                            _ApproveWithDisputeGuard(
+                              booking: booking,
+                              onRelease: () => ctx
+                                  .read<BookingViewModel>()
+                                  .releaseBookingWithFee(booking.id),
+                            ),
+                            const SizedBox(height: AppDimens.p12),
+                          ]);
+                        }
+
+                        if (ctaMeta.allowedActions.contains('refund')) {
+                          dynamicActions.addAll([
+                            AppButton(
+                              text: l10n.issueRefund,
+                              isPrimary: false,
+                              onPressed: () {
+                                // The refund logic can be wired here if the provider needs an explicit refund button.
+                                // Usually handled automatically on decline though.
+                              },
+                            ),
+                            const SizedBox(height: AppDimens.p12),
+                          ]);
+                        }
+
+                        return Column(children: dynamicActions);
+                      },
                     ),
-                    const SizedBox(width: AppDimens.p16),
-                    Expanded(
-                      child: AppButton(
-                        text: l10n.acceptJob,
-                        onPressed: () => context
-                            .read<BookingViewModel>()
-                            .acceptBooking(booking.id),
-                      ),
-                    ),
+
+                    // 1. Provider Actions (Legacy status-based checks that don't overlap with Payment matrix directly yet)
+                    if (isProvider) ...[
+                      // Accept Request (Funds held)
+                      if (booking.status == BookingStatus.paidRequestPending ||
+                          (booking.status == BookingStatus.pending &&
+                              booking.paymentStatus == PaymentStatus.held)) ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: AppButton(
+                                text: l10n.decline,
+                                isPrimary: false,
+                                onPressed: () => context
+                                    .read<BookingViewModel>()
+                                    .declineBooking(booking.id),
+                              ),
+                            ),
+                            const SizedBox(width: AppDimens.p16),
+                            Expanded(
+                              child: AppButton(
+                                text: l10n.acceptJob,
+                                onPressed: () => context
+                                    .read<BookingViewModel>()
+                                    .acceptBooking(booking.id),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      // Mark Delivered
+                      if (booking.status == BookingStatus.active) ...[
+                        AppButton(
+                          text: l10n.markDelivered,
+                          onPressed: () => context
+                              .read<BookingViewModel>()
+                              .markDelivered(booking.id),
+                        ),
+                      ],
+                    ],
+
+                    // 2. Client Actions
+                    if (!isProvider) ...[
+                      // Report Issue when active or delivered; hidden when open dispute exists
+                      if (booking.status == BookingStatus.active ||
+                          booking.status == BookingStatus.delivered) ...[
+                        const SizedBox(height: AppDimens.p12),
+                        _ReportIssueGuardBooking(
+                          bookingId: booking.id,
+                          onReportIssue: () =>
+                              _showDisputeDialog(context, booking),
+                        ),
+                      ],
+                    ],
                   ],
                 ),
-              ],
-              // Mark Delivered
-              if (booking.status == BookingStatus.active) ...[
-                AppButton(
-                  text: l10n.markDelivered,
-                  onPressed: () => context
-                      .read<BookingViewModel>()
-                      .markDelivered(booking.id),
-                ),
-              ],
-            ],
-
-            // 2. Client Actions
-            if (!isProvider) ...[
-              // Report Issue when active or delivered; hidden when open dispute exists
-              if (booking.status == BookingStatus.active ||
-                  booking.status == BookingStatus.delivered) ...[
-                const SizedBox(height: AppDimens.p12),
-                _ReportIssueGuardBooking(
-                  bookingId: booking.id,
-                  onReportIssue: () => _showDisputeDialog(context, booking),
-                ),
-              ],
-            ],
+              ),
+            ),
+            _buildFloatingBackButton(
+              context,
+              onTap: () => Navigator.pop(context),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Floating route escape used instead of an app bar so booking content stays
+  /// visually aligned with the newer detail routes.
+  Widget _buildFloatingBackButton(
+    BuildContext context, {
+    required VoidCallback onTap,
+  }) {
+    return Positioned(
+      top: MediaQuery.paddingOf(context).top + AppDimens.p8,
+      left: AppDimens.p16,
+      child: CircleIconButton(
+        icon: Icons.arrow_back,
+        tooltip: AppLocalizations.of(context)!.back,
+        size: AppDimens.p40,
+        onTap: onTap,
       ),
     );
   }
@@ -567,9 +633,11 @@ class BookingDetailsScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppDimens.p16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: AmberDuskOpacity.mutedBackground),
         borderRadius: BorderRadius.circular(AppDimens.r12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: color.withValues(alpha: AmberDuskOpacity.mutedBorder),
+        ),
       ),
       child: Row(
         children: [

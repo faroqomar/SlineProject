@@ -3,14 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
+import 'package:sline_app/core/widgets/app_button.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
+import 'package:sline_app/core/widgets/circle_icon_button.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
@@ -19,6 +22,9 @@ import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.da
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
+import 'package:sline_app/features/work/models/unified_work_item_model.dart';
+import 'package:sline_app/features/work/models/work_contract_model.dart';
+import 'package:sline_app/features/work/services/work_management_service.dart';
 import 'package:sline_app/features/work/view/widgets/request_extension_modal.dart';
 import 'package:sline_app/features/work/view/widgets/review_delivery_modal.dart';
 import 'package:sline_app/features/work/view/widgets/submit_delivery_modal.dart';
@@ -27,14 +33,27 @@ import 'package:sline_app/features/work/view/widgets/work_item_bottom_actions.da
 import 'package:sline_app/features/work/view/widgets/work_item_guard_widgets.dart';
 import 'package:sline_app/features/work/viewmodels/work_item_details_view_model.dart';
 
+/// Detail route for unified work items from tasks, bookings, and custom offers.
+///
+/// The route owns presentation and user actions while work loading and mutation
+/// stay in [WorkItemDetailsViewModel] to preserve the feature MVVM boundary.
 class WorkItemDetailsScreen extends StatelessWidget {
+  /// Entity id from `vw_unified_work_items` or the originating deep link.
   final String id;
+
+  /// Work item branch to load through [WorkItemDetailsViewModel].
   final WorkItemType type;
 
+  /// Optional service override used by widget tests to exercise the production
+  /// route without touching Supabase-backed defaults.
+  final WorkManagementService? workService;
+
+  /// Creates a work-item details route for a task, booking, or direct offer.
   const WorkItemDetailsScreen({
     super.key,
     required this.id,
     required this.type,
+    this.workService,
   });
 
   @override
@@ -43,12 +62,869 @@ class WorkItemDetailsScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (ctx) => WorkItemDetailsViewModel(
         uid: uid,
+        workService: workService,
         chatViewModel: ctx.read<ChatViewModel>(),
         dashboardViewModel: ctx.read<DashboardViewModel>(),
       ),
       child: _WorkItemDetailsContent(id: id, type: type),
     );
   }
+}
+
+/// Loading route that keeps deep-link transitions visually aligned with the
+/// Amber Dusk work-management surface.
+class _WorkItemLoadingScaffold extends StatelessWidget {
+  const _WorkItemLoadingScaffold({required this.onBack});
+
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AmberDuskColors.background,
+      body: AmberDuskBackground(
+        child: Stack(
+          children: [
+            const Center(
+              child: CircularProgressIndicator(color: AmberDuskColors.primary),
+            ),
+            _WorkItemFloatingBackButton(onTap: onBack),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shared error and empty-state shell with retry so transient work-detail
+/// failures are recoverable without leaving the route.
+class _WorkItemStateScaffold extends StatelessWidget {
+  const _WorkItemStateScaffold({
+    required this.title,
+    required this.message,
+    required this.icon,
+    required this.onRetry,
+  });
+
+  final String title;
+  final String message;
+  final IconData icon;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AmberDuskColors.background,
+      body: AmberDuskBackground(
+        child: Stack(
+          children: [
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimens.p24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppLayout.cardMaxWidth,
+                  ),
+                  child: AppCardContainer(
+                    padding: const EdgeInsets.all(AppDimens.p20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          icon,
+                          color: AmberDuskColors.rust,
+                          size: AppDimens.p40,
+                        ),
+                        const SizedBox(height: AppDimens.p12),
+                        Text(
+                          title,
+                          style: AmberDuskTokens.typography.sectionTitle
+                              .copyWith(color: AmberDuskColors.text),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: AppDimens.p8),
+                        Text(
+                          message,
+                          style: AmberDuskTokens.typography.body.copyWith(
+                            color: AmberDuskColors.textSubtle,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: AppDimens.p16),
+                        AppButton(
+                          onPressed: onRetry,
+                          text: 'Retry',
+                          icon: Icons.refresh,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            _WorkItemFloatingBackButton(onTap: () => Navigator.pop(context)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Floating route escape used instead of a standard app bar so the work hero
+/// remains the screen's primary title surface.
+class _WorkItemFloatingBackButton extends StatelessWidget {
+  const _WorkItemFloatingBackButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: MediaQuery.paddingOf(context).top + AppDimens.p8,
+      left: AppDimens.p16,
+      child: CircleIconButton(
+        icon: Icons.arrow_back,
+        tooltip: 'Back',
+        size: AppDimens.p40,
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+/// Floating back control plus compact tab strip that replaces the old app bar
+/// without losing fast access to the three detail sections.
+class _WorkItemFloatingChrome extends StatelessWidget {
+  const _WorkItemFloatingChrome({
+    required this.onBack,
+    required this.semanticLabel,
+  });
+
+  final VoidCallback onBack;
+  final String semanticLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: MediaQuery.paddingOf(context).top + AppDimens.p8,
+      left: AppDimens.p16,
+      right: AppDimens.p16,
+      child: Row(
+        children: [
+          CircleIconButton(
+            icon: Icons.arrow_back,
+            tooltip: 'Back',
+            size: AppDimens.p40,
+            onTap: onBack,
+          ),
+          const SizedBox(width: AppDimens.p8),
+          Expanded(
+            child: Semantics(
+              label: semanticLabel,
+              child: const SizedBox(
+                height: AppDimens.p60,
+                child: _WorkItemTabBar(horizontalPadding: AppDimens.p0),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact floating tab strip with dashboard-style Amber Dusk pills.
+class _WorkItemTabBar extends StatelessWidget implements PreferredSizeWidget {
+  const _WorkItemTabBar({
+    this.horizontalPadding = AmberDuskSpacing.contentHorizontalPadding,
+  });
+
+  final double horizontalPadding;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(AppDimens.p60);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        AppDimens.p8,
+        horizontalPadding,
+        AppDimens.p10,
+      ),
+      child: TabBar(
+        indicator: BoxDecoration(
+          color: AmberDuskColors.primary,
+          borderRadius: BorderRadius.circular(AmberDuskSpacing.pillRadius),
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        labelColor: AmberDuskColors.textDark,
+        labelStyle: AmberDuskTokens.typography.chip,
+        unselectedLabelColor: AmberDuskColors.muted,
+        unselectedLabelStyle: AmberDuskTokens.typography.chip,
+        dividerColor: AmberDuskColors.transparent,
+        tabs: const [
+          Tab(text: 'Overview'),
+          Tab(text: 'Extensions'),
+          Tab(text: 'Contract'),
+        ],
+      ),
+    );
+  }
+}
+
+/// Hero summary for the work item, prioritizing title, status, price, and due
+/// date so users can understand the contract at a glance.
+class _WorkItemHeroCard extends StatelessWidget {
+  const _WorkItemHeroCard({
+    required this.title,
+    required this.item,
+    required this.statusColor,
+    required this.otherPartyName,
+    required this.isFreelancer,
+  });
+
+  final String title;
+  final UnifiedWorkItemModel item;
+  final Color statusColor;
+  final String otherPartyName;
+  final bool isFreelancer;
+
+  @override
+  Widget build(BuildContext context) {
+    final isBooking = item.isBooking;
+    final textColor = isBooking
+        ? AmberDuskColors.heroText
+        : AmberDuskColors.text;
+    final mutedColor = isBooking
+        ? AmberDuskColors.heroMuted
+        : AmberDuskColors.textSubtle;
+    final decoration = isBooking
+        ? AmberDuskMaterial.bookingCardDecoration()
+        : AmberDuskMaterial.taskCardDecoration();
+
+    return Semantics(
+      label:
+          '${_sourceLabel(item)}, $title, ${_workStatusLabel(item.unifiedStatus)}',
+      child: DecoratedBox(
+        decoration: decoration,
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimens.p20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Icon(
+                          _sourceIcon(item),
+                          size: AppLayout.iconStandard,
+                          color: statusColor,
+                        ),
+                        const SizedBox(width: AppDimens.p8),
+                        Text(
+                          _sourceLabel(item).toUpperCase(),
+                          style: AmberDuskTokens.typography.chip.copyWith(
+                            color: statusColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _WorkStatusPill(
+                    label: _workStatusLabel(item.unifiedStatus),
+                    color: statusColor,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppDimens.p18),
+              Text(
+                title,
+                style: AmberDuskTokens.typography.bookingName.copyWith(
+                  color: textColor,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppDimens.p8),
+              Text(
+                '${isFreelancer ? 'Client' : 'Freelancer'} · $otherPartyName',
+                style: AmberDuskTokens.typography.bodySmall.copyWith(
+                  color: mutedColor,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppDimens.p20),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'VALUE',
+                          style: AmberDuskTokens.typography.chip.copyWith(
+                            color: mutedColor,
+                          ),
+                        ),
+                        const SizedBox(height: AppDimens.p4),
+                        Text(
+                          PriceFormatter.formatPrice(item.price),
+                          style: AmberDuskTokens.typography.moneyMedium
+                              .copyWith(
+                                color: textColor,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppDimens.p12),
+                  _WorkMetricPill(
+                    icon: Icons.schedule_outlined,
+                    label: 'DUE',
+                    value: _shortDate(item.deadline),
+                    textColor: textColor,
+                    mutedColor: mutedColor,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Lifecycle card with status guidance and operational metadata.
+class _WorkItemLifecycleCard extends StatelessWidget {
+  const _WorkItemLifecycleCard({
+    required this.item,
+    required this.statusColor,
+    required this.isClient,
+    required this.isFreelancer,
+  });
+
+  final UnifiedWorkItemModel item;
+  final Color statusColor;
+  final bool isClient;
+  final bool isFreelancer;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCardContainer(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: AppDimens.p40,
+                height: AppDimens.p40,
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.14),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _workStatusIcon(item.unifiedStatus),
+                  color: statusColor,
+                  size: AppLayout.iconStandard,
+                ),
+              ),
+              const SizedBox(width: AppDimens.p12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Current stage',
+                      style: AmberDuskTokens.typography.chip.copyWith(
+                        color: AmberDuskColors.muted,
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.p4),
+                    Text(
+                      _workStageTitle(item.unifiedStatus),
+                      style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                        color: AmberDuskColors.text,
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.p6),
+                    Text(
+                      _workNextStep(item),
+                      style: AmberDuskTokens.typography.bodySmall.copyWith(
+                        color: AmberDuskColors.textSubtle,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Divider(
+            height: AppDimens.p32,
+            thickness: AppDimens.hairlineDivider,
+            color: AmberDuskMaterial.rowSeparator,
+          ),
+          _WorkDetailRow(
+            label: 'Your role',
+            value: _roleLabel(isClient: isClient, isFreelancer: isFreelancer),
+            icon: Icons.person_outline,
+          ),
+          _WorkDetailRow(
+            label: 'Source',
+            value: _sourceLabel(item),
+            icon: _sourceIcon(item),
+          ),
+          _WorkDetailRow(
+            label: 'Revisions',
+            value: '${item.revisionsUsed}/${item.revisionsTotal}',
+            icon: Icons.replay_outlined,
+          ),
+          _WorkDetailRow(
+            label: 'Deadline',
+            value: _formatOptionalDate(item.deadline),
+            icon: Icons.event_available_outlined,
+          ),
+          if (item.deliveredAt != null)
+            _WorkDetailRow(
+              label: 'Delivered',
+              value: formatUtcToLocal(item.deliveredAt!),
+              icon: Icons.outbox_outlined,
+            ),
+          if (item.reviewExpiresAt != null)
+            _WorkDetailRow(
+              label: 'Review by',
+              value: formatUtcToLocal(item.reviewExpiresAt!),
+              icon: Icons.rate_review_outlined,
+            ),
+          if (item.lastActivityAt != null)
+            _WorkDetailRow(
+              label: 'Last activity',
+              value: formatUtcToLocal(item.lastActivityAt!),
+              icon: Icons.update,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact contract preview for the overview tab, with the full snapshot still
+/// available in the Contract tab.
+class _WorkContractPreviewCard extends StatelessWidget {
+  const _WorkContractPreviewCard({required this.contract});
+
+  final WorkContractModel contract;
+
+  @override
+  Widget build(BuildContext context) {
+    final previewEntries = contract.snapshot.entries.take(3).toList();
+
+    return AppCardContainer(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _WorkSectionHeader(
+            icon: Icons.assignment_outlined,
+            title: 'Contract snapshot',
+            subtitle: 'Pinned terms used for this work item.',
+          ),
+          const SizedBox(height: AppDimens.p12),
+          _WorkDetailRow(
+            label: 'Version',
+            value: contract.version.toString(),
+            icon: Icons.layers_outlined,
+          ),
+          _WorkDetailRow(
+            label: 'Effective',
+            value: formatUtcToLocal(contract.createdAt),
+            icon: Icons.calendar_today_outlined,
+          ),
+          for (final entry in previewEntries)
+            _WorkDetailRow(
+              label: _humanizeKey(entry.key),
+              value: entry.value.toString(),
+              icon: Icons.circle_outlined,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Section title used inside work-detail cards.
+class _WorkSectionHeader extends StatelessWidget {
+  const _WorkSectionHeader({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          color: AmberDuskColors.primary,
+          size: AppLayout.iconStandard,
+        ),
+        const SizedBox(width: AppDimens.p10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                  color: AmberDuskColors.text,
+                ),
+              ),
+              const SizedBox(height: AppDimens.p4),
+              Text(
+                subtitle,
+                style: AmberDuskTokens.typography.bodySmall.copyWith(
+                  color: AmberDuskColors.textSubtle,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Empty-state panel for secondary tabs.
+class _WorkItemEmptyState extends StatelessWidget {
+  const _WorkItemEmptyState({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.p24),
+        child: AppCardContainer(
+          padding: const EdgeInsets.all(AppDimens.p20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: AmberDuskColors.primary, size: AppDimens.p40),
+              const SizedBox(height: AppDimens.p12),
+              Text(
+                title,
+                style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                  color: AmberDuskColors.text,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppDimens.p8),
+              Text(
+                message,
+                style: AmberDuskTokens.typography.body.copyWith(
+                  color: AmberDuskColors.textSubtle,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Small metric chip used inside the hero card.
+class _WorkMetricPill extends StatelessWidget {
+  const _WorkMetricPill({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.textColor,
+    required this.mutedColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color textColor;
+  final Color mutedColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.p12,
+        vertical: AppDimens.p10,
+      ),
+      decoration: BoxDecoration(
+        color: AmberDuskColors.heroChip,
+        borderRadius: BorderRadius.circular(AmberDuskSpacing.moduleRadius),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: mutedColor, size: AppLayout.iconTiny),
+          const SizedBox(width: AppDimens.p6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: AmberDuskTokens.typography.chip.copyWith(
+                  color: textColor,
+                ),
+              ),
+              Text(
+                label,
+                style: AmberDuskTokens.typography.chip.copyWith(
+                  color: mutedColor,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact status pill shared by work-detail summaries.
+class _WorkStatusPill extends StatelessWidget {
+  const _WorkStatusPill({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.p10,
+        vertical: AppDimens.p6,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(AmberDuskSpacing.pillRadius),
+      ),
+      child: Text(
+        label,
+        style: AmberDuskTokens.typography.chip.copyWith(color: color),
+      ),
+    );
+  }
+}
+
+/// Single metadata row with a stable icon slot for scanability.
+class _WorkDetailRow extends StatelessWidget {
+  const _WorkDetailRow({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppDimens.p8),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: AmberDuskColors.muted,
+            size: AppLayout.iconStandard,
+          ),
+          const SizedBox(width: AppDimens.p12),
+          Expanded(
+            child: Text(
+              label,
+              style: AmberDuskTokens.typography.bodySmall.copyWith(
+                color: AmberDuskColors.muted,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppDimens.p12),
+          Flexible(
+            child: Text(
+              value,
+              style: AmberDuskTokens.typography.bodySmall.copyWith(
+                color: AmberDuskColors.text,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Converts a work source into the screen title language users expect.
+String _workTypeLabel(String sourceType, bool isBookingFallback) {
+  if (isBookingFallback || sourceType == 'booking') return 'Booking';
+  if (sourceType == 'direct_offer') return 'Custom offer';
+  return 'Task';
+}
+
+/// Human label for the source branch from `vw_unified_work_items`.
+String _sourceLabel(UnifiedWorkItemModel item) {
+  if (item.isBooking) return 'Booking';
+  if (item.isDirectOffer) return 'Custom offer';
+  return 'Task';
+}
+
+/// Icon that helps distinguish task, booking, and direct-offer branches.
+IconData _sourceIcon(UnifiedWorkItemModel item) {
+  if (item.isBooking) return Icons.event_available_outlined;
+  if (item.isDirectOffer) return Icons.handshake_outlined;
+  return Icons.work_outline;
+}
+
+/// Uppercase status label for badges and screen-reader summaries.
+String _workStatusLabel(UnifiedWorkStatus status) {
+  switch (status) {
+    case UnifiedWorkStatus.pendingPayment:
+      return 'PENDING PAYMENT';
+    case UnifiedWorkStatus.requestPending:
+      return 'REQUEST PENDING';
+    case UnifiedWorkStatus.unknown:
+      return 'STATUS UNKNOWN';
+    case UnifiedWorkStatus.pending:
+    case UnifiedWorkStatus.active:
+    case UnifiedWorkStatus.delivered:
+    case UnifiedWorkStatus.completed:
+    case UnifiedWorkStatus.canceled:
+    case UnifiedWorkStatus.disputed:
+      return status.name.toUpperCase();
+  }
+}
+
+/// Title-case lifecycle label for sections that already have a status badge.
+String _workStageTitle(UnifiedWorkStatus status) {
+  return _titleCaseWords(_workStatusLabel(status));
+}
+
+/// User-facing explanation of the next expected action.
+String _workNextStep(UnifiedWorkItemModel item) {
+  switch (item.unifiedStatus) {
+    case UnifiedWorkStatus.pending:
+    case UnifiedWorkStatus.requestPending:
+      return 'The request is waiting for a response before work starts.';
+    case UnifiedWorkStatus.pendingPayment:
+      return 'Payment is required before the contract can move into active work.';
+    case UnifiedWorkStatus.active:
+      return 'Work is active. Delivery, extension, message, and safety actions are available.';
+    case UnifiedWorkStatus.delivered:
+      return item.needsReview
+          ? 'Delivery is ready for client review.'
+          : 'Delivery was submitted and is waiting for the next review step.';
+    case UnifiedWorkStatus.completed:
+      return 'This work item is complete and no further action is required.';
+    case UnifiedWorkStatus.canceled:
+      return 'This work item is closed.';
+    case UnifiedWorkStatus.disputed:
+      return 'Work is frozen while the dispute is under review.';
+    case UnifiedWorkStatus.unknown:
+      return 'The current lifecycle state could not be resolved.';
+  }
+}
+
+/// Status icon used in the lifecycle card.
+IconData _workStatusIcon(UnifiedWorkStatus status) {
+  switch (status) {
+    case UnifiedWorkStatus.pending:
+    case UnifiedWorkStatus.requestPending:
+      return Icons.hourglass_top_outlined;
+    case UnifiedWorkStatus.pendingPayment:
+      return Icons.payments_outlined;
+    case UnifiedWorkStatus.active:
+      return Icons.work_outline;
+    case UnifiedWorkStatus.delivered:
+      return Icons.rate_review_outlined;
+    case UnifiedWorkStatus.completed:
+      return Icons.verified_outlined;
+    case UnifiedWorkStatus.canceled:
+      return Icons.block_outlined;
+    case UnifiedWorkStatus.disputed:
+      return Icons.warning_amber_rounded;
+    case UnifiedWorkStatus.unknown:
+      return Icons.help_outline;
+  }
+}
+
+/// Role label avoids exposing raw participant IDs.
+String _roleLabel({required bool isClient, required bool isFreelancer}) {
+  if (isClient) return 'Client';
+  if (isFreelancer) return 'Freelancer';
+  return 'Viewer';
+}
+
+/// Extracts the loaded profile name with a safe fallback.
+String _otherPartyName(WorkItemDetailsViewModel vm) {
+  return vm.otherPartyProfile?['full_name']?.toString() ?? 'Unknown user';
+}
+
+/// Localized date string or a clear empty-value label.
+String _formatOptionalDate(DateTime? value) {
+  return value == null ? 'No deadline' : formatUtcToLocal(value);
+}
+
+/// Short date for hero chips where the full timestamp would crowd the price.
+String _shortDate(DateTime? value) {
+  if (value == null) return 'None';
+  final local = value.toLocal();
+  return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
+}
+
+/// Presents snake_case contract snapshot keys as readable labels.
+String _humanizeKey(String key) {
+  return _titleCaseWords(key.replaceAll('_', ' '));
+}
+
+/// Small formatting helper for enum-like labels.
+String _titleCaseWords(String value) {
+  return value
+      .split(' ')
+      .where((part) => part.isNotEmpty)
+      .map(
+        (part) => '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}',
+      )
+      .join(' ');
 }
 
 class _WorkItemDetailsContent extends StatefulWidget {
@@ -83,26 +959,39 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     return Consumer<WorkItemDetailsViewModel>(
       builder: (context, vm, child) {
         if (vm.isLoading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return _WorkItemLoadingScaffold(
+            onBack: () => Navigator.pop(context, _shouldRefresh),
           );
         }
 
         if (vm.error != null) {
-          return Scaffold(
-            appBar: AppBar(title: const Text('Error')),
-            body: Center(child: Text(vm.error!)),
+          return _WorkItemStateScaffold(
+            title: 'Work details',
+            message: vm.error!,
+            icon: Icons.error_outline,
+            onRetry: () => unawaited(
+              vm.loadData(widget.id, widget.type.name),
+            ),
           );
         }
 
         if (vm.workItem == null) {
-          return const Scaffold(body: Center(child: Text('No details found')));
+          return _WorkItemStateScaffold(
+            title: 'Work details',
+            message: 'No details found',
+            icon: Icons.search_off_outlined,
+            onRetry: () => unawaited(
+              vm.loadData(widget.id, widget.type.name),
+            ),
+          );
         }
 
         final isBooking = widget.type == WorkItemType.booking;
         final title = vm.title.isNotEmpty
             ? vm.title
             : (isBooking ? 'Booking' : 'Task');
+        final typeLabel = _workTypeLabel(vm.workItem!.sourceType, isBooking);
+        final topInset = MediaQuery.paddingOf(context).top;
 
         return DefaultTabController(
           length: 3,
@@ -113,40 +1002,30 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
               Navigator.pop(context, _shouldRefresh);
             },
             child: Scaffold(
-              backgroundColor: AmberDuskTokens.colors.page,
-              appBar: AppBar(
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.pop(context, _shouldRefresh),
-                ),
-                title: Text(isBooking ? 'Booking' : 'Task'),
-                backgroundColor: AmberDuskColors.transparent,
-                elevation: 0,
-                // Phase 7 REDESIGN: Pill-style tabs matching dashboard pattern
-                bottom: TabBar(
-                  indicator: BoxDecoration(
-                    color: AmberDuskTokens.colors.primary,
-                    borderRadius: BorderRadius.circular(AppDimens.r20),
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelColor: AmberDuskTokens.colors.textInverse,
-                  labelStyle: AppTypography.captionBold,
-                  unselectedLabelColor: AmberDuskTokens.colors.muted,
-                  unselectedLabelStyle: AppTypography.caption,
-                  dividerColor: AmberDuskColors.transparent,
-                  tabs: const [
-                    Tab(text: 'Overview'),
-                    Tab(text: 'Extensions'),
-                    Tab(text: 'Contract'),
+              backgroundColor: AmberDuskColors.background,
+              body: AmberDuskBackground(
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          top: topInset + AppDimens.p80,
+                        ),
+                        child: TabBarView(
+                          children: [
+                            _buildOverviewTab(vm, title),
+                            _buildExtensionsTab(vm),
+                            _buildContractTab(vm),
+                          ],
+                        ),
+                      ),
+                    ),
+                    _WorkItemFloatingChrome(
+                      semanticLabel: '$typeLabel details sections',
+                      onBack: () => Navigator.pop(context, _shouldRefresh),
+                    ),
                   ],
                 ),
-              ),
-              body: TabBarView(
-                children: [
-                  _buildOverviewTab(vm, title),
-                  _buildExtensionsTab(vm),
-                  _buildContractTab(vm),
-                ],
               ),
               bottomNavigationBar: _buildBottomActions(vm, context),
             ),
@@ -160,52 +1039,65 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
   // Tabs
   // ---------------------------------------------------------------------------
 
+  /// Builds the overview tab as a scannable work summary before role-specific
+  /// booking and payment actions.
   Widget _buildOverviewTab(WorkItemDetailsViewModel vm, String title) {
-    if (vm.booking != null) {
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimens.p24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: AppTypography.h3.copyWith(color: context.colorScheme.text),
-            ),
-            const SizedBox(height: AppDimens.p24),
-            _buildDisputedBanner(vm),
-            _buildBookingSpecifics(vm),
-            const SizedBox(height: AppDimens.p24),
-            _buildUnifiedStatus(vm),
-            const SizedBox(height: AppDimens.p24),
-            _buildContractInfo(vm),
-          ],
-        ),
-      );
-    }
+    final item = vm.workItem;
+    if (item == null) return const SizedBox.shrink();
+    final statusColor = _mapStatusColor(vm.status, context.amberColors);
+    final pendingPaymentActions = _buildPendingPaymentActions(context, vm);
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimens.p24),
+      padding: const EdgeInsets.fromLTRB(
+        AmberDuskSpacing.contentHorizontalPadding,
+        AppDimens.p16,
+        AmberDuskSpacing.contentHorizontalPadding,
+        AppDimens.p32,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: AppTypography.h3.copyWith(color: context.colorScheme.text),
+          _WorkItemHeroCard(
+            title: title,
+            item: item,
+            statusColor: statusColor,
+            otherPartyName: _otherPartyName(vm),
+            isFreelancer: vm.isFreelancer,
           ),
-          const SizedBox(height: AppDimens.p24),
+          const SizedBox(height: AppDimens.p16),
           _buildDisputedBanner(vm),
-          _buildUnifiedStatus(vm),
-          const SizedBox(height: AppDimens.p24),
-          _buildPendingPaymentActions(context, vm),
-          const SizedBox(height: AppDimens.p24),
-          _buildContractInfo(vm),
+          _WorkItemLifecycleCard(
+            item: item,
+            statusColor: statusColor,
+            isClient: vm.isClient,
+            isFreelancer: vm.isFreelancer,
+          ),
+          if (vm.booking != null) ...[
+            const SizedBox(height: AppDimens.p16),
+            _buildBookingSpecifics(vm),
+          ],
+          if (pendingPaymentActions is! SizedBox) ...[
+            const SizedBox(height: AppDimens.p16),
+            pendingPaymentActions,
+          ],
+          if (vm.activeContract != null) ...[
+            const SizedBox(height: AppDimens.p16),
+            _WorkContractPreviewCard(contract: vm.activeContract!),
+          ],
         ],
       ),
     );
   }
 
+  /// Shows request history with the same Amber Dusk empty-state treatment used
+  /// by other transactional screens.
   Widget _buildExtensionsTab(WorkItemDetailsViewModel vm) {
     if (vm.extensionRequests.isEmpty && vm.changeRequests.isEmpty) {
-      return const Center(child: Text('No requests history'));
+      return const _WorkItemEmptyState(
+        icon: Icons.history_toggle_off_outlined,
+        title: 'No requests history',
+        message: 'Extension and change requests will appear here.',
+      );
     }
 
     final allRequests = <Widget>[
@@ -214,7 +1106,12 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     ];
 
     return ListView.builder(
-      padding: const EdgeInsets.all(AppDimens.p16),
+      padding: const EdgeInsets.fromLTRB(
+        AmberDuskSpacing.contentHorizontalPadding,
+        AppDimens.p16,
+        AmberDuskSpacing.contentHorizontalPadding,
+        AppDimens.p32,
+      ),
       itemCount: allRequests.length,
       itemBuilder: (context, index) => allRequests[index],
     );
@@ -223,48 +1120,79 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
   /// Contract tab — clean sections with hairline dividers.
   Widget _buildContractTab(WorkItemDetailsViewModel vm) {
     final contract = vm.activeContract;
-    final colorScheme = context.colorScheme;
     if (contract == null) {
-      return Center(
-        child: Text(
-          'No active contract',
-          style: AppTypography.bodyMedium.copyWith(
-            color: colorScheme.textTertiary,
-          ),
-        ),
+      return const _WorkItemEmptyState(
+        icon: Icons.description_outlined,
+        title: 'No active contract',
+        message:
+            'A signed work snapshot will appear after the contract starts.',
       );
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimens.p24),
+      padding: const EdgeInsets.fromLTRB(
+        AmberDuskSpacing.contentHorizontalPadding,
+        AppDimens.p16,
+        AmberDuskSpacing.contentHorizontalPadding,
+        AppDimens.p32,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Contract Info',
-            style: AppTypography.h4.copyWith(color: colorScheme.text),
-          ),
-          const SizedBox(height: AppDimens.p16),
-          Container(height: 0.5, color: colorScheme.divider),
-          const SizedBox(height: AppDimens.p16),
-          _infoRow('Version', contract.version.toString()),
-          _infoRow(
-            'Effective Date',
-            contract.createdAt.toString().split(' ')[0],
-          ),
-          const SizedBox(height: AppDimens.p16),
-          Container(height: 0.5, color: colorScheme.divider),
-          const SizedBox(height: AppDimens.p16),
-          Text(
-            'SNAPSHOT',
-            style: AppTypography.overline.copyWith(
-              color: colorScheme.textSecondary,
-              letterSpacing: 1.5,
+          AppCardContainer(
+            padding: const EdgeInsets.all(AppDimens.p16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _WorkSectionHeader(
+                  icon: Icons.assignment_outlined,
+                  title: 'Contract Info',
+                  subtitle: 'Versioned snapshot used for delivery review.',
+                ),
+                const Divider(
+                  height: AppDimens.p32,
+                  thickness: AppDimens.hairlineDivider,
+                  color: AmberDuskMaterial.rowSeparator,
+                ),
+                _WorkDetailRow(
+                  label: 'Version',
+                  value: contract.version.toString(),
+                  icon: Icons.layers_outlined,
+                ),
+                _WorkDetailRow(
+                  label: 'Effective',
+                  value: formatUtcToLocal(contract.createdAt),
+                  icon: Icons.calendar_today_outlined,
+                ),
+                _WorkDetailRow(
+                  label: 'Hash',
+                  value: contract.contractHash,
+                  icon: Icons.tag_outlined,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: AppDimens.p12),
-          ...contract.snapshot.entries.map(
-            (e) => _infoRow(e.key, e.value.toString()),
+          const SizedBox(height: AppDimens.p16),
+          AppCardContainer(
+            padding: const EdgeInsets.all(AppDimens.p16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _WorkSectionHeader(
+                  icon: Icons.fact_check_outlined,
+                  title: 'Snapshot',
+                  subtitle: 'Terms captured when this work item was created.',
+                ),
+                const SizedBox(height: AppDimens.p12),
+                ...contract.snapshot.entries.map(
+                  (entry) => _WorkDetailRow(
+                    label: _humanizeKey(entry.key),
+                    value: entry.value.toString(),
+                    icon: Icons.circle_outlined,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -274,19 +1202,6 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
   // ---------------------------------------------------------------------------
   // Small helper widgets kept in parent
   // ---------------------------------------------------------------------------
-
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppDimens.p4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: AppTypography.bodySmall),
-          Text(value, style: AppTypography.bodyMedium),
-        ],
-      ),
-    );
-  }
 
   Widget _buildDisputedBanner(WorkItemDetailsViewModel vm) {
     if (vm.status != UnifiedWorkStatus.disputed) return const SizedBox.shrink();
@@ -300,131 +1215,25 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     );
   }
 
-  /// Premium status strip — inline, no card wrapper. Colored dot + overline
-  /// label + status name. Minimal, Stripe-like.
-  Widget _buildUnifiedStatus(WorkItemDetailsViewModel vm) {
-    final colorScheme = context.colorScheme;
-    final statusColor = _mapStatusColor(vm.status, colorScheme);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimens.p16,
-        vertical: AppDimens.p14,
-      ),
-      decoration: BoxDecoration(
-        color: statusColor.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(AppDimens.r12),
-      ),
-      child: Row(
-        children: [
-          // Small colored dot indicator
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: statusColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: AppDimens.p12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'STATUS',
-                style: AppTypography.micro.copyWith(
-                  color: colorScheme.textTertiary,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              Text(
-                vm.status.name.toUpperCase().replaceAll('_', ' '),
-                style: AppTypography.h6.copyWith(color: statusColor),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Map UnifiedWorkStatus to semantic color.
-  Color _mapStatusColor(UnifiedWorkStatus status, AppColorScheme cs) {
+  Color _mapStatusColor(UnifiedWorkStatus status, AmberDuskColorScheme colors) {
     switch (status) {
       case UnifiedWorkStatus.pending:
       case UnifiedWorkStatus.pendingPayment:
       case UnifiedWorkStatus.requestPending:
-        return cs.warning;
+        return colors.warning;
       case UnifiedWorkStatus.active:
-        return cs.primary;
+        return colors.primary;
       case UnifiedWorkStatus.delivered:
-        return cs.info;
+        return colors.info;
       case UnifiedWorkStatus.completed:
-        return cs.success;
+        return colors.success;
       case UnifiedWorkStatus.canceled:
       case UnifiedWorkStatus.disputed:
-        return cs.danger;
+        return colors.danger;
       case UnifiedWorkStatus.unknown:
-        return cs.textSecondary;
+        return colors.muted;
     }
-  }
-
-  /// Premium contract info — hero price on surface, hairline divider,
-  /// deadline with icon. No card wrapper, lives directly in the overview.
-  Widget _buildContractInfo(WorkItemDetailsViewModel vm) {
-    if (vm.activeContract == null) return const SizedBox.shrink();
-    final colorScheme = context.colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Hero price — overline label + h1 amount
-        Text(
-          'PRICE',
-          style: AppTypography.overline.copyWith(
-            color: colorScheme.textSecondary,
-            letterSpacing: 1.5,
-          ),
-        ),
-        const SizedBox(height: AppDimens.p4),
-        Text(
-          PriceFormatter.formatPrice(vm.workItem?.price ?? 0),
-          style: AppTypography.h1.copyWith(
-            color: colorScheme.text,
-            letterSpacing: -0.5,
-          ),
-        ),
-        if (vm.workItem?.deadline != null) ...[
-          const SizedBox(height: AppDimens.p8),
-          Row(
-            children: [
-              Icon(
-                Icons.schedule,
-                size: AppDimens.p14,
-                color: colorScheme.textTertiary,
-              ),
-              const SizedBox(width: AppDimens.p6),
-              Text(
-                'Due ${vm.workItem!.deadline}',
-                style: AppTypography.caption.copyWith(
-                  color: colorScheme.textTertiary,
-                ),
-              ),
-            ],
-          ),
-        ],
-        const SizedBox(height: AppDimens.p24),
-        // Hairline divider between price and rest
-        Container(height: 0.5, color: colorScheme.divider),
-        const SizedBox(height: AppDimens.p16),
-        // Contract label
-        Text(
-          'Contract Info',
-          style: AppTypography.captionBold.copyWith(
-            color: colorScheme.textSecondary,
-          ),
-        ),
-      ],
-    );
   }
 
   // ---------------------------------------------------------------------------
@@ -475,17 +1284,27 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     final amount = vm.workItem!.price;
     final deadline =
         vm.workItem?.paymentDeadline ??
+        // Awarded tasks can predate payment-deadline storage; keep the older
+        // 24-hour checkout fallback so the proposal payment route still opens.
         DateTime.now().add(const Duration(hours: 24));
     final otherName =
         vm.otherPartyProfile?['full_name']?.toString() ?? 'Freelancer';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            key: const Key('work_item_details_pay_cta'),
+    return AppCardContainer(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _WorkSectionHeader(
+            icon: Icons.payment_outlined,
+            title: 'Payment required',
+            subtitle: 'Confirm the awarded proposal before work can begin.',
+          ),
+          const SizedBox(height: AppDimens.p16),
+          AppButton(
+            tapTargetKey: const Key('work_item_details_pay_cta'),
+            icon: Icons.lock_outline,
+            text: 'Pay & Confirm',
             onPressed: () async {
               final summary = ProposalPaymentSummary(
                 requestId: requestId,
@@ -510,17 +1329,9 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                 );
               }
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: AmberDuskTokens.colors.primary,
-              foregroundColor: AmberDuskTokens.colors.textInverse,
-            ),
-            child: const Text('Pay & Confirm'),
           ),
-        ),
-        const SizedBox(height: AppDimens.p8),
-        SizedBox(
-          width: double.infinity,
-          child: TextButton(
+          const SizedBox(height: AppDimens.p8),
+          TextButton(
             onPressed: () async {
               try {
                 await context.read<WorkItemDetailsViewModel>().cancelAward(
@@ -550,8 +1361,8 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
             },
             child: const Text('Cancel payment'),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

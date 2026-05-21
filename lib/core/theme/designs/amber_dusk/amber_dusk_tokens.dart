@@ -66,6 +66,17 @@ abstract final class AmberDuskTokens {
       AmberDuskPhoneLayout.tokens;
 }
 
+/// Shared opacity constants for Amber Dusk overlay and border washes.
+abstract final class AmberDuskOpacity {
+  const AmberDuskOpacity._();
+
+  /// Muted background wash used where status color should not dominate content.
+  static const double mutedBackground = 0.1;
+
+  /// Muted border wash keeps status outlines visible without heavy contrast.
+  static const double mutedBorder = 0.3;
+}
+
 /// Resolves the staged Amber Dusk colors from the active Flutter brightness.
 ///
 /// Amber Dusk is still a staged design layer, so this helper centralizes the

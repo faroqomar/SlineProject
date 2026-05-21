@@ -72,6 +72,7 @@ void main() {
 
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
       expect(scaffold.backgroundColor, AmberDuskTokens.colors.background);
+      expect(find.byType(AmberDuskBackground), findsOneWidget);
     });
 
     testWidgets('T57 tab tap calls setTab(index)', (tester) async {

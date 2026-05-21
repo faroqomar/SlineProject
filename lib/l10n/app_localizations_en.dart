@@ -12,6 +12,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'SLine';
 
   @override
+  String get back => 'Back';
+
+  @override
   String get navHome => 'Home';
 
   @override

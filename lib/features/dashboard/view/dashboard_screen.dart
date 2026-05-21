@@ -266,86 +266,91 @@ class _DashboardContentState extends State<_DashboardContent>
 
     return Scaffold(
       backgroundColor: amber.background,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                spacing.contentHorizontalPadding,
-                spacing.md,
-                spacing.contentHorizontalPadding,
-                spacing.sm,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Semantics(
-                      header: true,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _dashboardTabLabel(vm.currentTab).toUpperCase(),
-                            style: typography.chip.copyWith(
-                              color: amber.muted,
-                              fontWeight: FontWeight.w600,
+      body: AmberDuskBackground(
+        // Match HomeScreen's page-level atmospheric background so the main
+        // bottom-nav tabs feel like one Amber Dusk shell instead of separate
+        // flat surfaces.
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  spacing.contentHorizontalPadding,
+                  spacing.md,
+                  spacing.contentHorizontalPadding,
+                  spacing.sm,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Semantics(
+                        header: true,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _dashboardTabLabel(vm.currentTab).toUpperCase(),
+                              style: typography.chip.copyWith(
+                                color: amber.muted,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: AppDimens.p4),
-                          Text(
-                            'Dashboard',
-                            style: typography.screenTitle.copyWith(
-                              color: amber.text,
+                            const SizedBox(height: AppDimens.p4),
+                            Text(
+                              'Dashboard',
+                              style: typography.screenTitle.copyWith(
+                                color: amber.text,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: 'Dashboard settings',
-                    icon: Icon(
-                      key: DashboardScreen.settingsButtonKey,
-                      Icons.settings_outlined,
-                      color: amber.textSubtle,
+                    IconButton(
+                      tooltip: 'Dashboard settings',
+                      icon: Icon(
+                        key: DashboardScreen.settingsButtonKey,
+                        Icons.settings_outlined,
+                        color: amber.textSubtle,
+                      ),
+                      onPressed: () => _showSettings(context, vm),
                     ),
-                    onPressed: () => _showSettings(context, vm),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: spacing.contentHorizontalPadding,
-              ),
-              child: Semantics(
-                label: 'Dashboard tabs',
-                child: _DashboardTabStrip(
-                  currentIndex: vm.currentTab.index,
-                  onSelected: vm.setTab,
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: AppDimens.p8),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                physics: const NeverScrollableScrollPhysics(),
-                children:
-                    widget.tabViews ??
-                    const [
-                      OverviewTab(),
-                      BookingsTab(),
-                      WorkTab(),
-                      WalletTab(),
-                      InboxTab(),
-                    ],
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: spacing.contentHorizontalPadding,
+                ),
+                child: Semantics(
+                  label: 'Dashboard tabs',
+                  child: _DashboardTabStrip(
+                    currentIndex: vm.currentTab.index,
+                    onSelected: vm.setTab,
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: AppDimens.p8),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children:
+                      widget.tabViews ??
+                      const [
+                        OverviewTab(),
+                        BookingsTab(),
+                        WorkTab(),
+                        WalletTab(),
+                        InboxTab(),
+                      ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

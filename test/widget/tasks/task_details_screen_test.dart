@@ -13,7 +13,6 @@ import 'package:sline_app/core/services/account_guard_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
-import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
@@ -381,7 +380,7 @@ void main() {
         find.byType(SingleChildScrollView),
       );
       final padding = scrollView.padding! as EdgeInsets;
-      expect(padding.bottom, greaterThanOrEqualTo(AppDimens.p140));
+      expect(padding.bottom, AppDimens.p32);
     });
 
     // ---- T239: Manage Task button disabled for owner -------------------------
@@ -493,7 +492,7 @@ void main() {
 
     // ---- Additional coverage ------------------------------------------------
 
-    testWidgets('T244 header shows Job Details for tender task', (
+    testWidgets('T244 top chrome stays titleless for tender task', (
       tester,
     ) async {
       await _pumpScreen(
@@ -507,10 +506,11 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Job Details'), findsOneWidget);
+      expect(find.text('Job Details'), findsNothing);
+      expect(find.byTooltip('Back'), findsOneWidget);
     });
 
-    testWidgets('T245 header shows Booking Details for booking task', (
+    testWidgets('T245 top chrome stays titleless for booking task', (
       tester,
     ) async {
       await _pumpScreen(
@@ -524,7 +524,8 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Booking Details'), findsOneWidget);
+      expect(find.text('Booking Details'), findsNothing);
+      expect(find.byTooltip('Back'), findsOneWidget);
     });
 
     testWidgets('T246 non-owner sees chat bubble icon', (tester) async {
@@ -570,7 +571,7 @@ void main() {
       expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
     });
 
-    testWidgets('T249 AppCardContainer wraps header and bottom bar', (
+    testWidgets('T249 compact dock keeps primary action visible', (
       tester,
     ) async {
       await _pumpScreen(
@@ -584,13 +585,13 @@ void main() {
       );
       await tester.pump();
 
-      // The header remains card-backed while the Amber Dusk bottom bar is a
-      // full-width transactional surface with the primary AppButton inside.
-      expect(find.byType(AppCardContainer), findsAtLeastNWidgets(1));
+      // The top chrome is titleless; the compact dock still owns the primary
+      // task action and icon-only secondary actions.
+      expect(find.byTooltip('Back'), findsOneWidget);
       expect(find.byType(AppButton), findsWidgets);
     });
 
-    testWidgets('T250 back arrow icon is present in header', (tester) async {
+    testWidgets('T250 floating back arrow icon is present', (tester) async {
       await _pumpScreen(
         tester,
         task: _task(),
@@ -602,10 +603,12 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byIcon(Icons.arrow_back_ios), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     });
 
-    testWidgets('T251 share icon is present in header', (tester) async {
+    testWidgets('T251 share icon is removed from titleless chrome', (
+      tester,
+    ) async {
       await _pumpScreen(
         tester,
         task: _task(),
@@ -617,7 +620,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byIcon(Icons.share), findsOneWidget);
+      expect(find.byIcon(Icons.share), findsNothing);
     });
 
     testWidgets('T252 View Profile text appears in author section', (

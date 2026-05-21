@@ -68,8 +68,8 @@ Read at minimum:
 - `Sline_everything/UI_SURFACE_INVENTORY.md` for UI, navigation, redesign, modal, popup, tab, route, or reusable-widget work
 - `Sline_everything/Sline_Log.md`
 - relevant feature docs under `Sline_everything/DEVELOPER_GUIDE/`
-- `Sline_everything/AppDigram/README.md`
-- relevant diagrams under `Sline_everything/AppDigram/`
+- `Sline_everything/AppDiagram/README.md`
+- relevant diagrams under `Sline_everything/AppDiagram/`
 - relevant diagrams under `docs/diagrams/` if present
 
 Critique requirements:

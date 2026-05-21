@@ -40,14 +40,17 @@ abstract final class AmberDuskColors {
   /// Dark page background from the Amber Dusk phone artboard.
   static const Color page = Color(0xFF0E0B08);
 
-  /// First elevated dark background step.
+  /// First elevated dark background step from the Open Design phone shell.
   static const Color background = Color(0xFF1A1612);
 
   /// Default dark card surface step.
   static const Color surface = Color(0xFF241F1A);
 
-  /// Raised dark card surface step matching `rgba(36,31,26,.88)`.
-  static const Color surfaceRaised = Color.fromRGBO(36, 31, 26, 0.88);
+  /// Secondary dark surface step from the Open Design variable set.
+  static const Color surface2 = Color(0xFF2F2822);
+
+  /// Raised dark card surface step matching `rgba(36,31,26,.9)`.
+  static const Color surfaceRaised = Color.fromRGBO(36, 31, 26, 0.90);
 
   /// Highest dark neutral surface available for strongest neutral contrast.
   static const Color surfaceHighest = Color(0xFF3A312A);
@@ -106,11 +109,11 @@ abstract final class AmberDuskColors {
   /// Middle stop for bottom navigation safe-area fade.
   static const Color bottomNavFadeMiddle = Color.fromRGBO(26, 22, 18, 0.92);
 
-  /// Low-opacity amber top-shell atmospheric fade.
-  static const Color atmosphericAmber = Color.fromRGBO(212, 144, 106, 0.12);
+  /// Low-opacity amber top-shell atmospheric fade from `.phone:before`.
+  static const Color atmosphericAmber = Color.fromRGBO(212, 144, 106, 0.13);
 
-  /// Low-opacity forest top-shell atmospheric fade.
-  static const Color atmosphericForest = Color.fromRGBO(127, 168, 114, 0.075);
+  /// Low-opacity forest top-shell atmospheric fade from `.phone:before`.
+  static const Color atmosphericForest = Color.fromRGBO(127, 168, 114, 0.08);
 
   /// Top highlight that preserves the hero material sheen without blur.
   static const Color heroHighlight = Color(0x0AFFFFFF);
@@ -263,6 +266,9 @@ final class AmberDuskColorTokens {
 
   /// Default card surface color from the default dark scheme.
   Color get surface => dark.surface;
+
+  /// Secondary surface step from the Open Design variable set.
+  Color get surface2 => AmberDuskColors.surface2;
 
   /// Raised surface color from the default dark scheme.
   Color get surfaceRaised => dark.surfaceRaised;

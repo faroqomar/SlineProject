@@ -14,10 +14,12 @@ class _MockNotificationService extends Mock implements NotificationService {}
 void main() {
   group('NotificationViewModel', () {
     late _MockNotificationService mockService;
+    late MockSupabaseClient mockClient;
     late StreamController<AuthState> authController;
 
     setUp(() {
       mockService = _MockNotificationService();
+      mockClient = createMockSupabaseClient();
       authController = StreamController<AuthState>.broadcast(sync: true);
     });
 
@@ -32,6 +34,7 @@ void main() {
       final vm = NotificationViewModel(
         service: mockService,
         authStateChanges: authController.stream,
+        client: mockClient,
       );
       addTearDown(vm.dispose);
       expect(vm.notifications, isEmpty);
@@ -48,6 +51,7 @@ void main() {
       final vm = NotificationViewModel(
         service: mockService,
         authStateChanges: authController.stream,
+        client: mockClient,
       );
       addTearDown(vm.dispose);
 
@@ -64,6 +68,7 @@ void main() {
       final vm = NotificationViewModel(
         service: mockService,
         authStateChanges: authController.stream,
+        client: mockClient,
       );
       addTearDown(vm.dispose);
 
@@ -85,6 +90,7 @@ void main() {
         final vm = NotificationViewModel(
           service: mockService,
           authStateChanges: authController.stream,
+          client: mockClient,
         );
         addTearDown(vm.dispose);
 
@@ -103,6 +109,7 @@ void main() {
       final vm = NotificationViewModel(
         service: mockService,
         authStateChanges: authController.stream,
+        client: mockClient,
       );
       addTearDown(vm.dispose);
       expect(vm.retry, returnsNormally);
@@ -124,6 +131,7 @@ void main() {
         final vm = NotificationViewModel(
           service: mockService,
           authStateChanges: authController.stream,
+          client: mockClient,
         );
         addTearDown(vm.dispose);
 
@@ -176,72 +184,76 @@ void main() {
       },
     );
 
-    test(
-      'transient realtime close keeps notifications and reconnects',
-      () async {
-        final firstStream =
-            StreamController<List<NotificationItem>>.broadcast();
-        final secondStream =
-            StreamController<List<NotificationItem>>.broadcast();
-        addTearDown(firstStream.close);
-        addTearDown(secondStream.close);
+    for (final closeCode in <int>[1001, 1006]) {
+      test(
+        'transient realtime close $closeCode keeps notifications and reconnects',
+        () async {
+          final firstStream =
+              StreamController<List<NotificationItem>>.broadcast();
+          final secondStream =
+              StreamController<List<NotificationItem>>.broadcast();
+          addTearDown(firstStream.close);
+          addTearDown(secondStream.close);
 
-        var streamCallCount = 0;
-        when(
-          () => mockService.getUnreadNotifications(limit: any(named: 'limit')),
-        ).thenAnswer((_) async => []);
-        when(() => mockService.streamNotifications()).thenAnswer((_) {
-          streamCallCount++;
-          return streamCallCount == 1
-              ? firstStream.stream
-              : secondStream.stream;
-        });
+          var streamCallCount = 0;
+          when(
+            () =>
+                mockService.getUnreadNotifications(limit: any(named: 'limit')),
+          ).thenAnswer((_) async => []);
+          when(() => mockService.streamNotifications()).thenAnswer((_) {
+            streamCallCount++;
+            return streamCallCount == 1
+                ? firstStream.stream
+                : secondStream.stream;
+          });
 
-        final vm = NotificationViewModel(
-          service: mockService,
-          authStateChanges: authController.stream,
-          realtimeReconnectBaseDelay: Duration.zero,
-        );
-        addTearDown(vm.dispose);
+          final vm = NotificationViewModel(
+            service: mockService,
+            authStateChanges: authController.stream,
+            client: mockClient,
+            realtimeReconnectBaseDelay: Duration.zero,
+          );
+          addTearDown(vm.dispose);
 
-        final mockUser = MockUser();
-        when(() => mockUser.id).thenReturn('user-1');
-        final mockSession = MockSession();
-        when(() => mockSession.user).thenReturn(mockUser);
+          final mockUser = MockUser();
+          when(() => mockUser.id).thenReturn('user-1');
+          final mockSession = MockSession();
+          when(() => mockSession.user).thenReturn(mockUser);
 
-        authController.add(AuthState(AuthChangeEvent.signedIn, mockSession));
-        await Future<void>.delayed(Duration.zero);
-        await Future<void>.delayed(Duration.zero);
+          authController.add(AuthState(AuthChangeEvent.signedIn, mockSession));
+          await Future<void>.delayed(Duration.zero);
+          await Future<void>.delayed(Duration.zero);
 
-        firstStream.add([
-          NotificationItem(
-            id: 'n-1',
-            userId: 'user-1',
-            title: 'Notification',
-            message: 'Message',
-            type: NotificationType.system,
-            isRead: false,
-            createdAt: DateTime.utc(2026),
-          ),
-        ]);
-        await Future<void>.delayed(Duration.zero);
+          firstStream.add([
+            NotificationItem(
+              id: 'n-1',
+              userId: 'user-1',
+              title: 'Notification',
+              message: 'Message',
+              type: NotificationType.system,
+              isRead: false,
+              createdAt: DateTime.utc(2026),
+            ),
+          ]);
+          await Future<void>.delayed(Duration.zero);
 
-        firstStream.addError(
-          RealtimeSubscribeException(
-            RealtimeSubscribeStatus.channelError,
-            const RealtimeCloseEvent(code: 1006, reason: ''),
-          ),
-          StackTrace.current,
-        );
-        await Future<void>.delayed(Duration.zero);
-        await Future<void>.delayed(Duration.zero);
-        await Future<void>.delayed(Duration.zero);
+          firstStream.addError(
+            RealtimeSubscribeException(
+              RealtimeSubscribeStatus.channelError,
+              RealtimeCloseEvent(code: closeCode, reason: ''),
+            ),
+            StackTrace.current,
+          );
+          await Future<void>.delayed(Duration.zero);
+          await Future<void>.delayed(Duration.zero);
+          await Future<void>.delayed(Duration.zero);
 
-        expect(vm.error, isNull);
-        expect(vm.notifications, hasLength(1));
-        expect(streamCallCount, 2);
-      },
-    );
+          expect(vm.error, isNull);
+          expect(vm.notifications, hasLength(1));
+          expect(streamCallCount, 2);
+        },
+      );
+    }
 
     test('non-realtime stream error sets user-facing error', () async {
       final notificationStream =
@@ -257,6 +269,7 @@ void main() {
       final vm = NotificationViewModel(
         service: mockService,
         authStateChanges: authController.stream,
+        client: mockClient,
       );
       addTearDown(vm.dispose);
 

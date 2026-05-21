@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-05-15
+**Last Updated:** 2026-05-21
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -13,7 +13,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | --- | --- | --- |
 | Flutter app shell and navigation | ✅ Completed | `main.dart` + `lib/app/main_navigation_screen.dart`; visible bottom nav is Home, Dashboard, Messages, Profile via `lib/core/navigation/main_nav_destinations.dart` |
 | Supabase bootstrap and app providers | ✅ Completed | shared client/bootstrap in `lib/core/services/supabase_config.dart` and root providers in `main.dart` |
-| Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart`. **2026-05-11:** Amber Dusk Phase 0 added a staged inactive Open Design token layer under `lib/core/theme/designs/amber_dusk/`; it is not globally runtime-activated. **2026-05-12:** Phases 2-4 consume Amber Dusk tokens in scoped phone shell/discovery/dashboard surfaces. **2026-05-13:** Phases 5-12 extend scoped Amber Dusk treatment across auth gates, chat/notifications, tasks/work, booking/payment, wallet, profile, portfolio, services, and secondary surfaces. **2026-05-14:** Transactional QA tightened focused/active UI state proof, payment/booking lifecycle buckets, and safe payment result UI while final processed-payment simulator parity remains open. |
+| Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart`. **2026-05-11:** Amber Dusk Phase 0 added a staged inactive Open Design token layer under `lib/core/theme/designs/amber_dusk/`; it is not globally runtime-activated. **2026-05-12:** Phases 2-4 consume Amber Dusk tokens in scoped phone shell/discovery/dashboard surfaces. **2026-05-13:** Phases 5-12 extend scoped Amber Dusk treatment across auth gates, chat/notifications, tasks/work, booking/payment, wallet, profile, portfolio, services, and secondary surfaces. **2026-05-14:** Transactional QA tightened focused/active UI state proof, payment/booking lifecycle buckets, and safe payment result UI while final processed-payment simulator parity remains open. **2026-05-21:** direct-offer, work-item, task, and booking detail routes aligned around titleless floating chrome and compact docks without global theme activation. |
 | Layout tokens (Layer 2) | ✅ Completed | Phase 0.7: `app_layout.dart` (41 semantic tokens), `app_dimens.dart` (raw primitives). Three-layer architecture complete. |
 | Logging and crash boundaries | ✅ Completed | `AppLogger`, `CrashReportingService`, zoned/global handlers |
 | Documentation hub | ✅ Completed | maintained under `Sline_everything/` |
@@ -58,14 +58,14 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Web payment callback handling | ✅ Completed | same-tab redirect + `PaymentReturnScreen`; sanitized callbacks can recover through `PaymentPendingStore` |
 | Mobile payment callback handling | ✅ Completed | `PaymentWebViewScreen` validates trusted callbacks and receives payment-intent stream completion |
 | Repeat slotless direct bookings | ✅ Completed | same client can create multiple slotless bookings for one booking task |
-| Booking details and history | ✅ Completed | client/provider history lists and detail screen exist |
+| Booking details and history | ✅ Completed | client/provider history lists and detail screen exist. **2026-05-21:** booking details keeps existing CTA/payment/message behavior while using floating back chrome and an in-content booking/task identity surface. |
 
 ## 6. Collaboration and Communication
 
 | Feature | Status | Notes |
 | --- | --- | --- |
 | Realtime chat (08_chat-realtime-sync + 18_topology) | ✅ Completed | Messages-only realtime: active chat `subscribeToMessages(conversationId)`; Inbox `subscribeToInboxMessages(userId)` (conversations not in publication; no N+1). Presence (typing, 15s TTL, 5s throttle); delivered/read receipts; feature flag `chat_presence_receipts_enabled`; ChatRealtimeMerger; archive via RPC `archive_conversation_v1`; offer payload. See `.TODO/PLAN_ChatRealtimeSync_2026-03-07_PlanCritic.md`, `.TODO/PLAN_RealtimeSubscriptionTopology_2026-03-07.md`, diagram 18. |
-| Direct Chat Offers | ✅ Completed | accept in chat → Pending Payment in dashboard → Pay from dashboard (QiCard); `lib/features/direct_offers/`; edge `qicard_payment_create_direct_offer`, `qicard_payment_recovery_direct_offer`. **2026-03-08 hardening:** delivered_at/review_expires_at, auto-release cron, disputes.direct_offer_id, fee from row, trigger protect price/currency/fee. Plan: `.TODO/PLAN_DirectChatOfferFlow_2026-03-07_CRITIC.md`. |
+| Direct Chat Offers | ✅ Completed | accept in chat → Pending Payment in dashboard → Pay from dashboard (QiCard); `lib/features/direct_offers/`; edge `qicard_payment_create_direct_offer`, `qicard_payment_recovery_direct_offer`. **2026-03-08 hardening:** delivered_at/review_expires_at, auto-release cron, disputes.direct_offer_id, fee from row, trigger protect price/currency/fee. **2026-05-21:** direct offer details keeps payment/chat/delivery/release behavior while using floating back chrome and a compact action dock. Plan: `.TODO/PLAN_DirectChatOfferFlow_2026-03-07_CRITIC.md`. |
 | Attachments | ✅ Completed | private attachment flow; participant-scoped access via `can_access_chat_attachment` |
 | Favorites-powered contact flows | ✅ Completed | favorites and chat handoff are implemented |
 | Chat Creation Matrix (v2.19) | ✅ Completed | Atomic RPC `start_direct_conversation_v1` with rate limiting (20/hr), favorites enforcement, role verification. Guard trigger hardens all paths. Feature flag `enable_direct_conversation_rpc`. See `supabase/migrations/20260306000000_chat_creation_matrix.sql` |
@@ -77,7 +77,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Unified dashboard/workspace | ✅ Completed | Single `DashboardScreen`; cache wiring, lazy-load by tab, wallet snapshot on entry; MyServices off dashboard; booking/offer/wallet cards in owning features + `StatusPresenter`. **Work list and detail (2026-03-08):** Single source `vw_unified_work_items` (4 branches: tasks, bookings, awarded pending, direct_offers); no fallback mappers; Plan 12: `.TODO/PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`, `.TODO/MASTER_REPORT_2026-03-08_UnifiedWorkView.md`. |
+| Unified dashboard/workspace | ✅ Completed | Single `DashboardScreen`; cache wiring, lazy-load by tab, wallet snapshot on entry; MyServices off dashboard; booking/offer/wallet cards in owning features + `StatusPresenter`. **Work list and detail (2026-03-08):** Single source `vw_unified_work_items` (4 branches: tasks, bookings, awarded pending, direct_offers); no fallback mappers; Plan 12: `.TODO/PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`, `.TODO/MASTER_REPORT_2026-03-08_UnifiedWorkView.md`. **2026-05-21:** work item details keeps ViewModel/service authority while using floating back/tab chrome and a compact action dock with stable async report guard spacing. |
 | Booking/task CTA resolution | ✅ Completed | unified CTA resolver is used by work/booking screens |
 | Order management timeline | Removed | Order Timeline & Notes UI was removed from task and booking details; direct-offer system event logging remains internal. |
 | Wallet and ledger views | 🚧 In Progress | Wallet feature and ledger schema exist; ongoing finance hardening. **2026-03-07:** Escrow idempotency (stable key + FOR UPDATE); **rpc_approve_delivery** extended for **direct_offer** (single exit for escrow release); DirectOffersService.completeOffer uses RPC. Dashboard includes dedicated **Wallet tab** (balance, activity, Coming Soon withdraw). See `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/PLAN_WalletEscrowAvailableBalances_2026-03-07_CRITIC.md`, `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/EXECUTION_LOG_PLAN_WalletEscrowAvailableBalances_2026-03-07.md`, `Sline_everything/DEVELOPER_GUIDE/Wallet_Feature.md` §4, `.TODO/improvement_the_system/Done/09_ledger-event-flow/CONTRACT_ledger_event_flow.md`. Withdraw = Upcoming. |
@@ -97,7 +97,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Supabase migrations | ✅ Completed | repo contains live migration history under `supabase/migrations/` |
 | Edge functions | ✅ Completed | booking/payment functions are checked into `supabase/functions/` |
 | Docs sync discipline | ✅ Completed | docs now reflect current `view/viewmodels/data/services` layout and payment/runtime helpers |
-| Agent system evolution | ✅ Completed | `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md` records the latest deduped session-log findings. The Step 7 pass updated `.cursor/Agents/*.md` rules for worker checkpoints, untrusted worker patches, lazy/injected service bridges, wrapper theme harnesses, per-file emulator matrices, safe URL-facts logging, realtime transient reconnect handling, and stale guidance-path cleanup. |
+| Agent system evolution | ✅ Completed | Latest merge: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-21.md`. The 2026-05-21 pass updated `.cursor/Agents/*.md` rules for detail-route state review, production-route chrome/dock tests, and wrapper-only coverage disclosure. Earlier 2026-05-13/14 passes covered worker checkpoints, untrusted worker patches, lazy/injected service bridges, wrapper theme harnesses, per-file emulator matrices, safe URL-facts logging, realtime transient reconnect handling, stale guidance-path cleanup, and transactional runtime proof. |
 
 ## 9. Completed Phases
 
@@ -154,6 +154,7 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. Architecture guard had 6 checks i
 | 1.2 | Amber Dusk Phases 5-8 Trust, Messaging, Work, Payments | ✅ Code complete; Step 8 docs synced; manual emulator visual QA gate open | Scoped phone-view Amber Dusk runtime surfaces; no backend/schema changes | `SESSION_PLAN_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments_2026-05-12.md` |
 | 1.3 | Amber Dusk Phases 9-12 Phone Profile, Secondary, Readiness, Handoff | ✅ Code complete after Step 5 gap scan; docs/handoff synced; manual emulator visual QA gate open | Scoped profile, portfolio, services, secondary screens, notification/helper states; no backend/schema changes | `SESSION_PLAN_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness_2026-05-13.md` |
 | 1.4 | Amber Dusk Transactional QA Recovery | ✅ Code/test/docs complete; processed-payment simulator success branch open | Payment recovery, IQD money consistency, signup/post refresh, transactional Dashboard/Messages/Wallet/Task/Chat alignment; local Edge Function source changes only | `SESSION_PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md` |
+| 1.5 | Amber Dusk Detail Surface Chrome And Compact Docks | ✅ Code/test/docs complete; emulator parity open | Direct offer, work item, task, and booking detail routes aligned around floating back chrome, in-content identity, compact docks, production-route tests, and SystemEvolution rules; no backend/schema changes | `SESSION_OpenDesign_DetailSurfaces_2026-05-21.md` |
 | 1 | Core Widget Redesign | ✅ Completed | Redesign | `SESSION_PLAN_CoreWidgetRedesign_2026-04-07.md` |
 | 2+3+5 | App Shell + Auth + Cards | ✅ Completed | Redesign | `SESSION_PLAN_Phase2_AppShellAuthCards_2026-04-08.md` |
 | 4 | Home & Discovery | ✅ Completed | Redesign | `SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md` |
@@ -178,6 +179,7 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. Architecture guard had 6 checks i
 
 ### Current Focus
 1. **Amber Dusk visual gates** — run `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`, `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8.md`, `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_Step6.md`, and `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/README.md` on the target iOS Simulator before claiming final visual parity. The remaining transactional gate is the full QiCard processed-payment success branch with app recovery and Dashboard Bookings proof.
+   - Include the 2026-05-21 detail-surface routes in that pass: direct offer, work item, task details, and booking details across loading/error/loaded, report/dispute, cancel, payment, submit, approve/release, and chat states.
 2. **Missing Open Design states** — Search, Categories, Saved, Favorites, loading, empty, error, proposal detail, payment return/WebView, attachment error, notification modal, and auth/system edge states still need exact Open Design or user screenshots before pixel-match claims.
 3. **Amber Dusk activation/preview work** — optional broader activation must explicitly map staged tokens into active `AppTheme` before widgets depend on them.
 4. **Phase F: Ship Preparation** — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards.

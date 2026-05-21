@@ -204,93 +204,99 @@ class _MessagesScreenState extends State<MessagesScreen>
 
     return Scaffold(
       backgroundColor: amber.background,
-      body: Consumer<ChatViewModel>(
-        builder: (context, controller, child) {
-          final unreadCount = controller.conversations.where(_isUnread).length;
-          final sentCount = _sentConversationCount(controller.conversations);
-          final filtered = _filteredConversations(controller.conversations);
+      body: AmberDuskBackground(
+        // Match HomeScreen's page-level atmospheric background so the inbox
+        // sits on the same Amber Dusk shell as the discovery feed.
+        child: Consumer<ChatViewModel>(
+          builder: (context, controller, child) {
+            final unreadCount = controller.conversations
+                .where(_isUnread)
+                .length;
+            final sentCount = _sentConversationCount(controller.conversations);
+            final filtered = _filteredConversations(controller.conversations);
 
-          // Trigger stagger on first content arrival
-          if (!controller.isLoadingConversations &&
-              controller.conversations.isNotEmpty) {
-            _triggerStaggerIfNeeded(controller.conversations.length);
-          }
+            // Trigger stagger on first content arrival
+            if (!controller.isLoadingConversations &&
+                controller.conversations.isNotEmpty) {
+              _triggerStaggerIfNeeded(controller.conversations.length);
+            }
 
-          return RefreshIndicator(
-            color: amber.primary,
-            onRefresh: () async {
-              // Haptic on pull-to-refresh for tactile feedback
-              AppInteractionStates.hapticSelection();
-              await controller.fetchConversations();
-            },
-            child: Semantics(
-              label: 'Conversations list',
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        AppLayout.screenHorizontalMargin,
-                        topPadding + AppDimens.p12,
-                        AppLayout.screenHorizontalMargin,
-                        AppDimens.p16,
-                      ),
-                      child: _MessagesHeader(
-                        totalCount: controller.conversations.length,
-                        unreadCount: unreadCount,
-                        onSearchTap: () {
-                          AppInteractionStates.hapticTap();
-                          _searchFocusNode.requestFocus();
-                          AppLogger.d(
-                            'MessagesScreen: search focused from header',
-                            tag: 'Chat',
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppLayout.screenHorizontalMargin,
-                      ),
-                      child: _buildSearchBar(),
-                    ),
-                  ),
-
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        spacing.contentHorizontalPadding,
-                        AppDimens.p20,
-                        spacing.contentHorizontalPadding,
-                        AppDimens.p20,
-                      ),
-                      child: _buildModeToggle(
-                        receivedCount: controller.conversations.length,
-                        sentCount: sentCount,
+            return RefreshIndicator(
+              color: amber.primary,
+              onRefresh: () async {
+                // Haptic on pull-to-refresh for tactile feedback
+                AppInteractionStates.hapticSelection();
+                await controller.fetchConversations();
+              },
+              child: Semantics(
+                label: 'Conversations list',
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          AppLayout.screenHorizontalMargin,
+                          topPadding + AppDimens.p12,
+                          AppLayout.screenHorizontalMargin,
+                          AppDimens.p16,
+                        ),
+                        child: _MessagesHeader(
+                          totalCount: controller.conversations.length,
+                          unreadCount: unreadCount,
+                          onSearchTap: () {
+                            AppInteractionStates.hapticTap();
+                            _searchFocusNode.requestFocus();
+                            AppLogger.d(
+                              'MessagesScreen: search focused from header',
+                              tag: 'Chat',
+                            );
+                          },
+                        ),
                       ),
                     ),
-                  ),
 
-                  // ── Content: Loading / Empty / List / No Results ─
-                  if (controller.isLoadingConversations)
-                    _buildSkeletonList()
-                  else if (controller.conversations.isEmpty)
-                    _buildEmptyState()
-                  else ...[
-                    // Apply search filter to conversations
-                    if (filtered.isEmpty)
-                      _buildNoSearchResults()
-                    else
-                      _buildConversationList(controller, filtered),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppLayout.screenHorizontalMargin,
+                        ),
+                        child: _buildSearchBar(),
+                      ),
+                    ),
+
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          spacing.contentHorizontalPadding,
+                          AppDimens.p20,
+                          spacing.contentHorizontalPadding,
+                          AppDimens.p20,
+                        ),
+                        child: _buildModeToggle(
+                          receivedCount: controller.conversations.length,
+                          sentCount: sentCount,
+                        ),
+                      ),
+                    ),
+
+                    // ── Content: Loading / Empty / List / No Results ─
+                    if (controller.isLoadingConversations)
+                      _buildSkeletonList()
+                    else if (controller.conversations.isEmpty)
+                      _buildEmptyState()
+                    else ...[
+                      // Apply search filter to conversations
+                      if (filtered.isEmpty)
+                        _buildNoSearchResults()
+                      else
+                        _buildConversationList(controller, filtered),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

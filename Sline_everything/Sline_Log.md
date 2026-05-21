@@ -1,6 +1,37 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-05-13
+**Last Updated:** 2026-05-21
+
+---
+
+## Version 2.34.0 — Detail Surface Chrome, Compact Docks, SystemEvolution, And Docs Sync (2026-05-21)
+
+**Classification:** Scoped Amber Dusk detail-route UI refresh, production-route test hardening, agent-rule merge, and DocsKeeper sync
+**Workflow:** `.TODO/Archive/AmberDuskDesign/OpenDesign_DetailSurfaces_2026-05-21/WORKFLOW_OpenDesign_Redesign_To_Flutter_2026-05-21.md`
+**Session Log:** `docs/LOG/SESSION_OpenDesign_DetailSurfaces_2026-05-21.md`
+**SystemEvolution Report:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-21.md`
+**Docs Sync:** `.TODO/Archive/AmberDuskDesign/OpenDesign_DetailSurfaces_2026-05-21/DOCS_SYNC_2026-05-21_DetailSurfaceChromeDocks.md`
+**Reference Fix:** `.TODO/Archive/AmberDuskDesign/OpenDesign_DetailSurfaces_2026-05-21/DOCS_REFERENCE_FIX_2026-05-21_AppDiagramPaths.md`
+**Supabase objects changed:** none
+
+### Scope
+- Aligned `lib/features/direct_offers/view/direct_offer_details_screen.dart`, `lib/features/work/view/work_item_details_screen.dart`, `lib/features/tasks/view/task_details_screen.dart`, and `lib/features/booking/view/booking_details_screen.dart` around titleless floating chrome and compact action docks.
+- Preserved existing ViewModel, payment, chat, delivery, approve/release, report, dispute, and cancel behavior. No Supabase, service, repository, RPC, Edge Function, RLS, or schema changes were introduced.
+- Updated `lib/features/work/view/widgets/work_item_bottom_actions.dart` and `lib/features/work/view/widgets/work_item_guard_widgets.dart` so async report/dispute guard checks reserve stable touch-target space and do not shift icon-only dock actions after the first frame.
+- Added production-route widget coverage in `test/widget/work/work_item_details_screen_test.dart`, `test/widget/booking/booking_details_screen_test.dart`, and `test/widget/direct_offers/direct_offer_details_screen_test.dart`; `test/widget/tasks/task_details_screen_test.dart` continues to cover task-detail chrome/dock behavior.
+- Ran SystemEvolution and merged deduped route-state and production-route test rules into `.cursor/Agents/Pixel.md`, `.cursor/Agents/Executor.md`, `.cursor/Agents/Sentinel.md`, and `.cursor/Agents/Orchestrator.md`.
+- Fixed stale `.cursor/Agents/*` references that misspelled the diagram index path; the live path is `Sline_everything/AppDiagram`.
+
+### Verification
+- `flutter test test/widget/direct_offers/direct_offer_details_screen_test.dart test/widget/work/work_item_details_screen_test.dart test/widget/booking/booking_details_screen_test.dart`: passed.
+- `flutter test test/widget/tasks/task_details_screen_test.dart`: passed.
+- `flutter analyze`: passed.
+- `dart run custom_lint`: passed.
+- `git diff --check`: passed.
+- MVVM grep on touched detail views found no direct `Supabase.instance`, `SupabaseClient`, raw `.from(`, raw HTTP, or PostgREST access.
+
+### Open Release Gate
+- Runtime emulator visual parity remains open for the refreshed detail routes. Manual checks must exercise loading, error, empty/not-found, loaded, report/dispute, cancel, payment, submit, approve/release, and chat states before final visual parity is claimed.
 
 ---
 

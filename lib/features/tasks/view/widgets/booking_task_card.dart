@@ -158,7 +158,35 @@ class BookingTaskCard extends StatelessWidget {
                               isOnline: providerIsOnline,
                             ),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: AppDimens.p10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  authorName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: cardTheme.bookingNameStyle.copyWith(
+                                    color: amberColors.heroText,
+                                  ),
+                                ),
+                                SizedBox(height: cardTheme.bookingNameGap),
+                                Text(
+                                  _roleLine(
+                                    providerLevel,
+                                    providerRole,
+                                  ).toUpperCase(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: cardTheme.bookingRoleStyle.copyWith(
+                                    color: amberColors.heroMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppDimens.p8),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -173,24 +201,6 @@ class BookingTaskCard extends StatelessWidget {
                         ],
                       ),
                       SizedBox(height: cardTheme.bookingTopSpacing),
-                      Text(
-                        authorName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: cardTheme.bookingNameStyle.copyWith(
-                          color: amberColors.heroText,
-                        ),
-                      ),
-                      SizedBox(height: cardTheme.bookingNameGap),
-                      Text(
-                        _roleLine(providerLevel, providerRole).toUpperCase(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: cardTheme.bookingRoleStyle.copyWith(
-                          color: amberColors.heroMuted,
-                        ),
-                      ),
-                      const SizedBox(height: AppDimens.p14),
                       Wrap(
                         spacing: AppDimens.p6,
                         runSpacing: AppDimens.p6,
@@ -210,8 +220,17 @@ class BookingTaskCard extends StatelessWidget {
                           if (isHot) const _FeaturedPill(),
                         ],
                       ),
-                      const SizedBox(height: AppDimens.p14),
-                      Container(height: 1, color: amberColors.heroDivider),
+                      const SizedBox(height: AppDimens.p10),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: cardTheme.bookingDividerWidthFactor,
+                          child: Container(
+                            height: 1,
+                            color: amberColors.heroDivider,
+                          ),
+                        ),
+                      ),
                       SizedBox(height: cardTheme.bookingDividerBottomSpacing),
                       Row(
                         children: [
@@ -260,6 +279,7 @@ class BookingTaskCard extends StatelessWidget {
                               ],
                             ),
                           ),
+                          const SizedBox(width: AppDimens.p12),
                           _BookingActionPill(isClosed: _isClosed),
                         ],
                       ),
@@ -571,9 +591,9 @@ class _BookingActionPill extends StatelessWidget {
 
     if (isClosed) {
       return Container(
+        key: const ValueKey<String>('booking_task_card_details_action'),
         height: cardTheme.cardActionHeight,
         padding: cardTheme.bookingActionPadding,
-        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: amberColors.heroChip,
           borderRadius: BorderRadius.circular(
@@ -591,9 +611,9 @@ class _BookingActionPill extends StatelessWidget {
     }
 
     return Container(
+      key: const ValueKey<String>('booking_task_card_details_action'),
       height: cardTheme.cardActionHeight,
       padding: cardTheme.bookingActionPadding,
-      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: amberColors.text,
         borderRadius: BorderRadius.circular(AmberDuskTokens.spacing.pillRadius),

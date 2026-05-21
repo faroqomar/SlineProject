@@ -16,8 +16,8 @@ import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_colors.dart';
 abstract final class AmberDuskMaterial {
   const AmberDuskMaterial._();
 
-  /// Raised surface fill matching `rgba(36,31,26,.88)` from the visual spec.
-  static const Color raisedSurface = Color.fromRGBO(36, 31, 26, 0.88);
+  /// Raised surface fill matching `rgba(36,31,26,.9)` from Open Design.
+  static const Color raisedSurface = AmberDuskColors.surfaceRaised;
 
   /// Warm booking fallback fill used beneath the V2 hero gradient.
   static const Color bookingSurface = AmberDuskColors.hero;
@@ -26,10 +26,10 @@ abstract final class AmberDuskMaterial {
   static const Color rowSeparator = Color.fromRGBO(242, 232, 213, 0.058);
 
   /// Amber glow used only for the top-left atmospheric phone-shell fade.
-  static const Color atmosphericAmber = Color.fromRGBO(212, 144, 106, 0.12);
+  static const Color atmosphericAmber = AmberDuskColors.atmosphericAmber;
 
   /// Green-brown glow used only for the top-right atmospheric phone-shell fade.
-  static const Color atmosphericForest = Color.fromRGBO(127, 168, 114, 0.075);
+  static const Color atmosphericForest = AmberDuskColors.atmosphericForest;
 
   /// Creates the restrained tactile surface used by cards and dense panels.
   ///
@@ -127,8 +127,8 @@ abstract final class AmberDuskMaterial {
     end: Alignment.bottomCenter,
     stops: <double>[0, 0.44, 1],
     colors: <Color>[
-      Color.fromRGBO(26, 22, 18, 0),
-      Color.fromRGBO(26, 22, 18, 0.92),
+      AmberDuskColors.bottomNavFadeTop,
+      AmberDuskColors.bottomNavFadeMiddle,
       AmberDuskColors.background,
     ],
   );
@@ -167,8 +167,8 @@ abstract final class AmberDuskMaterial {
 /// Paints the Amber Dusk screen background exactly once behind page content.
 ///
 /// Screens with opaque [Scaffold] backgrounds hide the app shell fades. This
-/// widget keeps the `#1A1612` base and the two subtle radial fades inside the
-/// screen body so the recipe is visible on every tab.
+/// widget keeps the `#1A1612` Amber Dusk base and two subtle radial fades
+/// inside the screen body so the recipe is visible on every tab.
 class AmberDuskBackground extends StatelessWidget {
   /// Creates a reusable Amber Dusk background wrapper.
   const AmberDuskBackground({super.key, required this.child});

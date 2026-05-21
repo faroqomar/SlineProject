@@ -269,7 +269,12 @@ class NotificationViewModel extends ChangeNotifier {
     if (error is! RealtimeSubscribeException) return false;
     final details = error.details;
     if (details is RealtimeCloseEvent) {
-      return details.code == 1002 || details.code == 1006;
+      // Supabase realtime can emit normal websocket lifecycle closes during
+      // app suspend/resume or backend restarts; keep the badge alive by
+      // reconnecting instead of surfacing a hard notification error.
+      return details.code == 1001 ||
+          details.code == 1002 ||
+          details.code == 1006;
     }
     return error.status == RealtimeSubscribeStatus.timedOut;
   }

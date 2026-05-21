@@ -332,6 +332,8 @@ When reskinning transactional surfaces, inspect the live focused/active states f
 
 Customer-facing payment and booking result surfaces must present safe status summaries, amount, merchant/app context, next action, and recovery path. Raw booking IDs, payer IDs, entity IDs, intent IDs, correlation IDs, callback parameters, and gateway metadata belong in logs or support tooling, not primary UI.
 
+When replacing a standard `AppBar`, tab chrome, or bottom action bar on a detail route, audit every route state together: loading, error, empty/not-found, and loaded. The redesign must keep a visible escape affordance, one clear in-content identity/title surface, stable tab height, and a compact dock that cannot shift when async report/dispute guards resolve. Icon-only actions need tooltips and minimum touch-target spacing even when the visual button is smaller.
+
 
 ## 8.1 Pixel Skill Routing Matrix
 

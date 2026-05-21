@@ -358,6 +358,7 @@ For each step:
 - What still lacks proof
 - For UI phases, visual proof status: design-reference screenshots, current-app runtime screenshots, missing states, and any open emulator/device gate
 - For broad UI phases, per-file fixture/provider/manual coverage matrix covering all touched source files, tests, docs, and screenshot artifacts
+- For route-level chrome or dock redesigns, whether tests cover the production route/body or only local wrappers; wrapper-only coverage must be called out as a remaining QA gap
 - For forms, composers, sheets, payment/booking screens, and transactional CTAs, focused/active/disabled/error/loading/recovery-state proof for the actual controls users touch
 - For payment or booking work, source-route, result-route, Dashboard Bookings, Dashboard Work, and list-bucket outcomes after success, pending, failed, canceled, retry, and recovery paths, including whether any external gateway action was not executed
 
@@ -373,7 +374,7 @@ For each step:
 
 - Confirm root `README.md` has current install/run instructions and links to active docs.
 - Confirm `Sline_everything/` docs changed or stayed unchanged for a stated reason.
-- Confirm `Sline_everything/AppDigram/README.md` and `Sline_everything/DOC_SOURCE_MAP.md` route the touched feature area correctly.
+- Confirm `Sline_everything/AppDiagram/README.md` and `Sline_everything/DOC_SOURCE_MAP.md` route the touched feature area correctly.
 - Confirm `Sline_everything/UI_SURFACE_INVENTORY.md` lists every touched or newly discovered UI surface.
 - Confirm required diagrams were updated or explicitly ruled unchanged.
 - If README, docs, source map, UI inventory, or diagram freshness is missing for major work, flag at least a MEDIUM finding and rerun `@DocsKeeper`.

@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.33.0 (Amber Dusk Phase 9-12, Transactional QA Recovery, SystemEvolution 2026-05-14, and DocsKeeper sync)
-**Last Updated**: 2026-05-14
+**Version**: 2.34.0 (Detail surface chrome/dock refresh, SystemEvolution 2026-05-21, and DocsKeeper sync)
+**Last Updated**: 2026-05-21
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -512,6 +512,59 @@ References:
 - Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md`
 - System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md`
 - Supabase objects changed: local Edge Function source only (`supabase/functions/qicard_payment_create/index.ts`, `supabase/functions/create_payment_intent/index.ts`); no migration/RLS/schema changes
+
+### Amber Dusk Detail Surface Chrome And Compact Docks (2026-05-21)
+
+The 2026-05-21 detail-surface refresh aligns direct-offer, work-item, task, and
+booking detail routes around quieter route chrome and compact action docks. This
+is scoped Flutter view/test/agent-rule work only: no Supabase schema, RLS, RPC,
+Edge Function, service, repository, or ViewModel behavior changed.
+
+Implementation notes:
+- `lib/features/direct_offers/view/direct_offer_details_screen.dart` keeps
+  `DirectOfferDetailsViewModel`, QiCard/WebView/browser payment handoff, cancel
+  confirmation, delivery submission, approve/release, dispute guards, report
+  submission, and chat opening behavior unchanged. The route now uses an Amber
+  Dusk background, floating back control for loading/error/loaded states, title
+  inside the hero card, and a compact dock with one primary pill plus icon-only
+  chat/cancel/report actions.
+- `lib/features/work/view/work_item_details_screen.dart` keeps
+  `WorkItemDetailsViewModel` and `WorkManagementService` as the source of work
+  state. The production route now accepts an optional `WorkManagementService`
+  override for widget tests, keeps loading/error/no-details escape affordances,
+  and uses floating tab chrome with stable height for `Overview`, `Extensions`,
+  and `Contract`.
+- `lib/features/work/view/widgets/work_item_bottom_actions.dart` and
+  `lib/features/work/view/widgets/work_item_guard_widgets.dart` reserve minimum
+  touch-target space for async report guards so icon-only compact docks do not
+  shift after dispute checks resolve.
+- `lib/features/booking/view/booking_details_screen.dart` removes the standard
+  AppBar treatment in favor of a floating back control and a top in-content
+  identity surface (`Booking Details` plus task title) before status and action
+  bands.
+- `lib/features/tasks/view/task_details_screen.dart` follows the same titleless
+  chrome and compact dock direction for task details while keeping owner,
+  non-owner, chat, report, package, and proposal behavior in existing
+  ViewModel/service paths.
+- Direct-offer, work-item, booking, and task widget tests now include
+  production-route assertions for back controls, chrome, compact dock primary
+  priority, icon-only tooltips, loading-state escape, and report/dispute guard
+  visibility. Wrapper tests may remain for Supabase-safe content coverage, but
+  they are no longer sufficient for route chrome or dock behavior.
+
+Runtime QA remains a separate visual gate. Analyzer, custom lint, focused
+widget tests, and `git diff --check` passed, but emulator review still needs to
+exercise every touched detail route across loading, error, empty/not-found,
+loaded, report, dispute, cancel, payment, submit, approve/release, and chat
+states before final visual parity is claimed.
+
+References:
+- Workflow: `.TODO/Archive/AmberDuskDesign/OpenDesign_DetailSurfaces_2026-05-21/WORKFLOW_OpenDesign_Redesign_To_Flutter_2026-05-21.md`
+- Session Log: `docs/LOG/SESSION_OpenDesign_DetailSurfaces_2026-05-21.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-21.md`
+- Key Flutter files: `lib/features/direct_offers/view/direct_offer_details_screen.dart`, `lib/features/work/view/work_item_details_screen.dart`, `lib/features/work/view/widgets/work_item_bottom_actions.dart`, `lib/features/work/view/widgets/work_item_guard_widgets.dart`, `lib/features/booking/view/booking_details_screen.dart`, `lib/features/tasks/view/task_details_screen.dart`
+- Key tests: `test/widget/direct_offers/direct_offer_details_screen_test.dart`, `test/widget/work/work_item_details_screen_test.dart`, `test/widget/booking/booking_details_screen_test.dart`, `test/widget/tasks/task_details_screen_test.dart`
+- Supabase objects changed: none
 
 ### 10.1 CI/CD Pipeline
 

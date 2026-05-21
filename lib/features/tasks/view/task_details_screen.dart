@@ -7,7 +7,6 @@ import 'package:sline_app/core/services/account_guard_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
@@ -16,6 +15,7 @@ import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
+import 'package:sline_app/core/widgets/circle_icon_button.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/booking/view/payment_checkout_screen.dart';
@@ -76,251 +76,248 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     final task = widget.task;
     final isTender = task.isTender;
     final isBooking = task.isBooking;
-    final scrollBottomClearance =
-        MediaQuery.viewPaddingOf(context).bottom + AppDimens.p140;
+    final topInset = MediaQuery.paddingOf(context).top;
 
     final currentUserId = context.read<TaskViewModel>().currentUserId;
     final isOwner = currentUserId != null && currentUserId == task.userId;
 
     return Scaffold(
       backgroundColor: amberColors.page,
-      body: Column(
-        children: [
-          // --- Header ---
-          AppCardContainer(
-            borderRadius: BorderRadius.zero,
-            padding: EdgeInsets.fromLTRB(
-              AppDimens.p24,
-              MediaQuery.of(context).padding.top + AppDimens.p16,
-              AppDimens.p24,
-              AppDimens.p16,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Icon(
-                    Icons.arrow_back_ios,
-                    color: amberColors.text,
-                    size: AppLayout.iconStandard,
-                  ),
+      body: AmberDuskBackground(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  // AmberDuskSpacing.contentHorizontalPadding aligns the detail body with the floating back button and compact action dock.
+                  AmberDuskSpacing.contentHorizontalPadding,
+                  // AppDimens.p64 reserves toolbar-height space below topInset so content never sits under the floating back button.
+                  topInset + AppDimens.p64,
+                  // AmberDuskSpacing.contentHorizontalPadding keeps both body edges on the same Amber Dusk content grid.
+                  AmberDuskSpacing.contentHorizontalPadding,
+                  // AppDimens.p32 gives the final section breathing room above the action dock on short screens.
+                  AppDimens.p32,
                 ),
-                Text(
-                  isBooking ? 'Booking Details' : 'Job Details',
-                  style: AppTypography.h5.copyWith(color: amberColors.text),
-                ),
-                Icon(
-                  Icons.share,
-                  color: amberColors.text,
-                  size: AppLayout.iconStandard,
-                ),
-              ],
-            ),
-          ),
-
-          // --- Scrollable Content ---
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                AppDimens.p24,
-                AppDimens.p24,
-                AppDimens.p24,
-                scrollBottomClearance,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    task.title,
-                    style: AppTypography.h3.copyWith(color: colorScheme.text),
-                  ),
-                  const SizedBox(height: AppDimens.p16),
-
-                  // Author
-                  GestureDetector(
-                    onTap: () {
-                      showProfilePreview(context, task.userId);
-                    },
-                    child: Row(
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: amberColors.warning,
-                              width: 2,
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                          child: SignedAvatar(
-                            storagePathOrUrl: task.userAvatar,
-                          ),
-                        ),
-                        const SizedBox(width: AppDimens.p12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  task.userName ?? 'Unknown User',
-                                  style: AppTypography.bodySmall.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.text,
-                                  ),
-                                ),
-                                const SizedBox(width: AppDimens.p4),
-                                Icon(
-                                  Icons.check_circle,
-                                  size: AppDimens.p14,
-                                  color: amberColors.success,
-                                ),
-                              ],
-                            ),
-                            Text(
-                              'View Profile',
-                              style: AppTypography.micro.copyWith(
-                                color: amberColors.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      task.title,
+                      style: AppTypography.h3.copyWith(color: colorScheme.text),
                     ),
-                  ),
-                  const SizedBox(height: AppDimens.p24),
-
-                  _buildTaskSummaryChips(context),
-                  const SizedBox(height: AppDimens.p24),
-
-                  // Packages (Booking Only)
-                  if (isBooking) ...[
-                    _buildPackageSelector(context),
                     const SizedBox(height: AppDimens.p16),
-                    _buildPackageDetails(context),
-                    const SizedBox(height: AppDimens.p24),
-                  ],
 
-                  // Description
-                  _TaskDescriptionText(description: task.description),
-                  const SizedBox(height: AppDimens.p24),
-
-                  // Images
-                  if (task.imagePaths.isNotEmpty) ...[
-                    SignedImage(
-                      storagePathOrUrl: task.imagePaths.first,
-                      width: double.infinity,
-                      height: 200,
-                      borderRadius: AppDimens.r16,
-                    ),
-                    const SizedBox(height: AppDimens.p24),
-                  ],
-
-                  // Proposals Link (Owner of Tender)
-                  if (isOwner && isTender)
+                    // Author
                     GestureDetector(
                       onTap: () {
-                        unawaited(
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => RequestsListScreen(
-                                taskId: task.id,
-                                isOwner: true,
-                                budget: task.budget.toString(),
+                        showProfilePreview(context, task.userId);
+                      },
+                      child: Row(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: amberColors.warning,
+                                width: 2,
                               ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: SignedAvatar(
+                              storagePathOrUrl: task.userAvatar,
                             ),
                           ),
-                        );
-                      },
-                      child: AppCardContainer(
-                        padding: const EdgeInsets.all(AppDimens.p16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'View Received Proposals',
-                              style: AppTypography.bodyMedium.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.text,
+                          const SizedBox(width: AppDimens.p12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    task.userName ?? 'Unknown User',
+                                    style: AppTypography.bodySmall.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.text,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppDimens.p4),
+                                  Icon(
+                                    Icons.check_circle,
+                                    size: AppDimens.p14,
+                                    color: amberColors.success,
+                                  ),
+                                ],
                               ),
-                            ),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              size: AppDimens.iconSizeSmall,
-                              color: colorScheme.textSecondary,
-                            ),
-                          ],
-                        ),
+                              Text(
+                                'View Profile',
+                                style: AppTypography.micro.copyWith(
+                                  color: amberColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                ],
-              ),
-            ),
-          ),
+                    const SizedBox(height: AppDimens.p24),
 
-          // --- Bottom Bar ---
-          Container(
-            padding: EdgeInsets.fromLTRB(
-              AppDimens.p24,
-              AppDimens.p16,
-              AppDimens.p24,
-              MediaQuery.viewPaddingOf(context).bottom + AppDimens.p24,
-            ),
-            decoration: BoxDecoration(
-              color: amberColors.background,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppDimens.r30),
-              ),
-              border: Border(top: BorderSide(color: amberColors.surface)),
-              boxShadow: AppDecorations.elevation(
-                AmberDuskTokens.surfaces.nav.elevationLevel,
-                isDark: amberColors.isDark,
-              ),
-            ),
-            child: Row(
-              children: [
-                if (!isOwner) ...[
-                  _buildBottomIconButton(
-                    context,
-                    icon: Icons.chat_bubble_outline,
-                    color: amberColors.primary,
-                    semanticsLabel: 'Start chat',
-                    onPressed: () => _handleChatAction(
-                      context,
-                      task.id,
-                      task.userId,
-                      currentUserId,
-                    ),
-                  ),
-                  const SizedBox(width: AppDimens.p12),
-                ],
-                Expanded(
-                  child: AppButton(
-                    text: _getButtonLabel(isOwner, isTender, isBooking),
-                    onPressed: _canTriggerPrimaryAction(isOwner, isBooking)
-                        ? () async => _handlePrimaryAction(
-                            context,
-                            isOwner,
-                            isTender,
-                            isBooking,
-                          )
-                        : null,
-                  ),
+                    _buildTaskSummaryChips(context),
+                    const SizedBox(height: AppDimens.p24),
+
+                    // Packages (Booking Only)
+                    if (isBooking) ...[
+                      _buildPackageSelector(context),
+                      const SizedBox(height: AppDimens.p16),
+                      _buildPackageDetails(context),
+                      const SizedBox(height: AppDimens.p24),
+                    ],
+
+                    // Description
+                    _TaskDescriptionText(description: task.description),
+                    const SizedBox(height: AppDimens.p24),
+
+                    // Images
+                    if (task.imagePaths.isNotEmpty) ...[
+                      SignedImage(
+                        storagePathOrUrl: task.imagePaths.first,
+                        width: double.infinity,
+                        height: 200,
+                        borderRadius: AppDimens.r16,
+                      ),
+                      const SizedBox(height: AppDimens.p24),
+                    ],
+
+                    // Proposals Link (Owner of Tender)
+                    if (isOwner && isTender)
+                      GestureDetector(
+                        onTap: () {
+                          unawaited(
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => RequestsListScreen(
+                                  taskId: task.id,
+                                  isOwner: true,
+                                  budget: task.budget.toString(),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        child: AppCardContainer(
+                          padding: const EdgeInsets.all(AppDimens.p16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'View Received Proposals',
+                                style: AppTypography.bodyMedium.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.text,
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                size: AppDimens.iconSizeSmall,
+                                color: colorScheme.textSecondary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(width: AppDimens.p12),
-                _buildBottomIconButton(
-                  context,
-                  icon: Icons.flag_outlined,
-                  color: amberColors.danger,
-                  semanticsLabel: 'Report task',
-                  onPressed: () => _showReportTaskDialog(context, task.id),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+            _buildFloatingBackButton(onTap: () => Navigator.pop(context)),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _buildActionDock(
+        primaryText: _getButtonLabel(isOwner, isTender, isBooking),
+        primaryEnabled: _canTriggerPrimaryAction(isOwner, isBooking),
+        onPrimary: () => unawaited(
+          _handlePrimaryAction(context, isOwner, isTender, isBooking),
+        ),
+        showChat: !isOwner,
+        onChat: () => unawaited(
+          _handleChatAction(context, task.id, task.userId, currentUserId),
+        ),
+        onReport: () => _showReportTaskDialog(context, task.id),
+      ),
+    );
+  }
+
+  /// Floating route escape that keeps navigation separate from the task title
+  /// and lets the task itself lead the screen content.
+  Widget _buildFloatingBackButton({required VoidCallback onTap}) {
+    return Positioned(
+      // AppDimens.p8 keeps the floating back button visually attached to the status bar without touching it.
+      top: MediaQuery.paddingOf(context).top + AppDimens.p8,
+      // AppDimens.p16 aligns the floating back button with AmberDuskSpacing.contentHorizontalPadding.
+      left: AppDimens.p16,
+      child: CircleIconButton(
+        icon: Icons.arrow_back,
+        tooltip: 'Back',
+        size: AppDimens.p40,
+        onTap: onTap,
+      ),
+    );
+  }
+
+  /// Compact action dock for task details, matching the direct-offer treatment
+  /// with one primary pill and icon-only secondary actions.
+  Widget _buildActionDock({
+    required String primaryText,
+    required bool primaryEnabled,
+    required VoidCallback onPrimary,
+    required bool showChat,
+    required VoidCallback onChat,
+    required VoidCallback onReport,
+  }) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          // AmberDuskSpacing.contentHorizontalPadding aligns the action dock with the scroll content grid.
+          AmberDuskSpacing.contentHorizontalPadding,
+          // AppDimens.p6 keeps the dock compact while separating it from scrolled content.
+          AppDimens.p6,
+          // AmberDuskSpacing.contentHorizontalPadding prevents icon actions from hugging screen edges.
+          AmberDuskSpacing.contentHorizontalPadding,
+          // AppDimens.p10 preserves a small bottom cushion inside the SafeArea action dock.
+          AppDimens.p10,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: AppButton(
+                text: primaryText,
+                height: AppDimens.publicProfileActionButtonHeight,
+                onPressed: primaryEnabled ? onPrimary : null,
+              ),
+            ),
+            if (showChat) ...[
+              // AppDimens.p8 separates the primary pill from the optional chat action without widening the dock.
+              const SizedBox(width: AppDimens.p8),
+              CircleIconButton(
+                icon: Icons.chat_bubble_outline,
+                tooltip: 'Start chat',
+                size: AppDimens.p40,
+                onTap: onChat,
+              ),
+            ],
+            // AppDimens.p6 keeps the report action grouped with secondary dock controls.
+            const SizedBox(width: AppDimens.p6),
+            CircleIconButton(
+              icon: Icons.flag_outlined,
+              tooltip: 'Report task',
+              iconColor: context.amberColors.danger,
+              size: AppDimens.p40,
+              onTap: onReport,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -464,35 +461,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       spacing: AppDimens.p8,
       runSpacing: AppDimens.p8,
       children: chips.map((chip) => _TaskFactChip(fact: chip)).toList(),
-    );
-  }
-
-  Widget _buildBottomIconButton(
-    BuildContext context, {
-    required IconData icon,
-    required Color color,
-    required String semanticsLabel,
-    required VoidCallback onPressed,
-  }) {
-    final amberColors = context.amberColors;
-    return Semantics(
-      button: true,
-      label: semanticsLabel,
-      child: Container(
-        width: 54,
-        height: 54,
-        decoration: BoxDecoration(
-          color: amberColors.surface,
-          borderRadius: BorderRadius.circular(
-            AmberDuskTokens.spacing.compactControlRadius,
-          ),
-          border: Border.all(color: amberColors.surfaceHighest),
-        ),
-        child: IconButton(
-          icon: Icon(icon, color: color),
-          onPressed: onPressed,
-        ),
-      ),
     );
   }
 

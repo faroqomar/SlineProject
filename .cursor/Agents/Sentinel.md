@@ -137,7 +137,7 @@ Require these checks for any non-trivial code or docs change:
 
 - touched Dart files have useful comments around public APIs, widgets, helpers, and non-obvious logic
 - root `README.md` is current when setup, install, run, feature status, docs links, or onboarding instructions changed
-- `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDigram/README.md` still route the changed feature area correctly
+- `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDiagram/README.md` still route the changed feature area correctly
 - `Sline_everything/UI_SURFACE_INVENTORY.md` lists changed or newly discovered UI surfaces when UI work is involved
 - required diagrams are updated, or the report states why they did not need changes
 
@@ -171,6 +171,8 @@ If the plan included UI skill steps, also require:
 For review-fix passes, behavior changes must have behavior-level tests. Do not accept tests that only assert token constants or static theme values when the finding was about runtime behavior. If a fix changes filtering, action enablement, callback routing, accessibility semantics, visual state selection, visible labels, or badge/status text, require a widget/unit test that exercises that behavior directly. When text changes, scan the test suite for stale assertions against the same component before approving the fix.
 
 If a behavior fix changes a shared screen that is reached through wrapper tests or re-export entry points, require those wrapper tests to use the same app theme/provider harness as production. Theme-extension failures in wrapper tests are release-relevant, not test noise.
+
+If a review-fix or redesign changes route chrome, tabs, bottom docks, or icon-only actions, require at least one assertion against the production route or production route body. Local wrapper copies may stay for isolated content coverage, but approval requires production coverage for back/escape controls in loading/error/content states, compact dock primary priority, secondary action tooltips, and async guard hidden/disabled behavior.
 
 
 If the plan included Supabase migration steps, also require:

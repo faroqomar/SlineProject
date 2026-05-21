@@ -96,8 +96,8 @@ Read and reference the current project documentation before drafting any plan. `
 - `Sline_everything/Sline_Log.md`
 - Relevant `.TODO/` artifacts for the current area
 - Relevant feature docs under `Sline_everything/DEVELOPER_GUIDE/`
-- `Sline_everything/AppDigram/README.md`
-- Relevant architecture, UI sequence, lifecycle, security, payment, realtime, storage, wallet, booking, chat, task, and notification diagrams under `Sline_everything/AppDigram/`
+- `Sline_everything/AppDiagram/README.md`
+- Relevant architecture, UI sequence, lifecycle, security, payment, realtime, storage, wallet, booking, chat, task, and notification diagrams under `Sline_everything/AppDiagram/`
 - Relevant project diagrams under `docs/diagrams/` if present
 
 Plan requirements:

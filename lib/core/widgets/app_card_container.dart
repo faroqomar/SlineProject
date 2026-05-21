@@ -9,7 +9,7 @@ import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 /// This widget was previously a glassmorphism container with [BackdropFilter] blur.
 /// As of Phase 1 (Core Widget Redesign), ALL glass effects have been removed.
 /// The widget now renders with the shared Amber Dusk material recipe:
-/// - `rgba(36,31,26,.88)` raised fill for depth
+/// - `rgba(36,31,26,.9)` raised fill for depth
 /// - inset top and bottom shadows for tactile panels
 /// - no visible hard border
 ///

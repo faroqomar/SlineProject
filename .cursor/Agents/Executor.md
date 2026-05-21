@@ -188,7 +188,7 @@ Read in full:
 - `Sline_everything/STRUCTURE.md`
 - `Sline_everything/DOC_SOURCE_MAP.md`
 - `Sline_everything/UI_SURFACE_INVENTORY.md` when UI, navigation, modal, popup, tab, route, redesign, or reusable-widget work is involved
-- `Sline_everything/AppDigram/README.md`
+- `Sline_everything/AppDiagram/README.md`
 
 Plus: scan the full `.TODO/` directory and read any doc relevant to the current plan.
 If a session log for this plan already exists, read it before continuing.
@@ -423,6 +423,8 @@ When a UI change adds animation, navigation, route pushes, or route-level provid
 
 
 When a shared screen or wrapper starts consuming app theme extensions such as `context.colorScheme`, `context.amberColors`, or `ThemeExtension` values, update every wrapper/entry test that pumps that screen so it uses the production app theme or the established app test harness. Do not fix only the primary feature test.
+
+When a route-level UI change removes or replaces production chrome, tabs, or bottom action bars, wrapper-only tests are not enough. Add at least one production-route or production-route-body widget test for the changed navigation chrome, loading/error escape hatch, compact dock primary action, icon-only secondary action tooltips, and hidden/disabled guard states. Keep any Supabase-safe wrapper tests for content coverage, but do not let copied wrappers be the only assertions for production chrome or action priority.
 
 
 ### Step 3.1.3 — Visual Proof Gate

@@ -192,6 +192,7 @@ void main() {
       await tester.pump();
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byTooltip('Back'), findsOneWidget);
     });
 
     // ── T182: Offer title ────────────────────────────────────────────────
@@ -298,15 +299,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // ErrorMapper wraps unknown exceptions; the AppBar still shows "Custom offer".
-      expect(find.text('Custom offer'), findsOneWidget);
+      // ErrorMapper wraps unknown exceptions; the error card owns the message.
+      expect(find.text('Offer unavailable'), findsOneWidget);
       // The error text appears in the body Center widget.
       expect(find.byType(Center), findsAtLeastNWidgets(1));
     });
 
     // ── T187: Error state has retry capability ───────────────────────────
 
-    testWidgets('T187 error state renders with appbar and error text', (
+    testWidgets('T187 error state renders with floating back control', (
       tester,
     ) async {
       when(
@@ -323,8 +324,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Error scaffold has appbar with back button and error text in body.
-      expect(find.byType(AppBar), findsOneWidget);
+      // Error scaffold uses the same floating back control as the loaded route.
+      expect(find.byType(AppBar), findsNothing);
       expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     });
 
@@ -346,8 +347,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Tap the cancel button
-      await tester.tap(find.text('Cancel offer'));
+      // Tap the icon-only cancel action.
+      await tester.tap(find.byTooltip('Cancel offer'));
       await tester.pumpAndSettle();
 
       // Dialog should appear
@@ -378,15 +379,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap cancel
-      await tester.tap(find.text('Cancel offer'));
+      await tester.tap(find.byTooltip('Cancel offer'));
       await tester.pumpAndSettle();
 
       // Confirm by tapping the red "Cancel offer" button inside the dialog.
-      // There are two "Cancel offer" texts now (button + dialog button).
-      // The dialog FilledButton is the second one.
       final cancelButtons = find.text('Cancel offer');
-      expect(cancelButtons, findsNWidgets(2));
-      await tester.tap(cancelButtons.last);
+      expect(cancelButtons, findsOneWidget);
+      await tester.tap(cancelButtons);
       await tester.pumpAndSettle();
 
       verify(() => mockOffers.cancelAcceptedOffer(_kOfferId)).called(1);
@@ -412,7 +411,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Open chat'), findsOneWidget);
+      expect(find.byTooltip('Open chat'), findsOneWidget);
       expect(find.byIcon(Icons.chat_bubble_outline), findsOneWidget);
     });
 
@@ -436,6 +435,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Cancel offer'), findsNothing);
+      expect(find.byTooltip('Cancel offer'), findsNothing);
       expect(find.text('Pay (QiCard)'), findsNothing);
       expect(find.text('Submit work'), findsNothing);
       expect(find.text('Approve & release payment'), findsNothing);
@@ -459,6 +459,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Cancel offer'), findsNothing);
+      expect(find.byTooltip('Cancel offer'), findsNothing);
       expect(find.text('Pay (QiCard)'), findsNothing);
       expect(find.text('Submit work'), findsNothing);
     });
@@ -605,7 +606,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // AppBar and the AppCardContainer title both show "Custom offer"
+      // The hero card owns the fallback title now that top chrome is titleless.
       expect(find.text('Custom offer'), findsAtLeastNWidgets(1));
     });
 
@@ -649,7 +650,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Open chat'));
+        await tester.tap(find.byTooltip('Open chat'));
         await tester.pumpAndSettle();
 
         verify(
@@ -680,6 +681,7 @@ void main() {
 
       // canCancel requires clientId == currentUserId; freelancer should not see it
       expect(find.text('Cancel offer'), findsNothing);
+      expect(find.byTooltip('Cancel offer'), findsNothing);
       expect(find.text('Pay (QiCard)'), findsNothing);
     });
 
@@ -703,7 +705,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Open dialog
-      await tester.tap(find.text('Cancel offer'));
+      await tester.tap(find.byTooltip('Cancel offer'));
       await tester.pumpAndSettle();
 
       // Tap Keep
@@ -734,9 +736,9 @@ void main() {
       expect(find.text('Offer not found.'), findsOneWidget);
     });
 
-    // ── T204: Back button in appbar exists ────────────────────────────────
+    // ── T204: Floating back button exists ────────────────────────────────
 
-    testWidgets('T204 back button is present in appbar', (tester) async {
+    testWidgets('T204 floating back button is present', (tester) async {
       when(
         () => mockOffers.getOffer(_kOfferId),
       ).thenAnswer((_) async => _offer());
@@ -775,6 +777,59 @@ void main() {
 
       // At least one AppCardContainer for the main details card
       expect(find.byType(AppCardContainer), findsAtLeastNWidgets(1));
+    });
+
+    testWidgets('T206 report issue icon opens the report dialog', (
+      tester,
+    ) async {
+      when(() => mockOffers.getOffer(_kOfferId)).thenAnswer(
+        (_) async => _offer(status: 'active', paymentStatus: 'held'),
+      );
+
+      await _pumpScreen(
+        tester,
+        authVm: mockAuth,
+        offersService: mockOffers,
+        paymentService: mockPayment,
+        safetyVm: mockSafety,
+        deepLinkService: mockDeepLink,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Report issue'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Report issue'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Report Issue'), findsOneWidget);
+      expect(find.text('Describe the problem with this offer'), findsOneWidget);
+      expect(find.text('Submit'), findsOneWidget);
+    });
+
+    testWidgets('T207 report issue icon is hidden during an open dispute', (
+      tester,
+    ) async {
+      when(() => mockOffers.getOffer(_kOfferId)).thenAnswer(
+        (_) async => _offer(status: 'active', paymentStatus: 'held'),
+      );
+      when(
+        () => mockSafety.hasOpenDisputeForDirectOffer(any()),
+      ).thenAnswer((_) async => true);
+      when(
+        () => mockSafety.getDisputeStatusForDirectOffer(any()),
+      ).thenAnswer((_) async => 'open');
+
+      await _pumpScreen(
+        tester,
+        authVm: mockAuth,
+        offersService: mockOffers,
+        paymentService: mockPayment,
+        safetyVm: mockSafety,
+        deepLinkService: mockDeepLink,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Report issue'), findsNothing);
     });
   });
 }

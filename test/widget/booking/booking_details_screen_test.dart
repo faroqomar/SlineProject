@@ -21,6 +21,7 @@ import 'package:sline_app/core/utils/unified_cta_resolver.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
+import 'package:sline_app/features/booking/view/booking_details_screen.dart';
 import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 
@@ -687,6 +688,26 @@ Future<void> _pumpScreen(
   );
 }
 
+/// Pumps the production booking details route so the real floating chrome is
+/// covered in addition to the legacy Supabase-safe wrapper tests.
+Future<void> _pumpProductionScreen(
+  WidgetTester tester, {
+  required BookingModel booking,
+  required _MockBookingViewModel bookingVm,
+  required _MockSafetyViewModel safetyVm,
+}) async {
+  await pumpApp(
+    tester,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<BookingViewModel>.value(value: bookingVm),
+        ChangeNotifierProvider<SafetyViewModel>.value(value: safetyVm),
+      ],
+      child: BookingDetailsScreen(booking: booking),
+    ),
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -715,6 +736,24 @@ void main() {
       expect(find.byType(_TestBookingDetailsContent), findsOneWidget);
       expect(find.byType(Scaffold), findsOneWidget);
       expect(find.text('Booking Details'), findsOneWidget);
+    });
+
+    testWidgets('T210b production route uses floating back chrome', (
+      tester,
+    ) async {
+      await _pumpProductionScreen(
+        tester,
+        booking: _booking(taskData: const {'title': 'Logo booking'}),
+        bookingVm: bookingVm,
+        safetyVm: safetyVm,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BookingDetailsScreen), findsOneWidget);
+      expect(find.byType(AppBar), findsNothing);
+      expect(find.byTooltip('Back'), findsOneWidget);
+      expect(find.text('Booking Details'), findsOneWidget);
+      expect(find.text('Logo booking'), findsAtLeastNWidgets(1));
     });
 
     // T211: shows booking status banner

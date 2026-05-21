@@ -82,6 +82,7 @@ void main() {
       );
 
       expect(find.text('Conversations'), findsOneWidget);
+      expect(find.byType(AmberDuskBackground), findsOneWidget);
     });
 
     testWidgets(

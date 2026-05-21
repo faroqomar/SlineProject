@@ -91,6 +91,7 @@ lib/
   - **Rule:** Components NEVER hardcode colors, font sizes, durations, padding, avatar sizes, card heights, or spacing. They ALWAYS reference Layer 1 or Layer 2 tokens. Redesign = change token files, not 134 widget files.
 - **MVVM for UI Redesign**: UI redesign work touches the View layer ONLY. Views consume ViewModel state via `Consumer`/`context.watch`/`context.read`. Views NEVER import Supabase, NEVER contain business logic, NEVER decide what data to fetch. If a redesign needs data the ViewModel doesn't expose, document it as a gap and use placeholder UI — do NOT add Supabase calls to the View.
 - **Codebase Discovery Scan**: Before implementing any UI phase, search the codebase (`grep` for feature name, widget class names, imports of target files) to find ALL related files the plan may have missed. Report discovered files before writing code. This ensures 100% coverage.
+- **Open Design Redesign Workflow**: When the user provides a screenshot or design-code file and asks to redesign, improve, or adapt a target screen through Open Design, follow `.TODO/Archive/AmberDuskDesign/OpenDesign_DetailSurfaces_2026-05-21/WORKFLOW_OpenDesign_Redesign_To_Flutter_2026-05-21.md`: capture the input and target screen, use Open Design MCP/app automation to produce the revised design, wait for the finished artifact, pull it back with MCP, implement it in the correct Flutter view/shared-widget/token layer, and verify with focused tests/analyzer plus runtime visual evidence when claiming visual parity.
 
 ## Conventions
 

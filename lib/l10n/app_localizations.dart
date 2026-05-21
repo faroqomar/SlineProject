@@ -100,6 +100,12 @@ abstract class AppLocalizations {
   /// **'SLine'**
   String get appTitle;
 
+  /// Generic back navigation tooltip and label
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
   /// Bottom nav: Home tab
   ///
   /// In en, this message translates to:

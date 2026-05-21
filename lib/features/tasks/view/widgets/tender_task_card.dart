@@ -110,24 +110,15 @@ class TenderTaskCard extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: cardTheme.taskSectionSpacing),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        task.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: cardTheme.taskTitleStyle.copyWith(
-                          color: amberColors.text,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppDimens.p12),
-                    _PricePill(amount: task.budget),
-                  ],
+                Text(
+                  task.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: cardTheme.taskTitleStyle.copyWith(
+                    color: amberColors.text,
+                  ),
                 ),
-                const SizedBox(height: AppDimens.p8),
+                const SizedBox(height: AppDimens.p6),
                 Text(
                   task.description,
                   maxLines: 1,
@@ -136,7 +127,7 @@ class TenderTaskCard extends StatelessWidget {
                     color: amberColors.muted,
                   ),
                 ),
-                const SizedBox(height: AppDimens.p12),
+                const SizedBox(height: AppDimens.p10),
                 Wrap(
                   spacing: AppDimens.p6,
                   runSpacing: AppDimens.p6,
@@ -173,10 +164,13 @@ class TenderTaskCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(width: AppDimens.p8),
+                    _PricePill(amount: task.budget),
+                    const SizedBox(width: AppDimens.p8),
                     Container(
                       height: cardTheme.cardActionHeight,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimens.p18,
+                        horizontal: AppDimens.p14,
                       ),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
@@ -306,7 +300,7 @@ class _PricePill extends StatelessWidget {
     final cardTheme = AmberDuskTokens.widgetTheme.cards;
     final price = _splitFormattedPrice(_formatCardPrice(amount));
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 128),
+      constraints: const BoxConstraints(maxWidth: 112),
       child: Container(
         padding: cardTheme.taskPricePadding,
         decoration: BoxDecoration(

@@ -37,8 +37,9 @@ void main() {
       expect(dark.surface, equals(const Color(0xFF241F1A)));
       expect(
         dark.surfaceRaised,
-        equals(const Color.fromRGBO(36, 31, 26, 0.88)),
+        equals(const Color.fromRGBO(36, 31, 26, 0.90)),
       );
+      expect(AmberDuskTokens.colors.surface2, equals(const Color(0xFF2F2822)));
       expect(dark.surfaceHighest, equals(const Color(0xFF3A312A)));
       expect(dark.text, equals(const Color(0xFFF2E8D5)));
       expect(dark.textSubtle, equals(const Color(0xFFE6D7BE)));
@@ -68,11 +69,11 @@ void main() {
       );
       expect(
         AmberDuskTokens.colors.atmosphericAmber,
-        equals(const Color.fromRGBO(212, 144, 106, 0.12)),
+        equals(const Color.fromRGBO(212, 144, 106, 0.13)),
       );
       expect(
         AmberDuskTokens.colors.atmosphericForest,
-        equals(const Color.fromRGBO(127, 168, 114, 0.075)),
+        equals(const Color.fromRGBO(127, 168, 114, 0.08)),
       );
     });
 

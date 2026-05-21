@@ -3,6 +3,8 @@
 
   "appTitle": "SLine",
   "@appTitle": { "description": "The application title" },
+  "back": "Back",
+  "@back": { "description": "Generic back navigation tooltip and label" },
 
   "navHome": "Home",
   "@navHome": { "description": "Bottom nav: Home tab" },
